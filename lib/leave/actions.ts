@@ -1,0 +1,271 @@
+'use server';
+
+import { z } from 'zod';
+import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
+import { pool } from '@/lib/db/pool';
+import { requireAuth } from '@/lib/auth/permissions';
+import { getSafeUserById } from '@/lib/db/queries/users';
+import { calculateWorkingDays } from './calculator';
+import { evaluateLeaveApproval, evaluateLeaveRejection, LeaveStatus } from './workflow';
+
+const createLeaveSchema = z.object({
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Ngày bắt đầu không hợp lệ (YYYY-MM-DD)'),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Ngày kết thúc không hợp lệ (YYYY-MM-DD)'),
+  reason: z.string().min(5, 'Lý do nghỉ phép phải có ít nhất 5 ký tự').max(1000, 'Lý do quá dài'),
+});
+
+export type LeaveActionState = {
+  success?: boolean;
+  error?: string;
+};
+
+/**
+ * Server Action: Tạo đơn nghỉ phép mới
+ */
+export async function createLeaveRequestAction(
+  prevState: LeaveActionState | null,
+  formData: FormData
+): Promise<LeaveActionState> {
+  const currentUser = await requireAuth();
+
+  // 1. Kiểm tra nghiệp vụ: Giám đốc không tạo đơn nghỉ phép trên hệ thống
+  if (currentUser.role === 'DIRECTOR') {
+    return { error: 'Tài khoản Giám đốc (DIRECTOR) không tạo đơn nghỉ phép trên ứng dụng.' };
+  }
+
+  // 2. Validate dữ liệu đầu vào
+  const rawStartDate = formData.get('startDate');
+  const rawEndDate = formData.get('endDate');
+  const rawReason = formData.get('reason');
+
+  const validated = createLeaveSchema.safeParse({
+    startDate: rawStartDate,
+    endDate: rawEndDate,
+    reason: rawReason,
+  });
+
+  if (!validated.success) {
+    return { error: validated.error.errors[0]?.message || 'Dữ liệu không hợp lệ.' };
+  }
+
+  const { startDate, endDate, reason } = validated.data;
+
+  // 3. Tính số ngày nghỉ làm việc thực tế ở Server
+  let durationDays: number;
+  try {
+    durationDays = calculateWorkingDays(startDate, endDate);
+  } catch (err: any) {
+    return { error: err.message || 'Khoảng ngày không hợp lệ.' };
+  }
+
+  if (durationDays <= 0) {
+    return {
+      error: 'Khoảng thời gian bạn chọn không có ngày làm việc nào (toàn bộ rơi vào ngày Chủ Nhật).',
+    };
+  }
+
+  // 4. Kiểm tra xem có đơn nào đang trùng khoảng thời gian không
+  const overlapCheck = await pool.query(
+    `SELECT id FROM leave_requests 
+     WHERE employee_id = $1 
+       AND status NOT IN ('REJECTED')
+       AND start_date <= $2 
+       AND end_date >= $3
+     LIMIT 1`,
+    [currentUser.id, endDate, startDate]
+  );
+
+  if (overlapCheck.rows.length > 0) {
+    return {
+      error: 'Bạn đã có một đơn nghỉ phép khác đang chờ xử lý hoặc đã duyệt trong khoảng thời gian này.',
+    };
+  }
+
+  // 5. Ghi vào database với trạng thái khởi đầu PENDING
+  try {
+    await pool.query(
+      `INSERT INTO leave_requests (employee_id, start_date, end_date, duration_days, reason, status)
+       VALUES ($1, $2, $3, $4, $5, 'PENDING')`,
+      [currentUser.id, startDate, endDate, durationDays, reason]
+    );
+  } catch (err: any) {
+    console.error('[Create Leave Error]', err.message);
+    return { error: 'Không thể tạo đơn nghỉ phép lúc này. Vui lòng thử lại sau.' };
+  }
+
+  revalidatePath('/leave');
+  redirect('/leave');
+}
+
+/**
+ * Server Action: Phê duyệt đơn nghỉ phép
+ */
+export async function approveLeaveRequestAction(
+  prevState: LeaveActionState | null,
+  formData: FormData
+): Promise<LeaveActionState> {
+  const currentUser = await requireAuth();
+  const requestId = formData.get('requestId') as string;
+  const comment = (formData.get('comment') as string) || null;
+
+  if (!requestId) {
+    return { error: 'Thiếu mã đơn cần phê duyệt.' };
+  }
+
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    // 1. Khóa hàng FOR UPDATE để chống thao tác đồng thời (race condition)
+    const selectRes = await client.query(
+      `SELECT id, employee_id, status, duration_days::float AS duration_days 
+       FROM leave_requests 
+       WHERE id = $1 
+       FOR UPDATE`,
+      [requestId]
+    );
+
+    if (selectRes.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return { error: 'Không tìm thấy đơn nghỉ phép.' };
+    }
+
+    const leaveRequest = selectRes.rows[0];
+    const applicant = await getSafeUserById(leaveRequest.employee_id);
+
+    if (!applicant) {
+      await client.query('ROLLBACK');
+      return { error: 'Không tìm thấy thông tin nhân viên tạo đơn.' };
+    }
+
+    // 2. Kiểm tra thẩm quyền phê duyệt
+    const evaluation = evaluateLeaveApproval(
+      currentUser,
+      applicant,
+      leaveRequest.status as LeaveStatus,
+      leaveRequest.duration_days
+    );
+
+    if (!evaluation.allowed || !evaluation.nextStatus || !evaluation.action) {
+      await client.query('ROLLBACK');
+      return { error: evaluation.reason || 'Bạn không có thẩm quyền phê duyệt đơn này.' };
+    }
+
+    // 3. Cập nhật trạng thái đơn nghỉ phép
+    await client.query(
+      `UPDATE leave_requests 
+       SET status = $1, approver_id = $2, updated_at = NOW() 
+       WHERE id = $3`,
+      [evaluation.nextStatus, currentUser.id, requestId]
+    );
+
+    // 4. Ghi nhận vào lịch sử phê duyệt
+    await client.query(
+      `INSERT INTO approval_history (request_type, request_id, approver_id, action, comment) 
+       VALUES ('LEAVE', $1, $2, $3, $4)`,
+      [requestId, currentUser.id, evaluation.action, comment]
+    );
+
+    await client.query('COMMIT');
+  } catch (err: any) {
+    await client.query('ROLLBACK');
+    console.error('[Approve Leave Error]', err.message);
+    return { error: 'Có lỗi xảy ra trong quá trình xử lý phê duyệt: ' + err.message };
+  } finally {
+    client.release();
+  }
+
+  revalidatePath('/approvals/leave');
+  revalidatePath(`/leave/${requestId}`);
+  return { success: true };
+}
+
+/**
+ * Server Action: Từ chối đơn nghỉ phép
+ */
+export async function rejectLeaveRequestAction(
+  prevState: LeaveActionState | null,
+  formData: FormData
+): Promise<LeaveActionState> {
+  const currentUser = await requireAuth();
+  const requestId = formData.get('requestId') as string;
+  const rejectionReason = (formData.get('rejectionReason') as string)?.trim();
+
+  if (!requestId) {
+    return { error: 'Thiếu mã đơn cần từ chối.' };
+  }
+
+  if (!rejectionReason || rejectionReason.length < 5) {
+    return { error: 'Bắt buộc phải nhập lý do từ chối cụ thể (tối thiểu 5 ký tự).' };
+  }
+
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    // 1. Khóa hàng FOR UPDATE
+    const selectRes = await client.query(
+      `SELECT id, employee_id, status, duration_days::float AS duration_days 
+       FROM leave_requests 
+       WHERE id = $1 
+       FOR UPDATE`,
+      [requestId]
+    );
+
+    if (selectRes.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return { error: 'Không tìm thấy đơn nghỉ phép.' };
+    }
+
+    const leaveRequest = selectRes.rows[0];
+    const applicant = await getSafeUserById(leaveRequest.employee_id);
+
+    if (!applicant) {
+      await client.query('ROLLBACK');
+      return { error: 'Không tìm thấy thông tin nhân viên tạo đơn.' };
+    }
+
+    // 2. Kiểm tra thẩm quyền từ chối
+    const evaluation = evaluateLeaveRejection(
+      currentUser,
+      applicant,
+      leaveRequest.status as LeaveStatus,
+      leaveRequest.duration_days
+    );
+
+    if (!evaluation.allowed) {
+      await client.query('ROLLBACK');
+      return { error: evaluation.reason || 'Bạn không có thẩm quyền từ chối đơn này.' };
+    }
+
+    // 3. Cập nhật trạng thái thành REJECTED
+    await client.query(
+      `UPDATE leave_requests 
+       SET status = 'REJECTED', approver_id = $1, rejection_reason = $2, updated_at = NOW() 
+       WHERE id = $3`,
+      [currentUser.id, rejectionReason, requestId]
+    );
+
+    // 4. Ghi nhận vào lịch sử phê duyệt
+    await client.query(
+      `INSERT INTO approval_history (request_type, request_id, approver_id, action, comment) 
+       VALUES ('LEAVE', $1, $2, 'REJECTED', $3)`,
+      [requestId, currentUser.id, rejectionReason]
+    );
+
+    await client.query('COMMIT');
+  } catch (err: any) {
+    await client.query('ROLLBACK');
+    console.error('[Reject Leave Error]', err.message);
+    return { error: 'Có lỗi xảy ra trong quá trình từ chối đơn: ' + err.message };
+  } finally {
+    client.release();
+  }
+
+  revalidatePath('/approvals/leave');
+  revalidatePath(`/leave/${requestId}`);
+  return { success: true };
+}
