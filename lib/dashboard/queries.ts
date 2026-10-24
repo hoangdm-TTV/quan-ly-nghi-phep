@@ -340,11 +340,11 @@ export async function getScopeActivityFeed(
   const leaveConditions: string[] = [scope.whereSql];
   if (fromDate) {
     leaveParams.push(fromDate);
-    leaveConditions.push(`lr.start_date >= ${leaveParams.length}`);
+    leaveConditions.push('lr.start_date >= $' + leaveParams.length);
   }
   if (toDate) {
     leaveParams.push(toDate);
-    leaveConditions.push(`lr.start_date <= ${leaveParams.length}`);
+    leaveConditions.push('lr.start_date <= $' + leaveParams.length);
   }
 
   const leaveSql = `
@@ -369,11 +369,11 @@ export async function getScopeActivityFeed(
   const outOfficeConditions: string[] = [scope.whereSql];
   if (fromDate) {
     outOfficeParams.push(fromDate);
-    outOfficeConditions.push(`oo.request_date >= ${outOfficeParams.length}`);
+    outOfficeConditions.push('oo.request_date >= $' + outOfficeParams.length);
   }
   if (toDate) {
     outOfficeParams.push(toDate);
-    outOfficeConditions.push(`oo.request_date <= ${outOfficeParams.length}`);
+    outOfficeConditions.push('oo.request_date <= $' + outOfficeParams.length);
   }
 
   const outOfficeSql = `
