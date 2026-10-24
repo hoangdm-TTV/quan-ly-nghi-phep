@@ -37,9 +37,9 @@ Không dùng Supabase, không có `auth.uid()`. DBeaver chỉ là công cụ qu�
 | Vai trò | Phạm vi xem dữ liệu | Quyền duyệt |
 |---|---|---|
 | `STAFF` | Chỉ dữ liệu của chính mình | Không |
-| `TEAM_LEAD` | Bản thân + cùng `team_id` | Cấp 1 trong team được giao |
+| `TEAM_LEAD` | Bản thân + cùng `team_id` | Không (chỉ Trưởng phòng và Giám đốc duyệt) |
 | `MANAGER` | Bản thân + cùng `department_id` | Cấp 1 trong phòng ban, theo ma trận |
-| `ACCOUNTANT` | Toàn công ty (giám sát, đối soát) | Không mặc nhiên |
+| `ACCOUNTANT` | Toàn công ty (chỉ đọc, đối soát) | Không (chỉ xem tất cả đơn, không duyệt) |
 | `DIRECTOR` | Toàn công ty | Các đơn yêu cầu cấp Director |
 
 Không ai được duyệt đơn của chính mình.
@@ -53,7 +53,7 @@ Trạng thái: `PENDING` → `APPROVED_BY_LEAD` → `WAITING_FOR_DOC` → `COMPL
 | STAFF | Manager cùng phòng duyệt → `WAITING_FOR_DOC` | Manager duyệt cấp 1 → `APPROVED_BY_LEAD` → Director duyệt → `WAITING_FOR_DOC` |
 | TEAM_LEAD | Manager cùng phòng duyệt → `WAITING_FOR_DOC` | Manager duyệt cấp 1 → `APPROVED_BY_LEAD` → Director duyệt → `WAITING_FOR_DOC` |
 | MANAGER | Director duyệt trực tiếp → `WAITING_FOR_DOC` | Director duyệt trực tiếp → `WAITING_FOR_DOC` |
-| ACCOUNTANT | Chỉ xem báo cáo tổng hợp; không tạo/xem chi tiết đơn và không duyệt | Chỉ xem báo cáo tổng hợp; không tạo/xem chi tiết đơn và không duyệt |
+| ACCOUNTANT | Xin nghỉ như nhân viên, do Trưởng phòng duyệt; xem được tất cả đơn công ty (chỉ đọc) | Xin nghỉ như nhân viên, do Trưởng phòng duyệt; xem được tất cả đơn công ty (chỉ đọc) |
 | DIRECTOR | Mặc định **từ chối tự duyệt**; cần quy trình ngoài hệ thống do doanh nghiệp xác định | |
 
 **Hoàn tất bằng giấy đã ký:** khi đơn ở `WAITING_FOR_DOC`, chỉ chủ đơn mới được tải PDF/PNG/JPEG (tối đa 5 MiB). Server kiểm tra session, chủ đơn, trạng thái, MIME và chữ ký định dạng; lưu tệp và chuyển sang `COMPLETED` trong cùng transaction. Tải xuống qua route xác thực và kiểm tra scope; tệp không nằm trong thư mục public. Client không thể tự đặt `status = COMPLETED`.
@@ -64,7 +64,7 @@ Trạng thái: `PENDING` → `APPROVED_BY_LEAD` → `WAITING_FOR_DOC` → `COMPL
 
 `PENDING` → `APPROVED` hoặc `REJECTED`. (`COMPLETED` dành cho bước đối soát sau này.)
 
-- Người duyệt: Manager duyệt đơn của STAFF/TEAM_LEAD cùng phòng ban; Director có quyền duyệt toàn công ty. Team Lead không duyệt. ACCOUNTANT chỉ xem báo cáo tổng hợp.
+- Người duyệt: Trưởng phòng (MANAGER) duyệt đơn của nhân viên có `manager_id` trỏ trực tiếp tới mình; Giám đốc (DIRECTOR) có quyền duyệt toàn công ty. Trưởng Nhóm (TEAM_LEAD) không duyệt. Kế toán (ACCOUNTANT) xin nghỉ như nhân viên thường, do Trưởng phòng duyệt; đồng thời xem được tất cả đơn công ty ở dạng chỉ đọc.
 - Chỉ trong cùng một ngày; giờ kết thúc phải lớn hơn giờ bắt đầu.
 - `estimated_hours` do **server** tự tính, không tin dữ liệu từ client.
 - Từ chối bắt buộc có lý do. `APPROVED` không đồng nghĩa `COMPLETED`.
@@ -93,7 +93,7 @@ Nếu chưa có quyền sửa database, hệ thống chạy ở chế độ tư�
 
 Cần doanh nghiệp xác nhận trước production:
 
-- *(giả định)* Số ngày nghỉ = số ngày lịch, **gồm cả** ngày bắt đầu và kết thúc; không loại trừ cuối tuần/ngày lễ; không nghỉ nửa ngày; không nghỉ theo giờ.
+- Công ty làm việc từ **Thứ 2 đến Thứ 7**, nghỉ **Chủ Nhật**. Số ngày nghỉ phép = số ngày làm việc thực tế trong khoảng [start, end], **loại trừ Chủ Nhật và ngày lễ** (quản lý qua bảng `holidays`). Không nghỉ nửa ngày, không nghỉ theo giờ.
 - *(giả định)* Không cho tạo đơn trùng khoảng thời gian của cùng một nhân viên.
 - *(giả định)* Giới hạn giờ làm việc và số giờ ra ngoài tối đa cấu hình được theo chính sách.
 - Khi `manager_id`, `team_id` hoặc `department_id` không đủ xác định người duyệt → từ chối thao tác và ghi nhận lỗi cấu hình.

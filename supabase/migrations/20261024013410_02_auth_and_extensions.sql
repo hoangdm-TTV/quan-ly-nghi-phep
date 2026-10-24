@@ -1,0 +1,37 @@
+-- Auth extensions: password_hash, is_active, sessions, approval_history, timestamps
+
+ALTER TABLE users 
+ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255),
+ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE,
+ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW();
+
+CREATE TABLE IF NOT EXISTS sessions (
+    id VARCHAR(255) PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at);
+
+CREATE TABLE IF NOT EXISTS approval_history (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    request_type VARCHAR(50) NOT NULL CHECK (request_type IN ('LEAVE', 'OUT_OFFICE')),
+    request_id UUID NOT NULL,
+    approver_id UUID NOT NULL REFERENCES users(id),
+    action VARCHAR(50) NOT NULL CHECK (action IN ('APPROVED_LEAD', 'APPROVED_DIRECTOR', 'REJECTED')),
+    comment TEXT,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_approval_history_request ON approval_history(request_id);
+
+ALTER TABLE leave_requests 
+ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW();
+
+ALTER TABLE out_office_requests 
+ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW();

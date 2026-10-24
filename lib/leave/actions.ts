@@ -7,7 +7,7 @@ import type { PoolClient } from 'pg';
 import { pool } from '@/lib/db/pool';
 import { requireAuth } from '@/lib/auth/permissions';
 import { getSafeUserById } from '@/lib/db/queries/users';
-import { calculateWorkingDays } from './calculator';
+import { calculateWorkingDaysWithHolidays } from './calculator';
 import { evaluateLeaveApproval, evaluateLeaveRejection, LeaveStatus } from './workflow';
 
 const createLeaveSchema = z.object({
@@ -168,10 +168,10 @@ export async function createLeaveRequestAction(
 
   const { startDate, endDate, reason } = validated.data;
 
-  // 3. Tính số ngày nghỉ làm việc thực tế ở Server
+  // 3. Tính số ngày nghỉ làm việc thực tế ở Server (trừ Chủ Nhật và ngày lễ)
   let durationDays: number;
   try {
-    durationDays = calculateWorkingDays(startDate, endDate);
+    durationDays = await calculateWorkingDaysWithHolidays(startDate, endDate);
   } catch (err: any) {
     return { error: err.message || 'Khoảng ngày không hợp lệ.' };
   }
