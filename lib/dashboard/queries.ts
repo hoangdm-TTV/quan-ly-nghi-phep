@@ -361,9 +361,8 @@ export async function getScopeActivityFeed(
     LEFT JOIN departments d ON u.department_id = d.id
     WHERE ${leaveConditions.join(' AND ')}
     ORDER BY lr.start_date DESC
-    LIMIT ${leaveParams.length + 1}
+    LIMIT ${limit}
   `;
-  leaveParams.push(limit);
 
   const outOfficeParams: any[] = [...scope.params];
   const outOfficeConditions: string[] = [scope.whereSql];
@@ -390,9 +389,8 @@ export async function getScopeActivityFeed(
     LEFT JOIN departments d ON u.department_id = d.id
     WHERE ${outOfficeConditions.join(' AND ')}
     ORDER BY oo.request_date DESC
-    LIMIT ${outOfficeParams.length + 1}
+    LIMIT ${limit}
   `;
-  outOfficeParams.push(limit);
 
   const [leaveRes, outOfficeRes] = await Promise.all([
     query(leaveSql, leaveParams),
