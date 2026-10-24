@@ -1,6 +1,10 @@
--- Holidays table for leave day calculation
--- Supports both single-day holidays and date-range holidays (e.g. Tet holiday)
--- Managed by ACCOUNTANT role through the holidays management page
+-- =============================================================================
+-- Migration: 04_holidays.sql
+-- Mô tả: Tạo bảng ngày lễ (holidays) để tính số ngày nghỉ phép chính xác.
+-- Hỗ trợ cả ngày lễ đơn lẻ và khoảng ngày (ví dụ: nghỉ Tết từ 25/01 đến 01/02).
+-- Quản lý bởi ACCOUNTANT và DIRECTOR qua trang "Quản lý ngày lễ".
+-- Dự án: Leave & Gate Pass Management System
+-- =============================================================================
 
 CREATE TABLE IF NOT EXISTS holidays (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -15,7 +19,7 @@ CREATE TABLE IF NOT EXISTS holidays (
 
 CREATE INDEX IF NOT EXISTS idx_holidays_dates ON holidays(start_date, end_date) WHERE is_active = TRUE;
 
--- Seed sample Vietnamese holidays
+-- Seed dữ liệu mẫu ngày lễ Việt Nam
 INSERT INTO holidays (name, start_date, end_date) VALUES
     ('Tết Dương Lịch', '2026-01-01', '2026-01-01'),
     ('Giỗ tổ Hùng Vương', '2026-04-02', '2026-04-02'),
