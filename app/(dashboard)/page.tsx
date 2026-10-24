@@ -1,6 +1,7 @@
 import { requireAuth } from '@/lib/auth/permissions';
 import { getDashboardStats, getRecentActivities, getScopeReport } from '@/lib/dashboard/queries';
 import { getUserDataScopeLabel } from '@/lib/auth/data-scope';
+import { getRoleLabel } from '@/lib/auth/role-labels';
 import { getPendingLeaveRequestsForApprover } from '@/lib/leave/queries';
 import { getPendingOutOfficeRequestsForApprover } from '@/lib/out-office/queries';
 import Link from 'next/link';
@@ -55,7 +56,7 @@ export default async function DashboardPage({
   return (
     <div className="space-y-8">
       {/* 1. Lời chào và Lối tắt nhanh */}
-      <div className="bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-900 rounded-2xl p-6 sm:p-8 text-white shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+      <div className="bg-gradient-to-r from-blue-700 via-blue-800 to-blue-900 rounded-2xl p-6 sm:p-8 text-white shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-6">
         <div className="space-y-1.5">
           <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-200 border border-blue-400/20">
             <Sparkles className="w-3.5 h-3.5" />
@@ -65,7 +66,7 @@ export default async function DashboardPage({
             Xin chào, {user.full_name}!
           </h2>
           <p className="text-xs sm:text-sm text-blue-200/80 max-w-xl">
-            Vai trò: <span className="font-semibold text-white">{user.role}</span>
+            Vai trò: <span className="font-semibold text-white">{getRoleLabel(user.role)}</span>
             {user.department_name ? ` • ${user.department_name}` : ''}
             {user.team_name ? ` • ${user.team_name}` : ''}. Chúc bạn một ngày làm việc hiệu quả!
           </p>
@@ -163,7 +164,7 @@ export default async function DashboardPage({
         <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-slate-500">Đơn ra ngoài cá nhân</span>
-            <div className="p-2 bg-purple-50 text-purple-600 rounded-lg">
+            <div className="p-2 bg-teal-50 text-teal-600 rounded-lg">
               <Clock className="w-4 h-4" />
             </div>
           </div>
@@ -254,15 +255,15 @@ export default async function DashboardPage({
               <p className="text-xl font-bold text-blue-900 mt-1">{scopeReport.totals.leaveTotal}</p>
               <p className="text-[10px] text-blue-700 mt-1">{scopeReport.totals.leavePending} chờ · {scopeReport.totals.leaveApproved} đã duyệt · {scopeReport.totals.leaveRejected} từ chối</p>
             </div>
-            <div className="rounded-xl bg-indigo-50 p-4">
-              <p className="text-[11px] text-indigo-700">Ngày nghỉ đã duyệt</p>
-              <p className="text-xl font-bold text-indigo-900 mt-1">{Number(scopeReport.totals.leaveDays.toFixed(1))}</p>
-              <p className="text-[10px] text-indigo-700 mt-1">Tổng ngày từ đơn đã duyệt/chờ chứng từ và hoàn tất</p>
+            <div className="rounded-xl bg-blue-50 p-4">
+              <p className="text-[11px] text-blue-700">Ngày nghỉ đã duyệt</p>
+              <p className="text-xl font-bold text-blue-900 mt-1">{Number(scopeReport.totals.leaveDays.toFixed(1))}</p>
+              <p className="text-[10px] text-blue-700 mt-1">Tổng ngày từ đơn đã duyệt/chờ chứng từ và hoàn tất</p>
             </div>
-            <div className="rounded-xl bg-purple-50 p-4">
-              <p className="text-[11px] text-purple-700">Đơn ra ngoài</p>
-              <p className="text-xl font-bold text-purple-900 mt-1">{scopeReport.totals.outOfficeTotal}</p>
-              <p className="text-[10px] text-purple-700 mt-1">{scopeReport.totals.outOfficePending} chờ · {scopeReport.totals.outOfficeApproved} đã duyệt · {scopeReport.totals.outOfficeCompleted} hoàn tất</p>
+            <div className="rounded-xl bg-teal-50 p-4">
+              <p className="text-[11px] text-teal-700">Đơn ra ngoài</p>
+              <p className="text-xl font-bold text-teal-900 mt-1">{scopeReport.totals.outOfficeTotal}</p>
+              <p className="text-[10px] text-teal-700 mt-1">{scopeReport.totals.outOfficePending} chờ · {scopeReport.totals.outOfficeApproved} đã duyệt · {scopeReport.totals.outOfficeCompleted} hoàn tất</p>
             </div>
             <div className="rounded-xl bg-amber-50 p-4">
               <p className="text-[11px] text-amber-700">Giờ ra ngoài đã duyệt</p>
@@ -343,7 +344,7 @@ export default async function DashboardPage({
                         className={`text-[10px] font-semibold px-2 py-0.5 rounded ${
                           item.type === 'LEAVE'
                             ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                            : 'bg-purple-50 text-purple-700 border border-purple-200'
+                            : 'bg-teal-50 text-teal-700 border border-teal-200'
                         }`}
                       >
                         {item.type === 'LEAVE' ? 'Nghỉ phép' : 'Ra ngoài'}
@@ -385,7 +386,7 @@ export default async function DashboardPage({
             <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 space-y-4">
               <h3 className="text-sm font-bold text-slate-900 flex items-center justify-between border-b border-slate-100 pb-3">
                 <span className="flex items-center gap-2">
-                  <UserCheck className="w-4 h-4 text-purple-600" />
+                  <UserCheck className="w-4 h-4 text-teal-600" />
                   Cần bạn phê duyệt
                 </span>
                 <span className="text-xs font-bold px-2 py-0.5 bg-amber-100 text-amber-800 rounded-full">
@@ -403,11 +404,11 @@ export default async function DashboardPage({
                     <Link
                       key={req.id}
                       href={`/leave/${req.id}`}
-                      className="block p-3 rounded-xl bg-slate-50 hover:bg-purple-50/60 border border-slate-200 hover:border-purple-200 transition-colors"
+                      className="block p-3 rounded-xl bg-slate-50 hover:bg-teal-50/60 border border-slate-200 hover:border-teal-200 transition-colors"
                     >
                       <div className="flex items-center justify-between text-xs">
                         <span className="font-semibold text-slate-900">{req.employee_name}</span>
-                        <span className="text-[10px] text-purple-700 font-medium">Nghỉ phép</span>
+                        <span className="text-[10px] text-teal-700 font-medium">Nghỉ phép</span>
                       </div>
                       <p className="text-[11px] text-slate-500 mt-1 truncate">
                         {req.start_date} → {req.end_date} ({req.duration_days} ngày)

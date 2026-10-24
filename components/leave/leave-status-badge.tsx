@@ -16,7 +16,7 @@ export default function LeaveStatusBadge({ status }: LeaveStatusBadgeProps) {
     },
     WAITING_FOR_DOC: {
       label: 'Chờ nộp giấy đã ký',
-      className: 'bg-purple-50 text-purple-700 border-purple-200',
+      className: 'bg-teal-50 text-teal-700 border-teal-200',
     },
     COMPLETED: {
       label: 'Đã hoàn tất',

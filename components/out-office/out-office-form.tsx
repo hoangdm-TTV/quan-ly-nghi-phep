@@ -160,7 +160,7 @@ export default function OutOfficeForm() {
           <label
             className={`flex items-center gap-2 p-3 border rounded-lg cursor-pointer transition-colors ${
               reasonType === 'PERSONAL'
-                ? 'bg-purple-50 border-purple-300 text-purple-900 font-medium'
+                ? 'bg-teal-50 border-teal-300 text-teal-900 font-medium'
                 : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
             }`}
           >
@@ -170,9 +170,9 @@ export default function OutOfficeForm() {
               value="PERSONAL"
               checked={reasonType === 'PERSONAL'}
               onChange={() => setReasonType('PERSONAL')}
-              className="text-purple-600 focus:ring-purple-500"
+              className="text-teal-600 focus:ring-teal-500"
             />
-            <UserCheck className="w-4 h-4 text-purple-600" />
+            <UserCheck className="w-4 h-4 text-teal-600" />
             <span>Việc riêng (PERSONAL)</span>
           </label>
         </div>

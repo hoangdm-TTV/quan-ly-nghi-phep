@@ -9,6 +9,7 @@ import {
   canApproveWorkflowRequests,
   canSubmitPersonalRequests,
 } from '@/lib/auth/roles';
+import { getRoleLabel } from '@/lib/auth/role-labels';
 import {
   LayoutDashboard,
   CalendarDays,
@@ -229,7 +230,7 @@ export default function AppSidebar({ user, isOpen, onClose }: AppSidebarProps) {
               <p className="text-xs font-semibold text-white truncate">{user.full_name}</p>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className="inline-block px-1.5 py-0.2 text-[9px] font-semibold rounded bg-blue-500/20 text-blue-300 border border-blue-500/30">
-                  {user.role}
+                  {getRoleLabel(user.role)}
                 </span>
                 {user.department_name && (
                   <span className="text-[10px] text-slate-400 truncate">

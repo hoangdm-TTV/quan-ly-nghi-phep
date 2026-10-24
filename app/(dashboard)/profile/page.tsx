@@ -79,7 +79,7 @@ export default async function ProfilePage() {
           {/* Phạm vi phân quyền */}
           <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 space-y-4">
             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3">
-              <Shield className="w-4 h-4 text-purple-600" />
+              <Shield className="w-4 h-4 text-teal-600" />
               Phạm vi quyền hạn hệ thống
             </h3>
 

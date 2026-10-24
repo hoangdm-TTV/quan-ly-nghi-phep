@@ -119,12 +119,12 @@ export default async function LeaveDetailPage({
         )}
 
         {request.status === 'WAITING_FOR_DOC' && (
-          <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg space-y-1">
-            <div className="flex items-center gap-2 text-purple-900 font-semibold text-sm">
-              <CheckCircle className="w-4 h-4 text-purple-600" />
+          <div className="p-4 bg-teal-50 border border-teal-200 rounded-lg space-y-1">
+            <div className="flex items-center gap-2 text-teal-900 font-semibold text-sm">
+              <CheckCircle className="w-4 h-4 text-teal-600" />
               Đơn đã được phê duyệt đầy đủ các cấp
             </div>
-            <p className="text-xs text-purple-700">
+            <p className="text-xs text-teal-700">
               {isOwner
                 ? 'Đơn đã được duyệt. Nộp ảnh hoặc PDF giấy xin nghỉ phép đã ký để chuyển đơn sang hoàn tất.'
                 : 'Đơn đã được duyệt và đang chờ chủ đơn nộp giấy đã ký.'}

@@ -11,7 +11,7 @@ function UploadButton() {
     <button
       type="submit"
       disabled={pending}
-      className="inline-flex items-center rounded-lg bg-purple-700 px-4 py-2 text-xs font-semibold text-white hover:bg-purple-800 disabled:opacity-50"
+      className="inline-flex items-center rounded-lg bg-teal-700 px-4 py-2 text-xs font-semibold text-white hover:bg-teal-800 disabled:opacity-50"
     >
       {pending ? (
         <>
@@ -36,7 +36,7 @@ export default function LeaveDocumentForm({ requestId }: { requestId: string }) 
     <form
       action={formAction}
       encType="multipart/form-data"
-      className="space-y-3 rounded-xl border border-purple-200 bg-white p-5"
+      className="space-y-3 rounded-xl border border-teal-200 bg-white p-5"
     >
       <input type="hidden" name="requestId" value={requestId} />
       <div>
@@ -49,7 +49,7 @@ export default function LeaveDocumentForm({ requestId }: { requestId: string }) 
           type="file"
           accept="application/pdf,image/png,image/jpeg,.pdf,.png,.jpg,.jpeg"
           required
-          className="block w-full text-xs text-slate-700 file:mr-3 file:rounded-md file:border-0 file:bg-purple-50 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-purple-700"
+          className="block w-full text-xs text-slate-700 file:mr-3 file:rounded-md file:border-0 file:bg-teal-50 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-teal-700"
         />
         <p className="mt-1 text-[11px] text-slate-500">PDF, PNG hoặc JPEG; tối đa 5 MB. Tệp chỉ người có quyền xem đơn mới tải được.</p>
       </div>

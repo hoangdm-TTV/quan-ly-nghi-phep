@@ -4,6 +4,8 @@ import { SafeUser } from '@/lib/types/user';
 import LogoutButton from '@/components/logout-button';
 import Link from 'next/link';
 import { Menu, UserCheck, ShieldCheck } from 'lucide-react';
+import { getRoleLabel, getRoleBadgeClass } from '@/lib/auth/role-labels';
+import { UserRole } from '@/lib/types/user';
 
 interface AppHeaderProps {
   user: SafeUser;
@@ -12,9 +14,9 @@ interface AppHeaderProps {
 
 export default function AppHeader({ user, onOpenSidebar }: AppHeaderProps) {
   const roleBadgeColors: Record<string, string> = {
-    DIRECTOR: 'bg-purple-100 text-purple-800 border-purple-200',
-    MANAGER: 'bg-indigo-100 text-indigo-800 border-indigo-200',
-    TEAM_LEAD: 'bg-blue-100 text-blue-800 border-blue-200',
+    DIRECTOR: 'bg-teal-100 text-teal-800 border-teal-200',
+    MANAGER: 'bg-blue-100 text-blue-800 border-blue-200',
+    TEAM_LEAD: 'bg-cyan-100 text-cyan-800 border-cyan-200',
     ACCOUNTANT: 'bg-amber-100 text-amber-800 border-amber-200',
     STAFF: 'bg-emerald-100 text-emerald-800 border-emerald-200',
   };
@@ -59,7 +61,7 @@ export default function AppHeader({ user, onOpenSidebar }: AppHeaderProps) {
                   roleBadgeColors[user.role] || 'bg-slate-100 text-slate-700'
                 }`}
               >
-                {user.role}
+                {getRoleLabel(user.role as UserRole)}
               </span>
               {user.department_name && (
                 <span className="text-[10px] text-slate-500">

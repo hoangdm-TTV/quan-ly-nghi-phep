@@ -48,7 +48,7 @@ export default async function ApprovalsOutOfficePage() {
             >
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 pb-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-xs">
+                  <div className="w-9 h-9 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center font-bold text-xs">
                     {req.employee_name.slice(0, 2).toUpperCase()}
                   </div>
                   <div>
@@ -92,7 +92,7 @@ export default async function ApprovalsOutOfficePage() {
                         <Briefcase className="w-3 h-3" /> Việc công (WORK)
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-purple-700">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-teal-700">
                         <UserCheck className="w-3 h-3" /> Việc riêng (PERSONAL)
                       </span>
                     )}

@@ -18,7 +18,7 @@ function ApproveBtn({ isCompleting }: { isCompleting: boolean }) {
       type="submit"
       disabled={pending}
       className={`inline-flex items-center px-4 py-2 text-xs font-semibold rounded-lg text-white disabled:opacity-50 transition-colors ${
-        isCompleting ? 'bg-purple-600 hover:bg-purple-700' : 'bg-emerald-600 hover:bg-emerald-700'
+        isCompleting ? 'bg-teal-600 hover:bg-teal-700' : 'bg-emerald-600 hover:bg-emerald-700'
       }`}
     >
       {pending ? (
@@ -114,7 +114,7 @@ export default function OutOfficeApprovalActions({ requestId, currentStatus }: A
           {currentStatus === 'APPROVED' && (
             <button
               onClick={() => setMode('approve')}
-              className="inline-flex items-center px-3.5 py-1.5 text-xs font-semibold rounded-lg text-purple-700 bg-purple-50 border border-purple-200 hover:bg-purple-100 transition-colors"
+              className="inline-flex items-center px-3.5 py-1.5 text-xs font-semibold rounded-lg text-teal-700 bg-teal-50 border border-teal-200 hover:bg-teal-100 transition-colors"
             >
               <CheckCheck className="w-3.5 h-3.5 mr-1.5" />
               Đã về & Ký xác nhận

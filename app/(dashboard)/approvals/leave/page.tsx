@@ -88,7 +88,7 @@ export default async function ApprovalsLeavePage() {
                 </div>
                 <div>
                   <span className="text-slate-500 block">Cấp duyệt hiện tại:</span>
-                  <span className="font-medium text-purple-700">
+                  <span className="font-medium text-teal-700">
                     {req.status === 'PENDING'
                       ? 'Duyệt Cấp 1 (Lead/Manager)'
                       : 'Duyệt Cấp 2 (Giám đốc)'}

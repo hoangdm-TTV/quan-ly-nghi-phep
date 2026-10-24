@@ -131,7 +131,7 @@ export default async function OutOfficeListPage({
                           <Briefcase className="w-3 h-3" /> Việc công
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-purple-50 text-purple-700 border border-purple-200">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-teal-50 text-teal-700 border border-teal-200">
                           <UserCheck className="w-3 h-3" /> Việc riêng
                         </span>
                       )}
