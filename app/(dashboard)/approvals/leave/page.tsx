@@ -13,8 +13,8 @@ export const metadata = {
 export default async function ApprovalsLeavePage() {
   const user = await requireAuth();
 
-  if (user.role === 'STAFF' || user.role === 'ACCOUNTANT') {
-    redirect('/leave');
+  if (user.role !== 'MANAGER' && user.role !== 'DIRECTOR') {
+    redirect(user.role === 'ACCOUNTANT' ? '/' : '/leave');
   }
 
   const pendingRequests = await getPendingLeaveRequestsForApprover(user);

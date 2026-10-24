@@ -40,6 +40,7 @@ export default function AppHeader({ user, onOpenSidebar }: AppHeaderProps) {
 
       <div className="flex items-center gap-3 sm:gap-4">
         {/* User shortcut */}
+        {user.role !== 'ACCOUNTANT' && (
         <Link
           href="/profile"
           className="flex items-center gap-2.5 p-1.5 rounded-lg hover:bg-slate-50 transition-colors"
@@ -68,6 +69,7 @@ export default function AppHeader({ user, onOpenSidebar }: AppHeaderProps) {
             </div>
           </div>
         </Link>
+        )}
 
         <div className="h-6 w-px bg-slate-200"></div>
 

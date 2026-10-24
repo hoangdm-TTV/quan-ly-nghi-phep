@@ -12,6 +12,9 @@ export default async function NewLeavePage() {
   if (user.role === 'DIRECTOR') {
     redirect('/leave');
   }
+  if (user.role === 'ACCOUNTANT') {
+    redirect('/');
+  }
 
   return (
     <div className="space-y-6">

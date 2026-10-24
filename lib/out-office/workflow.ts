@@ -10,83 +10,56 @@ export interface OutOfficeEvaluation {
   action?: 'APPROVED_LEAD' | 'APPROVED_DIRECTOR' | 'REJECTED';
 }
 
-/**
- * Đánh giá thẩm quyền duyệt đơn ra ngoài
- * Theo quy định doanh nghiệp: Đơn ra ngoài do Kế toán (ACCOUNTANT) hoặc Giám đốc (DIRECTOR) duyệt.
- */
+function canManageOutOffice(approver: SafeUser, applicant: SafeUser): boolean {
+  if (approver.role === 'DIRECTOR') return true;
+  return (
+    approver.role === 'MANAGER' &&
+    Boolean(approver.department_id) &&
+    approver.department_id === applicant.department_id &&
+    (applicant.role === 'STAFF' || applicant.role === 'TEAM_LEAD')
+  );
+}
+
+/** Manager xử lý đơn của Staff/Team Lead cùng phòng; Director có quyền toàn công ty. */
 export function evaluateOutOfficeApproval(
   approver: SafeUser,
   applicant: SafeUser,
   currentStatus: OutOfficeStatus
 ): OutOfficeEvaluation {
-  // 1. Không cho phép tự duyệt đơn của chính mình
   if (approver.id === applicant.id) {
-    return {
-      allowed: false,
-      reason: 'Bạn không được phép tự phê duyệt đơn ra ngoài của chính mình.',
-    };
+    return { allowed: false, reason: 'Bạn không được phép tự phê duyệt đơn ra ngoài của chính mình.' };
+  }
+  if (!canManageOutOffice(approver, applicant)) {
+    return { allowed: false, reason: 'Đơn ra ngoài chỉ do Trưởng phòng cùng phòng ban hoặc Giám đốc xử lý.' };
   }
 
-  // 2. Chỉ Kế toán (ACCOUNTANT) hoặc Giám đốc (DIRECTOR) có quyền duyệt đơn ra ngoài
-  if (approver.role !== 'ACCOUNTANT' && approver.role !== 'DIRECTOR') {
-    return {
-      allowed: false,
-      reason: 'Chỉ phòng Kế toán (ACCOUNTANT) hoặc Giám đốc (DIRECTOR) mới có thẩm quyền duyệt đơn ra ngoài.',
-    };
-  }
-
-  // 3. Phê duyệt trước khi đi: PENDING -> APPROVED
+  const action = approver.role === 'DIRECTOR' ? 'APPROVED_DIRECTOR' : 'APPROVED_LEAD';
   if (currentStatus === 'PENDING') {
-    return {
-      allowed: true,
-      nextStatus: 'APPROVED',
-      action: approver.role === 'DIRECTOR' ? 'APPROVED_DIRECTOR' : 'APPROVED_LEAD',
-    };
+    return { allowed: true, nextStatus: 'APPROVED', action };
   }
-
-  // 4. Xác nhận hoàn tất sau khi về và ký giấy: APPROVED -> COMPLETED
   if (currentStatus === 'APPROVED') {
-    return {
-      allowed: true,
-      nextStatus: 'COMPLETED',
-      action: approver.role === 'DIRECTOR' ? 'APPROVED_DIRECTOR' : 'APPROVED_LEAD',
-    };
+    return { allowed: true, nextStatus: 'COMPLETED', action };
   }
-
   return {
     allowed: false,
     reason: `Đơn đang ở trạng thái "${currentStatus}", không thể thực hiện phê duyệt tiếp.`,
   };
 }
 
-/**
- * Đánh giá thẩm quyền từ chối đơn ra ngoài
- */
+/** Từ chối đơn ra ngoài phải cùng người xử lý được phép của request. */
 export function evaluateOutOfficeRejection(
   approver: SafeUser,
   applicant: SafeUser,
   currentStatus: OutOfficeStatus
 ): { allowed: boolean; reason?: string } {
   if (approver.id === applicant.id) {
-    return {
-      allowed: false,
-      reason: 'Bạn không thể từ chối đơn của chính mình.',
-    };
+    return { allowed: false, reason: 'Bạn không thể từ chối đơn của chính mình.' };
   }
-
-  if (approver.role !== 'ACCOUNTANT' && approver.role !== 'DIRECTOR') {
-    return {
-      allowed: false,
-      reason: 'Chỉ phòng Kế toán hoặc Giám đốc mới có thẩm quyền từ chối đơn ra ngoài.',
-    };
+  if (!canManageOutOffice(approver, applicant)) {
+    return { allowed: false, reason: 'Đơn ra ngoài chỉ do Trưởng phòng cùng phòng ban hoặc Giám đốc xử lý.' };
   }
-
   if (currentStatus !== 'PENDING' && currentStatus !== 'APPROVED') {
-    return {
-      allowed: false,
-      reason: `Không thể từ chối đơn đang ở trạng thái "${currentStatus}".`,
-    };
+    return { allowed: false, reason: `Không thể từ chối đơn đang ở trạng thái "${currentStatus}".` };
   }
-
   return { allowed: true };
 }

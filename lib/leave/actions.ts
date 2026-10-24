@@ -3,6 +3,7 @@
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import type { PoolClient } from 'pg';
 import { pool } from '@/lib/db/pool';
 import { requireAuth } from '@/lib/auth/permissions';
 import { getSafeUserById } from '@/lib/db/queries/users';
@@ -20,6 +21,119 @@ export type LeaveActionState = {
   error?: string;
 };
 
+const MAX_LEAVE_DOCUMENT_SIZE = 5 * 1024 * 1024;
+
+/** Chủ đơn nộp giấy đã ký sau khi được duyệt; tệp và trạng thái được lưu cùng một transaction. */
+export async function uploadLeaveDocumentAction(
+  _prevState: LeaveActionState | null,
+  formData: FormData
+): Promise<LeaveActionState> {
+  const currentUser = await requireAuth();
+  if (currentUser.role === 'ACCOUNTANT' || currentUser.role === 'DIRECTOR') {
+    return { error: 'Tài khoản này không có quyền nộp giấy nghỉ phép.' };
+  }
+
+  const parsedRequestId = z.string().uuid().safeParse(formData.get('requestId'));
+  if (!parsedRequestId.success) return { error: 'Mã đơn nghỉ phép không hợp lệ.' };
+  const requestId = parsedRequestId.data;
+
+  const fileValue = formData.get('documentFile');
+  if (!fileValue || typeof fileValue === 'string') {
+    return { error: 'Vui lòng chọn ảnh hoặc PDF giấy nghỉ phép đã ký.' };
+  }
+  const file = fileValue as File;
+  if (file.size <= 0 || file.size > MAX_LEAVE_DOCUMENT_SIZE) {
+    return { error: 'Tệp phải có dung lượng lớn hơn 0 và không vượt quá 5 MB.' };
+  }
+  if (!['application/pdf', 'image/png', 'image/jpeg'].includes(file.type)) {
+    return { error: 'Chỉ chấp nhận tệp PDF, PNG hoặc JPEG.' };
+  }
+
+  let documentBytes: Buffer;
+  try {
+    documentBytes = Buffer.from(await file.arrayBuffer());
+  } catch {
+    return { error: 'Không thể đọc tệp đã chọn. Vui lòng thử lại.' };
+  }
+
+  const isPdf = file.type === 'application/pdf' && documentBytes.subarray(0, 5).toString('ascii') === '%PDF-';
+  const isPng = file.type === 'image/png' && documentBytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+  const isJpeg = file.type === 'image/jpeg' && documentBytes.length >= 3 && documentBytes[0] === 0xff && documentBytes[1] === 0xd8 && documentBytes[2] === 0xff;
+  if (!isPdf && !isPng && !isJpeg) {
+    return { error: 'Nội dung tệp không khớp với định dạng PDF, PNG hoặc JPEG.' };
+  }
+
+  const safeFileName = file.name
+    .normalize('NFKC')
+    .replace(/[\/\\\u0000-\u001f\u007f]/g, '_')
+    .trim()
+    .slice(0, 180) || 'signed-leave-document';
+  let client: PoolClient | undefined;
+  try {
+    client = await pool.connect();
+    await client.query('BEGIN');
+    const requestResult = await client.query(
+      `SELECT employee_id, status, document_data
+         FROM leave_requests
+        WHERE id = $1
+        FOR UPDATE`,
+      [requestId]
+    );
+    const leaveRequest = requestResult.rows[0];
+    if (!leaveRequest) {
+      await client.query('ROLLBACK');
+      return { error: 'Không tìm thấy đơn nghỉ phép.' };
+    }
+    if (leaveRequest.employee_id !== currentUser.id) {
+      await client.query('ROLLBACK');
+      return { error: 'Chỉ người tạo đơn mới được nộp giấy nghỉ phép.' };
+    }
+    if (leaveRequest.status !== 'WAITING_FOR_DOC' || leaveRequest.document_data) {
+      await client.query('ROLLBACK');
+      return { error: 'Chỉ có thể nộp giấy một lần khi đơn đang ở trạng thái chờ nộp giấy.' };
+    }
+
+    const updateResult = await client.query(
+      `UPDATE leave_requests
+          SET document_data = $1,
+              document_mime_type = $2,
+              document_file_name = $3,
+              document_uploaded_at = NOW(),
+              document_url = $4,
+              status = 'COMPLETED',
+              updated_at = NOW()
+        WHERE id = $5
+          AND employee_id = $6
+          AND status = 'WAITING_FOR_DOC'
+          AND document_data IS NULL`,
+      [documentBytes, file.type, safeFileName, `/api/leave/${requestId}/document`, requestId, currentUser.id]
+    );
+    if (updateResult.rowCount !== 1) {
+      await client.query('ROLLBACK');
+      return { error: 'Đơn đã được cập nhật ở nơi khác. Tải lại trang và kiểm tra trạng thái.' };
+    }
+
+    await client.query('COMMIT');
+  } catch (error) {
+    if (client) {
+      try {
+        await client.query('ROLLBACK');
+      } catch {
+        // Kết nối có thể không vào được transaction hoặc đã bị đóng.
+      }
+    }
+    console.error('[Upload Leave Document Error]', error);
+    return { error: 'Không thể lưu giấy nghỉ phép lúc này. Vui lòng thử lại sau.' };
+  } finally {
+    client?.release();
+  }
+
+  revalidatePath('/leave');
+  revalidatePath(`/leave/${requestId}`);
+  revalidatePath('/');
+  redirect(`/leave/${requestId}`);
+}
+
 /**
  * Server Action: Tạo đơn nghỉ phép mới
  */
@@ -32,6 +146,9 @@ export async function createLeaveRequestAction(
   // 1. Kiểm tra nghiệp vụ: Giám đốc không tạo đơn nghỉ phép trên hệ thống
   if (currentUser.role === 'DIRECTOR') {
     return { error: 'Tài khoản Giám đốc (DIRECTOR) không tạo đơn nghỉ phép trên ứng dụng.' };
+  }
+  if (currentUser.role === 'ACCOUNTANT') {
+    return { error: 'Tài khoản ACCOUNTANT chỉ được xem báo cáo, không được tạo đơn nghỉ phép.' };
   }
 
   // 2. Validate dữ liệu đầu vào

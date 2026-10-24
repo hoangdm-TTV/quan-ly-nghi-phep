@@ -51,41 +51,46 @@ export async function requireRole(allowedRoles: UserRole[]): Promise<SafeUser> {
  */
 export function canAccessDepartment(currentUser: SafeUser, targetDepartmentId: string | null): boolean {
   if (!targetDepartmentId) return false;
-  // Giám đốc và Kế toán có quyền xem toàn công ty
-  if (currentUser.role === 'DIRECTOR' || currentUser.role === 'ACCOUNTANT') {
+  if (currentUser.role === 'DIRECTOR') {
     return true;
   }
-  // Các vai trò khác chỉ trong phòng ban của mình
-  return currentUser.department_id === targetDepartmentId;
+  return currentUser.role === 'MANAGER' && currentUser.department_id === targetDepartmentId;
 }
 
 /**
  * Kiểm tra quyền truy cập theo nhóm (team)
  */
-export function canAccessTeam(currentUser: SafeUser, targetTeamId: string | null): boolean {
+export function canAccessTeam(
+  currentUser: SafeUser,
+  targetTeamId: string | null,
+  targetDepartmentId?: string | null
+): boolean {
   if (!targetTeamId) return false;
-  if (currentUser.role === 'DIRECTOR' || currentUser.role === 'ACCOUNTANT') {
+  if (currentUser.role === 'DIRECTOR') {
     return true;
   }
   if (currentUser.role === 'MANAGER') {
-    // Manager có quyền trong toàn bộ phòng ban của mình
-    return true;
+    return Boolean(currentUser.department_id && targetDepartmentId === currentUser.department_id);
   }
-  // Team Lead và Staff chỉ trong team của mình
-  return currentUser.team_id === targetTeamId;
+  return currentUser.role === 'TEAM_LEAD' && currentUser.team_id === targetTeamId;
 }
 
 /**
  * Kiểm tra quyền truy cập dữ liệu của một nhân viên cụ thể
  */
 export function canAccessUserData(currentUser: SafeUser, targetUser: SafeUser): boolean {
+  // Accountant chỉ được xem báo cáo tổng hợp, không được đọc row-level data.
+  if (currentUser.role === 'ACCOUNTANT') {
+    return false;
+  }
+
   // Được truy cập dữ liệu của chính mình
   if (currentUser.id === targetUser.id) {
     return true;
   }
 
-  // Giám đốc và Kế toán được xem toàn bộ dữ liệu nhân viên
-  if (currentUser.role === 'DIRECTOR' || currentUser.role === 'ACCOUNTANT') {
+  // Chỉ Giám đốc được xem dữ liệu toàn bộ nhân viên.
+  if (currentUser.role === 'DIRECTOR') {
     return true;
   }
 

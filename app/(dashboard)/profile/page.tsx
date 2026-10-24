@@ -1,4 +1,5 @@
 import { requireAuth } from '@/lib/auth/permissions';
+import { redirect } from 'next/navigation';
 import { User, Mail, Shield, Building, Users, KeyRound, CheckCircle2 } from 'lucide-react';
 
 export const metadata = {
@@ -7,6 +8,7 @@ export const metadata = {
 
 export default async function ProfilePage() {
   const user = await requireAuth();
+  if (user.role === 'ACCOUNTANT') redirect('/');
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -97,13 +99,11 @@ export default async function ProfilePage() {
                 <div>
                   <strong className="text-slate-900">Quyền phê duyệt đơn: </strong>
                   {user.role === 'DIRECTOR'
-                    ? 'Phê duyệt cấp 2 cho các đơn nghỉ phép ≥ 2 ngày và duyệt trực tiếp đơn của Manager/Accountant.'
+                    ? 'Có quyền duyệt đơn nghỉ phép và đơn ra ngoài toàn công ty; đơn nghỉ nhiều ngày theo luồng Manager → Director.'
                     : user.role === 'MANAGER'
-                    ? 'Phê duyệt Cấp 1 các đơn nghỉ phép của nhân viên và trưởng nhóm trong phòng ban.'
+                    ? 'Duyệt đơn nghỉ phép và đơn ra ngoài của Staff/Team Lead trong phòng ban; nghỉ nhiều ngày chuyển tiếp Giám đốc.'
                     : user.role === 'TEAM_LEAD'
-                    ? 'Phê duyệt Cấp 1 các đơn nghỉ phép của nhân viên trong nhóm phụ trách.'
-                    : user.role === 'ACCOUNTANT'
-                    ? 'Phê duyệt đơn ra ngoài (Gate Pass) trước khi đi và ký xác nhận khi về.'
+                    ? 'Không có quyền duyệt; chỉ tạo và theo dõi đơn của mình/theo phạm vi được phép xem.'
                     : 'Nhân viên không có quyền phê duyệt.'}
                 </div>
               </div>

@@ -24,10 +24,10 @@ export default function AppSidebar({ user, isOpen, onClose }: AppSidebarProps) {
   const pathname = usePathname();
 
   const canApproveLeave =
-    user.role === 'TEAM_LEAD' || user.role === 'MANAGER' || user.role === 'DIRECTOR';
+    user.role === 'MANAGER' || user.role === 'DIRECTOR';
 
   const canApproveOutOffice =
-    user.role === 'ACCOUNTANT' || user.role === 'DIRECTOR';
+    user.role === 'MANAGER' || user.role === 'DIRECTOR';
 
   const navigation = [
     {
@@ -41,14 +41,14 @@ export default function AppSidebar({ user, isOpen, onClose }: AppSidebarProps) {
       name: 'Đơn nghỉ phép',
       href: '/leave',
       icon: CalendarDays,
-      show: user.role !== 'DIRECTOR',
+      show: user.role !== 'ACCOUNTANT',
       exact: false,
     },
     {
       name: 'Đơn xin ra ngoài',
       href: '/out-office',
       icon: Clock,
-      show: user.role !== 'DIRECTOR',
+      show: user.role !== 'ACCOUNTANT',
       exact: false,
     },
     {
@@ -71,7 +71,7 @@ export default function AppSidebar({ user, isOpen, onClose }: AppSidebarProps) {
       name: 'Hồ sơ tài khoản',
       href: '/profile',
       icon: UserCheck,
-      show: true,
+      show: user.role !== 'ACCOUNTANT',
       exact: true,
     },
   ];

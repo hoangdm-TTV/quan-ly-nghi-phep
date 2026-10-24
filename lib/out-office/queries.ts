@@ -1,5 +1,6 @@
 import { query } from '@/lib/db/pool';
 import { SafeUser } from '@/lib/types/user';
+import { buildUserDataScope } from '@/lib/auth/data-scope';
 import { OutOfficeStatus, OutOfficeReasonType } from './workflow';
 
 export interface OutOfficeDetail {
@@ -36,12 +37,14 @@ export interface OutOfficeApprovalRecord {
 }
 
 /**
- * Lấy danh sách đơn ra ngoài của người dùng hiện tại
+ * Lấy danh sách đơn ra ngoài trong phạm vi dữ liệu của người dùng hiện tại
  */
-export async function getMyOutOfficeRequests(
-  userId: string,
+export async function getVisibleOutOfficeRequests(
+  user: SafeUser,
   statusFilter?: string
 ): Promise<OutOfficeDetail[]> {
+  if (user.role === 'ACCOUNTANT') return [];
+  const scope = buildUserDataScope(user, 'u');
   let sql = `
     SELECT 
       oo.id,
@@ -68,14 +71,14 @@ export async function getMyOutOfficeRequests(
     LEFT JOIN departments d ON u.department_id = d.id
     LEFT JOIN teams t ON u.team_id = t.id
     LEFT JOIN users app ON oo.approver_id = app.id
-    WHERE oo.employee_id = $1
+    WHERE ${scope.whereSql}
   `;
 
-  const params: any[] = [userId];
+  const params: any[] = [...scope.params];
 
   if (statusFilter && statusFilter !== 'ALL') {
     params.push(statusFilter);
-    sql += ` AND oo.status = $2`;
+    sql += ` AND oo.status = $${params.length}`;
   }
 
   sql += ` ORDER BY oo.created_at DESC`;
@@ -145,14 +148,21 @@ export async function getOutOfficeApprovalHistory(requestId: string): Promise<Ou
 }
 
 /**
- * Lấy danh sách các đơn ra ngoài đang chờ Kế toán hoặc Giám đốc xử lý
+ * Lấy hàng đợi đơn ra ngoài cho Manager theo phòng ban hoặc Director toàn công ty
  */
 export async function getPendingOutOfficeRequestsForApprover(
   approver: SafeUser
 ): Promise<OutOfficeDetail[]> {
-  // Chỉ Kế toán hoặc Giám đốc được xem hàng đợi duyệt đơn ra ngoài
-  if (approver.role !== 'ACCOUNTANT' && approver.role !== 'DIRECTOR') {
+  if (approver.role !== 'MANAGER' && approver.role !== 'DIRECTOR') {
     return [];
+  }
+
+  const params: string[] = [approver.id];
+  let scopeClause = 'TRUE';
+  if (approver.role === 'MANAGER') {
+    if (!approver.department_id) return [];
+    params.push(approver.department_id);
+    scopeClause = `u.department_id = $2 AND u.role IN ('STAFF', 'TEAM_LEAD')`;
   }
 
   const sql = `
@@ -182,6 +192,7 @@ export async function getPendingOutOfficeRequestsForApprover(
     LEFT JOIN teams t ON u.team_id = t.id
     LEFT JOIN users app ON oo.approver_id = app.id
     WHERE oo.employee_id != $1
+      AND ${scopeClause}
       AND oo.status IN ('PENDING', 'APPROVED')
     ORDER BY 
       CASE WHEN oo.status = 'PENDING' THEN 1 ELSE 2 END,
@@ -189,6 +200,6 @@ export async function getPendingOutOfficeRequestsForApprover(
       oo.start_time ASC
   `;
 
-  const res = await query<OutOfficeDetail>(sql, [approver.id]);
+  const res = await query<OutOfficeDetail>(sql, params);
   return res.rows;
 }

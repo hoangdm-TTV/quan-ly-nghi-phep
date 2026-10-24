@@ -7,7 +7,7 @@ interface OutOfficeStatusBadgeProps {
 export default function OutOfficeStatusBadge({ status }: OutOfficeStatusBadgeProps) {
   const configs: Record<OutOfficeStatus, { label: string; className: string }> = {
     PENDING: {
-      label: 'Chờ kế toán duyệt',
+      label: 'Chờ duyệt',
       className: 'bg-amber-50 text-amber-700 border-amber-200',
     },
     APPROVED: {

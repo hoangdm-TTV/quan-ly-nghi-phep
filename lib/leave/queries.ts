@@ -1,5 +1,6 @@
 import { query } from '@/lib/db/pool';
 import { SafeUser } from '@/lib/types/user';
+import { buildUserDataScope } from '@/lib/auth/data-scope';
 import { LeaveStatus, ApprovalAction } from './workflow';
 
 export interface LeaveRequestDetail {
@@ -37,12 +38,14 @@ export interface ApprovalHistoryRecord {
 }
 
 /**
- * Lấy danh sách đơn nghỉ phép của chính người dùng hiện tại
+ * Lấy danh sách đơn nghỉ phép trong phạm vi dữ liệu của người dùng hiện tại
  */
-export async function getMyLeaveRequests(
-  userId: string,
+export async function getVisibleLeaveRequests(
+  user: SafeUser,
   statusFilter?: string
 ): Promise<LeaveRequestDetail[]> {
+  if (user.role === 'ACCOUNTANT') return [];
+  const scope = buildUserDataScope(user, 'u');
   let sql = `
     SELECT 
       lr.id,
@@ -70,14 +73,14 @@ export async function getMyLeaveRequests(
     LEFT JOIN departments d ON u.department_id = d.id
     LEFT JOIN teams t ON u.team_id = t.id
     LEFT JOIN users app ON lr.approver_id = app.id
-    WHERE lr.employee_id = $1
+    WHERE ${scope.whereSql}
   `;
 
-  const params: any[] = [userId];
+  const params: any[] = [...scope.params];
 
   if (statusFilter && statusFilter !== 'ALL') {
     params.push(statusFilter);
-    sql += ` AND lr.status = $2`;
+    sql += ` AND lr.status = $${params.length}`;
   }
 
   sql += ` ORDER BY lr.created_at DESC`;
@@ -147,14 +150,31 @@ export async function getLeaveApprovalHistory(requestId: string): Promise<Approv
   return res.rows;
 }
 
+export interface LeaveDocumentMetadata {
+  document_mime_type: string;
+  document_file_name: string;
+  document_uploaded_at: Date;
+}
+
+export async function getLeaveDocumentMetadataById(id: string): Promise<LeaveDocumentMetadata | null> {
+  const result = await query<LeaveDocumentMetadata>(
+    `SELECT document_mime_type, document_file_name, document_uploaded_at
+       FROM leave_requests
+      WHERE id = $1 AND document_data IS NOT NULL
+      LIMIT 1`,
+    [id]
+  );
+  return result.rows[0] || null;
+}
+
 /**
  * Lấy danh sách các đơn nghỉ phép đang chờ người dùng hiện tại phê duyệt
  */
 export async function getPendingLeaveRequestsForApprover(
   approver: SafeUser
 ): Promise<LeaveRequestDetail[]> {
-  // STAFF và ACCOUNTANT không có quyền phê duyệt
-  if (approver.role === 'STAFF' || approver.role === 'ACCOUNTANT') {
+  // Chỉ Manager và Director được duyệt nghỉ phép.
+  if (approver.role !== 'MANAGER' && approver.role !== 'DIRECTOR') {
     return [];
   }
 
@@ -162,9 +182,7 @@ export async function getPendingLeaveRequestsForApprover(
   const params: any[] = [approver.id];
 
   if (approver.role === 'DIRECTOR') {
-    // Giám đốc duyệt:
-    // 1. Cấp 2 cho đơn đã qua Lead (APPROVED_BY_LEAD)
-    // 2. Cấp 1 trực tiếp cho đơn của Trưởng phòng (MANAGER) hoặc Kế toán (ACCOUNTANT)
+    // Cấp 2 sau Manager và đơn của Manager/ACCOUNTANT theo luồng hiện có.
     whereClause = `
       (
         lr.status = 'APPROVED_BY_LEAD'
@@ -172,22 +190,13 @@ export async function getPendingLeaveRequestsForApprover(
       )
     `;
   } else if (approver.role === 'MANAGER') {
-    // Trưởng phòng duyệt cấp 1 cho nhân viên hoặc trưởng nhóm trong phòng ban của mình
+    // Trưởng phòng duyệt cấp 1 cho nhân viên và Team Lead cùng phòng ban.
     if (!approver.department_id) return [];
     params.push(approver.department_id);
     whereClause = `
       lr.status = 'PENDING'
       AND u.department_id = $2
       AND u.role IN ('STAFF', 'TEAM_LEAD')
-    `;
-  } else if (approver.role === 'TEAM_LEAD') {
-    // Trưởng nhóm duyệt cấp 1 cho nhân viên trong nhóm của mình
-    if (!approver.team_id) return [];
-    params.push(approver.team_id);
-    whereClause = `
-      lr.status = 'PENDING'
-      AND u.team_id = $2
-      AND u.role = 'STAFF'
     `;
   }
 

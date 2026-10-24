@@ -1,9 +1,10 @@
 import { notFound, redirect } from 'next/navigation';
 import { requireAuth, canAccessUserData } from '@/lib/auth/permissions';
-import { getLeaveRequestById, getLeaveApprovalHistory } from '@/lib/leave/queries';
+import { getLeaveRequestById, getLeaveApprovalHistory, getLeaveDocumentMetadataById } from '@/lib/leave/queries';
 import { evaluateLeaveApproval } from '@/lib/leave/workflow';
 import { getSafeUserById } from '@/lib/db/queries/users';
 import LeaveStatusBadge from '@/components/leave/leave-status-badge';
+import LeaveDocumentForm from '@/components/leave/leave-document-form';
 import ApprovalActions from '@/components/leave/approval-actions';
 import Link from 'next/link';
 import {
@@ -29,6 +30,7 @@ export default async function LeaveDetailPage({
   params: { id: string };
 }) {
   const currentUser = await requireAuth();
+  if (currentUser.role === 'ACCOUNTANT') redirect('/');
   const request = await getLeaveRequestById(params.id);
 
   if (!request) {
@@ -48,6 +50,7 @@ export default async function LeaveDetailPage({
     redirect('/leave');
   }
 
+  const documentMetadata = await getLeaveDocumentMetadataById(request.id);
   const history = await getLeaveApprovalHistory(request.id);
 
   // Kiểm tra xem người đang xem có thẩm quyền duyệt đơn này tại thời điểm hiện tại không
@@ -116,8 +119,31 @@ export default async function LeaveDetailPage({
               Đơn đã được phê duyệt đầy đủ các cấp
             </div>
             <p className="text-xs text-purple-700">
-              Bước tiếp theo: Nhân viên in mẫu giấy xin nghỉ phép, xin chữ ký quản lý và tải ảnh lên hệ thống để hoàn tất (tính năng tải file sẽ khả dụng ở giai đoạn sau).
+              {isOwner
+                ? 'Đơn đã được duyệt. Nộp ảnh hoặc PDF giấy xin nghỉ phép đã ký để chuyển đơn sang hoàn tất.'
+                : 'Đơn đã được duyệt và đang chờ chủ đơn nộp giấy đã ký.'}
             </p>
+          </div>
+        )}
+
+        {request.status === 'WAITING_FOR_DOC' && isOwner && (
+          <LeaveDocumentForm requestId={request.id} />
+        )}
+
+        {request.status === 'COMPLETED' && documentMetadata && (
+          <div className="flex flex-col gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-xs sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-semibold text-emerald-900">Giấy nghỉ phép đã nộp</p>
+              <p className="mt-1 text-emerald-800">
+                {documentMetadata.document_file_name} · {new Date(documentMetadata.document_uploaded_at).toLocaleString('vi-VN')}
+              </p>
+            </div>
+            <a
+              href={`/api/leave/${request.id}/document`}
+              className="font-semibold text-emerald-800 underline hover:text-emerald-950"
+            >
+              Tải giấy đã nộp
+            </a>
           </div>
         )}
 
@@ -224,7 +250,7 @@ export default async function LeaveDetailPage({
                   <p className="text-slate-600">
                     <span className="font-medium">Hành động:</span>{' '}
                     {h.action === 'APPROVED_LEAD'
-                      ? 'Đã duyệt Cấp 1 (Trưởng nhóm / Trưởng phòng)'
+                      ? 'Đã duyệt Cấp 1 (Trưởng phòng)'
                       : h.action === 'APPROVED_DIRECTOR'
                       ? 'Đã duyệt Cấp 2 (Giám đốc hoàn tất phê duyệt)'
                       : 'Đã từ chối đơn'}

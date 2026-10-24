@@ -13,9 +13,9 @@ export const metadata = {
 export default async function ApprovalsOutOfficePage() {
   const user = await requireAuth();
 
-  // Chỉ Kế toán hoặc Giám đốc mới có thẩm quyền duyệt đơn ra ngoài
-  if (user.role !== 'ACCOUNTANT' && user.role !== 'DIRECTOR') {
-    redirect('/out-office');
+  // Chỉ Trưởng phòng hoặc Giám đốc có thẩm quyền duyệt đơn ra ngoài.
+  if (user.role !== 'MANAGER' && user.role !== 'DIRECTOR') {
+    redirect(user.role === 'ACCOUNTANT' ? '/' : '/out-office');
   }
 
   const pendingRequests = await getPendingOutOfficeRequestsForApprover(user);
@@ -23,7 +23,7 @@ export default async function ApprovalsOutOfficePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-bold text-slate-900">Hàng đợi duyệt đơn ra ngoài (Phòng Kế toán)</h2>
+        <h2 className="text-xl font-bold text-slate-900">Hàng đợi duyệt đơn ra ngoài</h2>
         <p className="text-xs text-slate-500 mt-1">
           Duyệt đơn trước khi nhân viên ra ngoài và xác nhận ký sổ hoàn tất khi nhân viên quay lại.
         </p>
@@ -108,7 +108,7 @@ export default async function ApprovalsOutOfficePage() {
               {/* Thao tác Duyệt / Từ chối / Ký sổ */}
               <div className="pt-2 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <span className="text-[11px] text-slate-400">
-                  {req.status === 'PENDING' ? 'Bước 1: Kế toán duyệt trước khi đi' : 'Bước 2: Nhân viên đã về, ký xác nhận'}
+                  {req.status === 'PENDING' ? 'Bước 1: Trưởng phòng/Giám đốc duyệt trước khi đi' : 'Bước 2: Xác nhận hoàn tất khi nhân viên đã về'}
                 </span>
                 <OutOfficeApprovalActions requestId={req.id} currentStatus={req.status} />
               </div>

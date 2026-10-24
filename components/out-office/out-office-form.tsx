@@ -69,8 +69,8 @@ export default function OutOfficeForm() {
         <p className="font-semibold text-amber-900">
           Quy trình ra ngoài (Gate Pass):
         </p>
-        <p>1. <strong>Trước khi đi:</strong> Gửi đơn để Phòng Kế toán duyệt trước.</p>
-        <p>2. <strong>Sau khi về:</strong> Lên phòng Kế toán ký hoàn tất xác nhận giờ thực tế.</p>
+        <p>1. <strong>Trước khi đi:</strong> Gửi đơn để Trưởng phòng cùng phòng ban hoặc Giám đốc duyệt.</p>
+        <p>2. <strong>Sau khi về:</strong> Trưởng phòng hoặc Giám đốc xác nhận hoàn tất đơn.</p>
       </div>
 
       <div>

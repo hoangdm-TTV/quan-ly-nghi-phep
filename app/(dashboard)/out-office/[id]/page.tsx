@@ -27,6 +27,7 @@ export default async function OutOfficeDetailPage({
   params: { id: string };
 }) {
   const currentUser = await requireAuth();
+  if (currentUser.role === 'ACCOUNTANT') redirect('/');
   const request = await getOutOfficeRequestById(params.id);
 
   if (!request) {
@@ -38,12 +39,11 @@ export default async function OutOfficeDetailPage({
     notFound();
   }
 
-  // Kiểm tra quyền xem: Chủ đơn, Kế toán, Giám đốc hoặc Quản lý trực tiếp
+  // Kiểm tra quyền xem: Chủ đơn, Giám đốc hoặc quản lý trong phạm vi của mình.
   const isOwner = currentUser.id === request.employee_id;
-  const isFinanceOrAdmin = currentUser.role === 'ACCOUNTANT' || currentUser.role === 'DIRECTOR';
   const hasManagerialAccess = canAccessUserData(currentUser, applicant);
 
-  if (!isOwner && !isFinanceOrAdmin && !hasManagerialAccess) {
+  if (!isOwner && !hasManagerialAccess) {
     redirect('/out-office');
   }
 
@@ -79,7 +79,7 @@ export default async function OutOfficeDetailPage({
 
           {canApproveNow && (
             <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
-              <p className="text-xs font-semibold text-slate-700 mb-2">Thao tác của Kế toán:</p>
+              <p className="text-xs font-semibold text-slate-700 mb-2">Thao tác duyệt đơn:</p>
               <OutOfficeApprovalActions requestId={request.id} currentStatus={request.status} />
             </div>
           )}
@@ -93,7 +93,7 @@ export default async function OutOfficeDetailPage({
               Đơn ra ngoài đã bị từ chối
             </div>
             <p className="text-xs text-rose-700">
-              <span className="font-medium">Người xử lý:</span> {request.approver_name || 'Phòng Kế toán'}
+              <span className="font-medium">Người xử lý:</span> {request.approver_name || 'Người có thẩm quyền'}
             </p>
             <p className="text-xs text-rose-700">
               <span className="font-medium">Lý do từ chối:</span> {request.rejection_reason || 'Không có lý do chi tiết'}
@@ -108,7 +108,7 @@ export default async function OutOfficeDetailPage({
               Đơn đã được duyệt cho phép ra ngoài
             </div>
             <p className="text-xs text-blue-700">
-              Nhân viên có thể ra ngoài theo khung giờ đã đăng ký. Khi quay trở lại công ty, vui lòng ghé phòng Kế toán để ký xác nhận hoàn tất.
+              Nhân viên có thể ra ngoài theo khung giờ đã đăng ký. Khi quay lại, Trưởng phòng hoặc Giám đốc xác nhận hoàn tất đơn.
             </p>
           </div>
         )}
@@ -120,7 +120,7 @@ export default async function OutOfficeDetailPage({
               Đã hoàn tất quy trình ra ngoài
             </div>
             <p className="text-xs text-emerald-700">
-              Nhân viên đã về và ký xác nhận đầy đủ tại phòng Kế toán. Dữ liệu sẵn sàng phục vụ đối soát chấm công.
+              Đơn đã được người có thẩm quyền xác nhận hoàn tất. Dữ liệu sẵn sàng phục vụ đối soát chấm công.
             </p>
           </div>
         )}
@@ -206,7 +206,7 @@ export default async function OutOfficeDetailPage({
 
         {history.length === 0 ? (
           <p className="text-xs text-slate-500 italic py-2">
-            Đơn đang chờ phòng Kế toán tiếp nhận phê duyệt.
+            Đơn đang chờ Trưởng phòng hoặc Giám đốc tiếp nhận xử lý.
           </p>
         ) : (
           <div className="space-y-3">

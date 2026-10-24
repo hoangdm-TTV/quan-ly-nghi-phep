@@ -1,5 +1,6 @@
 import { requireAuth } from '@/lib/auth/permissions';
-import { getDashboardStats, getRecentActivities } from '@/lib/dashboard/queries';
+import { getDashboardStats, getRecentActivities, getScopeReport } from '@/lib/dashboard/queries';
+import { getUserDataScopeLabel } from '@/lib/auth/data-scope';
 import { getPendingLeaveRequestsForApprover } from '@/lib/leave/queries';
 import { getPendingOutOfficeRequestsForApprover } from '@/lib/out-office/queries';
 import Link from 'next/link';
@@ -17,22 +18,37 @@ import {
   UserCheck,
 } from 'lucide-react';
 
-export default async function DashboardPage() {
-  const user = await requireAuth();
+function validDateFilter(value?: string): string | undefined {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return undefined;
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  if (Number.isNaN(parsed.getTime())) return undefined;
+  return parsed.toISOString().slice(0, 10) === value ? value : undefined;
+}
 
-  // Nạp số liệu thống kê và hoạt động gần đây từ PostgreSQL
-  const [stats, recentActivities, pendingLeaves, pendingOutOffices] = await Promise.all([
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams?: { from?: string; to?: string };
+}) {
+  const user = await requireAuth();
+  let reportFrom = validDateFilter(searchParams?.from);
+  let reportTo = validDateFilter(searchParams?.to);
+  if (reportFrom && reportTo && reportFrom > reportTo) {
+    reportFrom = undefined;
+    reportTo = undefined;
+  }
+
+  // Nạp báo cáo tổng hợp; widgets cá nhân chỉ dành cho role có quyền xem đơn.
+  const [stats, recentActivities, pendingLeaves, pendingOutOffices, scopeReport] = await Promise.all([
     getDashboardStats(user),
     getRecentActivities(user),
     getPendingLeaveRequestsForApprover(user),
     getPendingOutOfficeRequestsForApprover(user),
+    getScopeReport(user, reportFrom, reportTo),
   ]);
+  const scopeLabel = getUserDataScopeLabel(user);
 
-  const canApprove =
-    user.role === 'TEAM_LEAD' ||
-    user.role === 'MANAGER' ||
-    user.role === 'ACCOUNTANT' ||
-    user.role === 'DIRECTOR';
+  const canApprove = user.role === 'MANAGER' || user.role === 'DIRECTOR';
 
   const totalPendingForMe = stats.pendingLeaveApprovals + stats.pendingOutOfficeApprovals;
 
@@ -55,8 +71,8 @@ export default async function DashboardPage() {
           </p>
         </div>
 
-        {/* Lối tắt tạo đơn (Ẩn đối với Giám đốc) */}
-        {user.role !== 'DIRECTOR' && (
+        {/* Accountant chỉ xem báo cáo; Giám đốc không tạo đơn. */}
+        {user.role !== 'DIRECTOR' && user.role !== 'ACCOUNTANT' && (
           <div className="flex flex-wrap items-center gap-2.5">
             <Link
               href="/leave/new"
@@ -121,7 +137,8 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* 3. Lưới thẻ thống kê số liệu thực tế (Stats Cards) */}
+      {/* 3. Widget cá nhân và chờ duyệt không hiển thị cho ACCOUNTANT. */}
+      {user.role !== 'ACCOUNTANT' && (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Tổng đơn nghỉ phép */}
         <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
@@ -194,7 +211,7 @@ export default async function DashboardPage() {
           </div>
           <div>
             <span className="text-sm font-bold text-slate-900 truncate block">
-              {user.department_name || 'Công ty'}
+              {scopeLabel}
             </span>
             <span className="text-xs text-slate-500 block truncate">
               {user.team_name ? `Nhóm: ${user.team_name}` : `Cấp bậc: ${user.role}`}
@@ -206,8 +223,87 @@ export default async function DashboardPage() {
           </div>
         </div>
       </div>
+      )}
 
-      {/* 4. Danh sách hoạt động gần đây & Đơn chờ xử lý */}
+      {scopeLabel !== 'Cá nhân' && (
+        <section className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 border-b border-slate-100 pb-4">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">Báo cáo trong phạm vi quyền hạn</h3>
+              <p className="text-xs text-slate-500 mt-1">{scopeLabel} · Lọc theo ngày bắt đầu đơn nghỉ hoặc ngày ra ngoài.</p>
+            </div>
+            <div className="text-[11px] text-slate-500">Chỉ gồm dữ liệu thuộc phạm vi tài khoản</div>
+          </div>
+
+          <form action="/" method="get" className="flex flex-col sm:flex-row sm:items-end gap-3 rounded-xl bg-slate-50 p-4">
+            <div>
+              <label htmlFor="report-from" className="block text-[11px] font-medium text-slate-600 mb-1">Từ ngày</label>
+              <input id="report-from" name="from" type="date" defaultValue={reportFrom} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs" />
+            </div>
+            <div>
+              <label htmlFor="report-to" className="block text-[11px] font-medium text-slate-600 mb-1">Đến ngày</label>
+              <input id="report-to" name="to" type="date" defaultValue={reportTo} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs" />
+            </div>
+            <button type="submit" className="rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700">Lọc báo cáo</button>
+            {(reportFrom || reportTo) && <Link href="/" className="px-2 py-2 text-xs font-medium text-slate-600 hover:text-slate-900">Xóa bộ lọc</Link>}
+          </form>
+
+          <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+            <div className="rounded-xl bg-blue-50 p-4">
+              <p className="text-[11px] text-blue-700">Đơn nghỉ phép</p>
+              <p className="text-xl font-bold text-blue-900 mt-1">{scopeReport.totals.leaveTotal}</p>
+              <p className="text-[10px] text-blue-700 mt-1">{scopeReport.totals.leavePending} chờ · {scopeReport.totals.leaveApproved} đã duyệt · {scopeReport.totals.leaveRejected} từ chối</p>
+            </div>
+            <div className="rounded-xl bg-indigo-50 p-4">
+              <p className="text-[11px] text-indigo-700">Ngày nghỉ đã duyệt</p>
+              <p className="text-xl font-bold text-indigo-900 mt-1">{Number(scopeReport.totals.leaveDays.toFixed(1))}</p>
+              <p className="text-[10px] text-indigo-700 mt-1">Tổng ngày từ đơn đã duyệt/chờ chứng từ và hoàn tất</p>
+            </div>
+            <div className="rounded-xl bg-purple-50 p-4">
+              <p className="text-[11px] text-purple-700">Đơn ra ngoài</p>
+              <p className="text-xl font-bold text-purple-900 mt-1">{scopeReport.totals.outOfficeTotal}</p>
+              <p className="text-[10px] text-purple-700 mt-1">{scopeReport.totals.outOfficePending} chờ · {scopeReport.totals.outOfficeApproved} đã duyệt · {scopeReport.totals.outOfficeCompleted} hoàn tất</p>
+            </div>
+            <div className="rounded-xl bg-amber-50 p-4">
+              <p className="text-[11px] text-amber-700">Giờ ra ngoài đã duyệt</p>
+              <p className="text-xl font-bold text-amber-900 mt-1">{Number(scopeReport.totals.outOfficeHours.toFixed(2))} giờ</p>
+              <p className="text-[10px] text-amber-700 mt-1">Tổng giờ dự kiến của đơn đã duyệt/hoàn tất</p>
+            </div>
+          </div>
+
+          {scopeReport.departments.length > 0 ? (
+            <div className="overflow-x-auto rounded-xl border border-slate-200">
+              <table className="min-w-full divide-y divide-slate-200 text-left text-xs">
+                <thead className="bg-slate-50 text-slate-600 font-semibold">
+                  <tr>
+                    <th className="px-4 py-3">Phòng ban</th>
+                    <th className="px-4 py-3">Đơn nghỉ</th>
+                    <th className="px-4 py-3">Ngày đã duyệt</th>
+                    <th className="px-4 py-3">Đơn ra ngoài</th>
+                    <th className="px-4 py-3">Giờ đã duyệt</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {scopeReport.departments.map((department) => (
+                    <tr key={department.departmentName}>
+                      <td className="px-4 py-3 font-medium text-slate-900">{department.departmentName}</td>
+                      <td className="px-4 py-3 text-slate-700">{department.leaveTotal} <span className="text-slate-400">({department.leavePending} chờ)</span></td>
+                      <td className="px-4 py-3 text-slate-700">{Number(department.leaveDays.toFixed(1))}</td>
+                      <td className="px-4 py-3 text-slate-700">{department.outOfficeTotal} <span className="text-slate-400">({department.outOfficePending} chờ)</span></td>
+                      <td className="px-4 py-3 text-slate-700">{Number(department.outOfficeHours.toFixed(2))}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="rounded-xl bg-slate-50 p-5 text-center text-xs text-slate-500">Chưa có dữ liệu báo cáo trong phạm vi này.</p>
+          )}
+        </section>
+      )}
+
+      {/* 4. Chi tiết hoạt động/đơn cá nhân chỉ dành cho role có quyền xem đơn. */}
+      {user.role !== 'ACCOUNTANT' && (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Cột trái: Đơn gần đây của cá nhân (Chiếm 2 cột) */}
         <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 space-y-4">
@@ -352,12 +448,13 @@ export default async function DashboardPage() {
                 • <strong>Duyệt đa cấp:</strong> Đơn nghỉ từ 2 ngày trở lên yêu cầu Giám đốc phê duyệt cấp 2.
               </p>
               <p>
-                • <strong>Ra ngoài:</strong> Đăng ký trước khi đi và ký xác nhận khi về tại phòng Kế toán.
+                • <strong>Ra ngoài:</strong> Manager cùng phòng hoặc Director duyệt; xác nhận hoàn tất khi về.
               </p>
             </div>
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }

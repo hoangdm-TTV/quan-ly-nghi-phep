@@ -113,7 +113,7 @@ export default function LeaveForm() {
           </p>
           <p className="text-blue-600">
             {calculatedDays <= 1
-              ? '• Đơn từ 1 ngày trở xuống: Chỉ cần 1 cấp phê duyệt (Trưởng nhóm hoặc Trưởng phòng).'
+              ? '• Đơn tối đa 1 ngày: Trưởng phòng cùng phòng ban duyệt.'
               : '• Đơn từ 2 ngày trở lên: Cần 2 cấp phê duyệt (Cấp 1 duyệt xong sẽ chuyển đến Giám đốc).'}
           </p>
         </div>

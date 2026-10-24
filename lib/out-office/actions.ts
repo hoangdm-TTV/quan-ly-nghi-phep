@@ -37,6 +37,9 @@ export async function createOutOfficeRequestAction(
   if (currentUser.role === 'DIRECTOR') {
     return { error: 'Tài khoản Giám đốc (DIRECTOR) không tạo đơn ra ngoài trên hệ thống.' };
   }
+  if (currentUser.role === 'ACCOUNTANT') {
+    return { error: 'Tài khoản ACCOUNTANT chỉ được xem báo cáo, không được tạo đơn ra ngoài.' };
+  }
 
   const rawDate = formData.get('requestDate');
   const rawStartTime = formData.get('startTime');

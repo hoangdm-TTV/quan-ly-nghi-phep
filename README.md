@@ -25,7 +25,7 @@ Hệ thống web nội bộ quản lý **nghỉ phép** và **đăng ký ra ngo�
 | Backend | Server Actions + Route Handlers (chỉ chạy phía server) |
 | Database | PostgreSQL hiện có (quản lý bằng DBeaver), truy cập qua `pg` + connection pool |
 | Xác thực | Session do ứng dụng quản lý; băm mật khẩu bằng Argon2id hoặc bcrypt |
-| File | Lưu riêng tư (server hoặc object storage); DB chỉ lưu đường dẫn / object key |
+| File | Giấy nghỉ phép PDF/PNG/JPEG (tối đa 5 MiB) lưu riêng tư dạng PostgreSQL `BYTEA`; tải qua route xác thực |
 | Biểu đồ | Recharts |
 | Form & validation | React Hook Form + Zod (client và server) |
 | Kiểm thử | Vitest/Jest (unit), Playwright (E2E) |
@@ -50,18 +50,21 @@ Trạng thái: `PENDING` → `APPROVED_BY_LEAD` → `WAITING_FOR_DOC` → `COMPL
 
 | Người xin nghỉ | ≤ 1 ngày | ≥ 2 ngày |
 |---|---|---|
-| STAFF | Team Lead / Manager duyệt → `WAITING_FOR_DOC` | Lead/Manager duyệt cấp 1 → `APPROVED_BY_LEAD` → Director duyệt → `WAITING_FOR_DOC` |
-| TEAM_LEAD | Manager duyệt → `WAITING_FOR_DOC` | Manager cấp 1 → `APPROVED_BY_LEAD` → Director → `WAITING_FOR_DOC` |
-| MANAGER / ACCOUNTANT | Director duyệt trực tiếp → `WAITING_FOR_DOC` | Director duyệt trực tiếp → `WAITING_FOR_DOC` |
+| STAFF | Manager cùng phòng duyệt → `WAITING_FOR_DOC` | Manager duyệt cấp 1 → `APPROVED_BY_LEAD` → Director duyệt → `WAITING_FOR_DOC` |
+| TEAM_LEAD | Manager cùng phòng duyệt → `WAITING_FOR_DOC` | Manager duyệt cấp 1 → `APPROVED_BY_LEAD` → Director duyệt → `WAITING_FOR_DOC` |
+| MANAGER | Director duyệt trực tiếp → `WAITING_FOR_DOC` | Director duyệt trực tiếp → `WAITING_FOR_DOC` |
+| ACCOUNTANT | Chỉ xem báo cáo tổng hợp; không tạo/xem chi tiết đơn và không duyệt | Chỉ xem báo cáo tổng hợp; không tạo/xem chi tiết đơn và không duyệt |
 | DIRECTOR | Mặc định **từ chối tự duyệt**; cần quy trình ngoài hệ thống do doanh nghiệp xác định | |
 
-**Hoàn tất bằng ảnh giấy:** khi đơn ở `WAITING_FOR_DOC`, chủ đơn tải ảnh giấy đã ký. Server kiểm tra quyền, trạng thái, MIME type, dung lượng; lưu file riêng tư; chỉ chuyển sang `COMPLETED` khi lưu file **và** cập nhật DB cùng thành công. Client không bao giờ được tự đặt `status = COMPLETED`.
+**Hoàn tất bằng giấy đã ký:** khi đơn ở `WAITING_FOR_DOC`, chỉ chủ đơn mới được tải PDF/PNG/JPEG (tối đa 5 MiB). Server kiểm tra session, chủ đơn, trạng thái, MIME và chữ ký định dạng; lưu tệp và chuyển sang `COMPLETED` trong cùng transaction. Tải xuống qua route xác thực và kiểm tra scope; tệp không nằm trong thư mục public. Client không thể tự đặt `status = COMPLETED`.
+
+> Để bật tính năng, chạy migration `migrations/03_leave_documents.sql` sau migrations `01` và `02` trên PostgreSQL trước khi deploy phiên bản này.
 
 ## 5. Quy trình đơn xin ra ngoài
 
 `PENDING` → `APPROVED` hoặc `REJECTED`. (`COMPLETED` dành cho bước đối soát sau này.)
 
-- Người duyệt: quản lý trực tiếp (`manager_id`), Team Lead cùng team, hoặc Manager cùng phòng ban. Không cần Director.
+- Người duyệt: Manager duyệt đơn của STAFF/TEAM_LEAD cùng phòng ban; Director có quyền duyệt toàn công ty. Team Lead không duyệt. ACCOUNTANT chỉ xem báo cáo tổng hợp.
 - Chỉ trong cùng một ngày; giờ kết thúc phải lớn hơn giờ bắt đầu.
 - `estimated_hours` do **server** tự tính, không tin dữ liệu từ client.
 - Từ chối bắt buộc có lý do. `APPROVED` không đồng nghĩa `COMPLETED`.

@@ -1,11 +1,13 @@
 import { requireAuth } from '@/lib/auth/permissions';
-import { getMyLeaveRequests } from '@/lib/leave/queries';
+import { getVisibleLeaveRequests } from '@/lib/leave/queries';
+import { getUserDataScopeLabel } from '@/lib/auth/data-scope';
+import { redirect } from 'next/navigation';
 import LeaveStatusBadge from '@/components/leave/leave-status-badge';
 import Link from 'next/link';
 import { Plus, FileText, ArrowRight, Calendar, Clock } from 'lucide-react';
 
 export const metadata = {
-  title: 'Đơn nghỉ phép của tôi | Leave & Gate Pass',
+  title: 'Danh sách đơn nghỉ phép | Leave & Gate Pass',
 };
 
 export default async function LeaveListPage({
@@ -14,8 +16,11 @@ export default async function LeaveListPage({
   searchParams: { status?: string };
 }) {
   const user = await requireAuth();
+  if (user.role === 'ACCOUNTANT') redirect('/');
   const currentFilter = searchParams?.status || 'ALL';
-  const requests = await getMyLeaveRequests(user.id, currentFilter);
+  const requests = await getVisibleLeaveRequests(user, currentFilter);
+  const scopeLabel = getUserDataScopeLabel(user);
+  const isPersonalScope = scopeLabel === 'Cá nhân';
 
   const filters = [
     { label: 'Tất cả', value: 'ALL' },
@@ -30,9 +35,13 @@ export default async function LeaveListPage({
       {/* Header & Nút tạo đơn */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-900">Đơn nghỉ phép của tôi</h2>
+          <h2 className="text-xl font-bold text-slate-900">
+            {isPersonalScope ? 'Đơn nghỉ phép của tôi' : 'Danh sách đơn nghỉ phép'}
+          </h2>
           <p className="text-xs text-slate-500 mt-1">
-            Theo dõi trạng thái và tiến trình phê duyệt các đơn xin nghỉ phép của bạn.
+            {isPersonalScope
+              ? 'Theo dõi trạng thái và tiến trình phê duyệt các đơn xin nghỉ phép của bạn.'
+              : `Các đơn trong phạm vi được phép xem: ${scopeLabel}.`}
           </p>
         </div>
 
@@ -73,10 +82,10 @@ export default async function LeaveListPage({
           <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
             <FileText className="w-6 h-6" />
           </div>
-          <h3 className="text-sm font-semibold text-slate-800">Chưa có đơn nghỉ phép nào</h3>
+          <h3 className="text-sm font-semibold text-slate-800">Không có đơn nghỉ phép nào</h3>
           <p className="text-xs text-slate-500 max-w-sm mx-auto">
             {currentFilter === 'ALL'
-              ? 'Bạn chưa tạo đơn nghỉ phép nào trong hệ thống.'
+              ? isPersonalScope ? 'Bạn chưa tạo đơn nghỉ phép nào trong hệ thống.' : `Chưa có đơn nào trong phạm vi ${scopeLabel}.`
               : 'Không có đơn nào phù hợp với bộ lọc hiện tại.'}
           </p>
           {user.role !== 'DIRECTOR' && currentFilter === 'ALL' && (
@@ -97,6 +106,7 @@ export default async function LeaveListPage({
             <table className="min-w-full divide-y divide-slate-200 text-left text-xs">
               <thead className="bg-slate-50 text-slate-600 font-semibold uppercase tracking-wider">
                 <tr>
+                  {!isPersonalScope && <th className="px-6 py-3.5">Nhân viên</th>}
                   <th className="px-6 py-3.5">Thời gian nghỉ</th>
                   <th className="px-6 py-3.5">Số ngày</th>
                   <th className="px-6 py-3.5">Lý do</th>
@@ -108,6 +118,12 @@ export default async function LeaveListPage({
               <tbody className="divide-y divide-slate-100 bg-white">
                 {requests.map((r) => (
                   <tr key={r.id} className="hover:bg-slate-50/80 transition-colors">
+                    {!isPersonalScope && (
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="font-semibold text-slate-900">{r.employee_name}</div>
+                        <div className="text-[11px] text-slate-500">{r.department_name || 'Chưa phân bổ'}{r.team_name ? ` • ${r.team_name}` : ''}</div>
+                      </td>
+                    )}
                     <td className="px-6 py-4 font-medium text-slate-900 whitespace-nowrap">
                       <div className="flex items-center gap-1.5">
                         <Calendar className="w-3.5 h-3.5 text-slate-400" />
