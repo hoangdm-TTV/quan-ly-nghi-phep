@@ -23,7 +23,7 @@ export async function createHolidayAction(
   formData: FormData
 ): Promise<HolidayActionState> {
   const currentUser = await requireAuth();
-  if (currentUser.role !== 'ACCOUNTANT' && currentUser.role !== 'DIRECTOR') {
+  if (currentUser.role !== 'DIRECTOR') {
     return { error: 'Bạn không có quyền quản lý ngày lễ.' };
   }
 
@@ -63,7 +63,7 @@ export async function updateHolidayAction(
   formData: FormData
 ): Promise<HolidayActionState> {
   const currentUser = await requireAuth();
-  if (currentUser.role !== 'ACCOUNTANT' && currentUser.role !== 'DIRECTOR') {
+  if (currentUser.role !== 'DIRECTOR') {
     return { error: 'Bạn không có quyền quản lý ngày lễ.' };
   }
 
@@ -110,7 +110,7 @@ export async function deleteHolidayAction(
   formData: FormData
 ): Promise<HolidayActionState> {
   const currentUser = await requireAuth();
-  if (currentUser.role !== 'ACCOUNTANT' && currentUser.role !== 'DIRECTOR') {
+  if (currentUser.role !== 'DIRECTOR') {
     return { error: 'Bạn không có quyền quản lý ngày lễ.' };
   }
 

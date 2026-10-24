@@ -1,7 +1,7 @@
 import { query } from '@/lib/db/pool';
 import { SafeUser } from '@/lib/types/user';
 import { canSubmitPersonalRequests } from '@/lib/auth/roles';
-import { buildUserDataScope } from '@/lib/auth/data-scope';
+import { buildReportDataScope } from '@/lib/auth/data-scope';
 import { LeaveStatus, ApprovalAction } from './workflow';
 
 export interface LeaveRequestDetail {
@@ -190,10 +190,12 @@ export async function getPendingLeaveRequestsForApprover(
       )
     `;
   } else if (approver.role === 'MANAGER') {
-    // Trưởng phòng duyệt cấp 1 cho nhân viên có manager_id trỏ trực tiếp tới mình.
+    if (!approver.department_id) return [];
+    params.push(approver.department_id);
+    // Trưởng phòng duyệt cấp 1 cho nhân viên cùng phòng ban.
     whereClause = `
       lr.status = 'PENDING'
-      AND u.manager_id = $1
+      AND u.department_id = $2
       AND u.role IN ('STAFF', 'TEAM_LEAD', 'ACCOUNTANT')
     `;
   }
@@ -249,25 +251,25 @@ export async function getScopedLeaveRequests(
   user: SafeUser,
   filter: ScopedLeaveFilter = {}
 ): Promise<LeaveRequestDetail[]> {
-  const scope = buildUserDataScope(user, 'u');
+  const scope = buildReportDataScope(user, 'u');
   const params: any[] = [...scope.params];
   const conditions: string[] = [scope.whereSql];
 
   if (filter.status && filter.status !== 'ALL') {
     params.push(filter.status);
-    conditions.push(`lr.status = ${params.length}`);
+    conditions.push(`lr.status = $${params.length}`);
   }
   if (filter.employeeId) {
     params.push(filter.employeeId);
-    conditions.push(`lr.employee_id = ${params.length}`);
+    conditions.push(`lr.employee_id = $${params.length}`);
   }
   if (filter.fromDate) {
     params.push(filter.fromDate);
-    conditions.push(`lr.start_date >= ${params.length}`);
+    conditions.push(`lr.start_date >= $${params.length}`);
   }
   if (filter.toDate) {
     params.push(filter.toDate);
-    conditions.push(`lr.start_date <= ${params.length}`);
+    conditions.push(`lr.start_date <= $${params.length}`);
   }
 
   const sql = `

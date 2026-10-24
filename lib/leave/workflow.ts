@@ -45,18 +45,18 @@ export function evaluateLeaveApproval(
   }
 
   if (applicant.role === 'STAFF' || applicant.role === 'TEAM_LEAD' || applicant.role === 'ACCOUNTANT') {
-    // Trưởng phòng chỉ duyệt đơn của nhân viên có manager_id trỏ trực tiếp tới mình.
-    const isDirectManager =
+    // Trưởng phòng duyệt đơn của nhân viên trong cùng phòng ban.
+    const isDepartmentManager =
       approver.role === 'MANAGER' &&
-      Boolean(applicant.manager_id) &&
-      approver.id === applicant.manager_id;
+      Boolean(approver.department_id) &&
+      approver.department_id === applicant.department_id;
 
-    if (!isDirectManager) {
+    if (!isDepartmentManager) {
       return {
         allowed: false,
         reason: durationDays > 1
-          ? 'Đơn nghỉ nhiều ngày phải được Trưởng phòng trực tiếp (manager_id) duyệt cấp 1 trước.'
-          : 'Đơn nghỉ phải do Trưởng phòng trực tiếp (manager_id) duyệt cấp 1.',
+          ? 'Đơn nghỉ nhiều ngày phải được Trưởng phòng cùng phòng ban duyệt cấp 1 trước.'
+          : 'Đơn nghỉ phải do Trưởng phòng cùng phòng ban duyệt cấp 1.',
       };
     }
 

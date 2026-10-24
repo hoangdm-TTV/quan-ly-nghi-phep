@@ -1,11 +1,11 @@
 import { UserRole } from '@/lib/types/user';
 
-/** Kế toán được dùng module đơn chi tiết (xin nghỉ + xem tất cả đơn). */
+/** Các role đều được vào module đơn theo phạm vi được cấp. */
 export function canAccessRequestModules(role: UserRole): boolean {
   return true;
 }
 
-/** Staff, Team Lead, Manager, Accountant được tạo và theo dõi đơn của chính mình. */
+/** Staff, Team Lead, Manager và Accountant có danh sách đơn cá nhân và được tạo đơn. */
 export function canSubmitPersonalRequests(role: UserRole): boolean {
   return role === 'STAFF' || role === 'TEAM_LEAD' || role === 'MANAGER' || role === 'ACCOUNTANT';
 }
@@ -15,12 +15,16 @@ export function canApproveWorkflowRequests(role: UserRole): boolean {
   return role === 'MANAGER' || role === 'DIRECTOR';
 }
 
-/** Giám đốc và Kế toán được xem tất cả đơn trong công ty (chỉ đọc). */
+/** Director và Accountant xem toàn công ty; Manager xem theo phòng ban riêng. */
 export function canViewAllRequests(role: UserRole): boolean {
   return role === 'DIRECTOR' || role === 'ACCOUNTANT';
 }
 
-/** Kế toán và Giám đốc được quản lý ngày lễ. */
+export function canViewRequestScope(role: UserRole): boolean {
+  return role === 'MANAGER' || canViewAllRequests(role);
+}
+
+/** Chỉ Giám đốc được quản lý ngày lễ. */
 export function canManageHolidays(role: UserRole): boolean {
-  return role === 'ACCOUNTANT' || role === 'DIRECTOR';
+  return role === 'DIRECTOR';
 }

@@ -37,10 +37,10 @@ Không dùng Supabase, không có `auth.uid()`. DBeaver chỉ là công cụ qu�
 | Vai trò | Phạm vi xem dữ liệu | Quyền duyệt |
 |---|---|---|
 | `STAFF` | Chỉ dữ liệu của chính mình | Không |
-| `TEAM_LEAD` | Bản thân + cùng `team_id` | Không (chỉ Trưởng phòng và Giám đốc duyệt) |
-| `MANAGER` | Bản thân + cùng `department_id` | Cấp 1 trong phòng ban, theo ma trận |
-| `ACCOUNTANT` | Toàn công ty (chỉ đọc, đối soát) | Không (chỉ xem tất cả đơn, không duyệt) |
-| `DIRECTOR` | Toàn công ty | Các đơn yêu cầu cấp Director |
+| `TEAM_LEAD` | Chỉ đơn của chính mình | Không |
+| `MANAGER` | Đơn của mình và toàn bộ đơn trong `department_id` | Cấp 1 trong phòng ban; đơn nhiều ngày chuyển Giám đốc |
+| `ACCOUNTANT` | Đơn của mình và toàn bộ đơn công ty (chỉ đọc với đơn người khác) | Không |
+| `DIRECTOR` | Toàn công ty; không có danh sách đơn cá nhân | Cấp cuối và đơn thuộc thẩm quyền toàn công ty |
 
 Không ai được duyệt đơn của chính mình.
 
@@ -53,7 +53,7 @@ Trạng thái: `PENDING` → `APPROVED_BY_LEAD` → `WAITING_FOR_DOC` → `COMPL
 | STAFF | Manager cùng phòng duyệt → `WAITING_FOR_DOC` | Manager duyệt cấp 1 → `APPROVED_BY_LEAD` → Director duyệt → `WAITING_FOR_DOC` |
 | TEAM_LEAD | Manager cùng phòng duyệt → `WAITING_FOR_DOC` | Manager duyệt cấp 1 → `APPROVED_BY_LEAD` → Director duyệt → `WAITING_FOR_DOC` |
 | MANAGER | Director duyệt trực tiếp → `WAITING_FOR_DOC` | Director duyệt trực tiếp → `WAITING_FOR_DOC` |
-| ACCOUNTANT | Xin nghỉ như nhân viên, do Trưởng phòng duyệt; xem được tất cả đơn công ty (chỉ đọc) | Xin nghỉ như nhân viên, do Trưởng phòng duyệt; xem được tất cả đơn công ty (chỉ đọc) |
+| ACCOUNTANT | Xin nghỉ như nhân viên, do Trưởng phòng cùng phòng ban duyệt; có thể xem tất cả đơn ở dạng chỉ đọc | Xin nghỉ như nhân viên, do Trưởng phòng cùng phòng ban duyệt; có thể xem tất cả đơn ở dạng chỉ đọc |
 | DIRECTOR | Mặc định **từ chối tự duyệt**; cần quy trình ngoài hệ thống do doanh nghiệp xác định | |
 
 **Hoàn tất bằng giấy đã ký:** khi đơn ở `WAITING_FOR_DOC`, chỉ chủ đơn mới được tải PDF/PNG/JPEG (tối đa 5 MiB). Server kiểm tra session, chủ đơn, trạng thái, MIME và chữ ký định dạng; lưu tệp và chuyển sang `COMPLETED` trong cùng transaction. Tải xuống qua route xác thực và kiểm tra scope; tệp không nằm trong thư mục public. Client không thể tự đặt `status = COMPLETED`.
@@ -64,7 +64,7 @@ Trạng thái: `PENDING` → `APPROVED_BY_LEAD` → `WAITING_FOR_DOC` → `COMPL
 
 `PENDING` → `APPROVED` hoặc `REJECTED`. (`COMPLETED` dành cho bước đối soát sau này.)
 
-- Người duyệt: Trưởng phòng (MANAGER) duyệt đơn của nhân viên có `manager_id` trỏ trực tiếp tới mình; Giám đốc (DIRECTOR) có quyền duyệt toàn công ty. Trưởng Nhóm (TEAM_LEAD) không duyệt. Kế toán (ACCOUNTANT) xin nghỉ như nhân viên thường, do Trưởng phòng duyệt; đồng thời xem được tất cả đơn công ty ở dạng chỉ đọc.
+- Người duyệt: Trưởng phòng (MANAGER) duyệt đơn của nhân viên cùng `department_id`; Giám đốc (DIRECTOR) có quyền duyệt toàn công ty. Trưởng Nhóm (TEAM_LEAD) không duyệt. Kế toán (ACCOUNTANT) có đơn cá nhân và xem tất cả đơn công ty ở dạng chỉ đọc.
 - Chỉ trong cùng một ngày; giờ kết thúc phải lớn hơn giờ bắt đầu.
 - `estimated_hours` do **server** tự tính, không tin dữ liệu từ client.
 - Từ chối bắt buộc có lý do. `APPROVED` không đồng nghĩa `COMPLETED`.
@@ -96,8 +96,8 @@ Cần doanh nghiệp xác nhận trước production:
 - Công ty làm việc từ **Thứ 2 đến Thứ 7**, nghỉ **Chủ Nhật**. Số ngày nghỉ phép = số ngày làm việc thực tế trong khoảng [start, end], **loại trừ Chủ Nhật và ngày lễ** (quản lý qua bảng `holidays`). Không nghỉ nửa ngày, không nghỉ theo giờ.
 - *(giả định)* Không cho tạo đơn trùng khoảng thời gian của cùng một nhân viên.
 - *(giả định)* Giới hạn giờ làm việc và số giờ ra ngoài tối đa cấu hình được theo chính sách.
-- Khi `manager_id`, `team_id` hoặc `department_id` không đủ xác định người duyệt → từ chối thao tác và ghi nhận lỗi cấu hình.
-- Quyền xem ảnh giấy nghỉ phép của ACCOUNTANT cần được xác định riêng.
+- Khi Manager không có `department_id`, không đưa đơn phòng ban vào hàng đợi và không cho duyệt; cần bổ sung cấu hình phòng ban.
+- ACCOUNTANT được xem chi tiết và giấy tờ toàn công ty ở chế độ chỉ đọc; không được duyệt hoặc thay đổi đơn của người khác.
 
 ## 8. Bảo mật
 

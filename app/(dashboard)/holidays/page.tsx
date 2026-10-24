@@ -12,7 +12,7 @@ export const metadata = {
 
 export default async function HolidaysPage() {
   const user = await requireAuth();
-  if (user.role !== 'ACCOUNTANT' && user.role !== 'DIRECTOR') {
+  if (user.role !== 'DIRECTOR') {
     redirect('/');
   }
 

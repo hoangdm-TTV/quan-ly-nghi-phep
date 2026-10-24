@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { SafeUser } from '@/lib/types/user';
 import {
   canAccessRequestModules,
   canApproveWorkflowRequests,
   canSubmitPersonalRequests,
+  canViewRequestScope,
+  canManageHolidays,
 } from '@/lib/auth/roles';
 import { getRoleLabel } from '@/lib/auth/role-labels';
 import {
@@ -56,17 +58,24 @@ interface NavGroup {
 
 type NavItem = NavLeaf | NavGroup;
 
-function isPathActive(pathname: string, href: string, exact = false) {
-  if (exact) return pathname === href;
-  return pathname === href || pathname.startsWith(`${href}/`);
+function isPathActive(pathname: string, href: string, exact = false, currentParams?: URLSearchParams) {
+  const [routePath, query] = href.split('?');
+  const routeMatches = exact
+    ? pathname === routePath
+    : pathname === routePath || pathname.startsWith(`${routePath}/`);
+  if (!routeMatches) return false;
+  if (!query) return true;
+  return Array.from(new URLSearchParams(query).entries()).every(([key, value]) => currentParams?.get(key) === value);
 }
 
 export default function AppSidebar({ user, isOpen, onClose }: AppSidebarProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const canSubmit = canSubmitPersonalRequests(user.role);
   const canApprove = canApproveWorkflowRequests(user.role);
+  const canTrackScope = canViewRequestScope(user.role);
   const canUseRequests = canAccessRequestModules(user.role);
-  const canManageHolidays = user.role === 'ACCOUNTANT' || user.role === 'DIRECTOR';
+  const canManageHolidaysForRole = canManageHolidays(user.role);
 
   const navigation: NavItem[] = [
     {
@@ -80,15 +89,21 @@ export default function AppSidebar({ user, isOpen, onClose }: AppSidebarProps) {
     {
       kind: 'group',
       id: 'leave',
-      name: 'Nghỉ phép',
+        name: 'Nghỉ phép',
       icon: CalendarDays,
       show: canUseRequests,
       children: [
         {
-          name: canSubmit ? 'Đơn của tôi' : 'Đơn nghỉ phép',
-          href: '/leave',
+          name: 'Đơn của tôi',
+          href: canTrackScope ? '/leave?tab=mine' : '/leave',
           icon: FileText,
-          show: true,
+          show: canSubmit,
+        },
+        {
+          name: user.role === 'MANAGER' ? 'Đơn phòng ban' : 'Toàn bộ đơn công ty',
+          href: '/leave?tab=scope',
+          icon: FileText,
+          show: canTrackScope,
         },
         {
           name: 'Duyệt đơn nghỉ phép',
@@ -101,15 +116,21 @@ export default function AppSidebar({ user, isOpen, onClose }: AppSidebarProps) {
     {
       kind: 'group',
       id: 'out-office',
-      name: 'Ra ngoài',
+        name: 'Ra ngoài',
       icon: Clock,
       show: canUseRequests,
       children: [
         {
-          name: canSubmit ? 'Đơn của tôi' : 'Đơn ra ngoài',
-          href: '/out-office',
+          name: 'Đơn của tôi',
+          href: canTrackScope ? '/out-office?tab=mine' : '/out-office',
           icon: FileText,
-          show: true,
+          show: canSubmit,
+        },
+        {
+          name: user.role === 'MANAGER' ? 'Đơn phòng ban' : 'Toàn bộ đơn công ty',
+          href: '/out-office?tab=scope',
+          icon: FileText,
+          show: canTrackScope,
         },
         {
           name: 'Duyệt đơn ra ngoài',
@@ -124,7 +145,7 @@ export default function AppSidebar({ user, isOpen, onClose }: AppSidebarProps) {
       name: 'Quản lý ngày lễ',
       href: '/holidays',
       icon: CalendarCheck,
-      show: canManageHolidays,
+      show: canManageHolidaysForRole,
       exact: true,
     },
     {
@@ -132,7 +153,7 @@ export default function AppSidebar({ user, isOpen, onClose }: AppSidebarProps) {
       name: 'Hồ sơ tài khoản',
       href: '/profile',
       icon: UserCheck,
-      show: canUseRequests,
+      show: canUseRequests && user.role !== 'ACCOUNTANT',
       exact: true,
     },
   ];
@@ -158,13 +179,13 @@ export default function AppSidebar({ user, isOpen, onClose }: AppSidebarProps) {
     setOpenGroups((prev) => {
       const next = { ...prev };
       for (const item of visibleItems) {
-        if (item.kind === 'group' && item.children.some((child) => isPathActive(pathname, child.href))) {
+        if (item.kind === 'group' && item.children.some((child) => isPathActive(pathname, child.href, false, searchParams))) {
           next[item.id] = true;
         }
       }
       return next;
     });
-  }, [pathname]);
+  }, [pathname, searchParams]);
 
   const toggleGroup = (id: string) => {
     setOpenGroups((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -175,47 +196,47 @@ export default function AppSidebar({ user, isOpen, onClose }: AppSidebarProps) {
       {isOpen && (
         <div
           onClick={onClose}
-          className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-xs lg:hidden transition-opacity"
+          className="fixed inset-0 z-40 bg-slate-950/30 lg:hidden transition-opacity"
         />
       )}
 
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-50 w-64 bg-slate-900 text-slate-300 flex flex-col transition-transform duration-200 ease-in-out lg:translate-x-0 ${
+        className={`fixed top-0 bottom-0 left-0 z-50 w-64 border-r border-slate-200 bg-white text-slate-700 flex flex-col transition-transform duration-200 ease-in-out lg:translate-x-0 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="h-16 flex items-center justify-between px-5 border-b border-slate-800">
+        <div className="h-16 flex items-center justify-between px-5 border-b border-slate-200">
           <Link href="/" className="flex items-center gap-3" onClick={onClose}>
-            <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
+            <div className="w-8 h-8 rounded-md bg-slate-900 text-white flex items-center justify-center font-bold text-sm">
               LP
             </div>
             <div>
-              <span className="text-sm font-bold text-white tracking-tight">Leave & Gate Pass</span>
-              <p className="text-[10px] text-slate-400">Enterprise Management</p>
+              <span className="text-sm font-semibold text-slate-900 tracking-tight">Leave & Gate Pass</span>
+              <p className="text-[10px] text-slate-500">Quản lý nội bộ</p>
             </div>
           </Link>
 
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-white lg:hidden rounded-md hover:bg-slate-800"
+            className="p-1.5 text-slate-500 hover:text-slate-900 lg:hidden rounded-md hover:bg-slate-100"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="p-4 mx-3 my-3 bg-slate-800/60 rounded-xl border border-slate-700/50">
+        <div className="p-3 mx-3 my-3 bg-slate-50 rounded-lg border border-slate-200">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-xs border border-blue-500/30">
+            <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-semibold text-xs">
               {user.full_name.slice(0, 2).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-white truncate">{user.full_name}</p>
+              <p className="text-xs font-semibold text-slate-900 truncate">{user.full_name}</p>
               <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="inline-block px-1.5 py-0.2 text-[9px] font-semibold rounded bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                <span className="inline-block px-1.5 py-0.5 text-[10px] font-medium rounded bg-slate-100 text-slate-700 border border-slate-200">
                   {getRoleLabel(user.role)}
                 </span>
                 {user.department_name && (
-                  <span className="text-[10px] text-slate-400 truncate">
+                  <span className="text-[10px] text-slate-500 truncate">
                     • {user.department_name}
                   </span>
                 )}
@@ -225,13 +246,13 @@ export default function AppSidebar({ user, isOpen, onClose }: AppSidebarProps) {
         </div>
 
         <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
-          <p className="px-3 text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2">
-            Danh mục làm việc
+          <p className="px-3 text-xs font-medium text-slate-500 mb-2">
+            Điều hướng
           </p>
 
           {visibleItems.map((item) => {
             if (item.kind === 'leaf') {
-              const isActive = isPathActive(pathname, item.href, item.exact);
+              const isActive = isPathActive(pathname, item.href, item.exact, searchParams);
               const Icon = item.icon;
               return (
                 <Link
@@ -240,18 +261,18 @@ export default function AppSidebar({ user, isOpen, onClose }: AppSidebarProps) {
                   onClick={onClose}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium transition-colors ${
                     isActive
-                      ? 'bg-blue-600 text-white font-semibold shadow-xs'
-                      : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                      ? 'bg-slate-100 text-slate-950 font-semibold'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-950'
                   }`}
                 >
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                  <Icon className={`w-4 h-4 ${isActive ? 'text-slate-800' : 'text-slate-400'}`} />
                   <span>{item.name}</span>
                 </Link>
               );
             }
 
             const visibleChildren = item.children;
-            const groupActive = visibleChildren.some((child) => isPathActive(pathname, child.href));
+            const groupActive = visibleChildren.some((child) => isPathActive(pathname, child.href, false, searchParams));
             const isOpenGroup = openGroups[item.id] ?? groupActive;
             const GroupIcon = item.icon;
 
@@ -262,12 +283,12 @@ export default function AppSidebar({ user, isOpen, onClose }: AppSidebarProps) {
                   onClick={() => toggleGroup(item.id)}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium transition-colors ${
                     groupActive
-                      ? 'bg-slate-800 text-white'
-                      : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                      ? 'bg-slate-50 text-slate-900'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-950'
                   }`}
                   aria-expanded={isOpenGroup}
                 >
-                  <GroupIcon className={`w-4 h-4 ${groupActive ? 'text-blue-400' : 'text-slate-400'}`} />
+                  <GroupIcon className={`w-4 h-4 ${groupActive ? 'text-slate-700' : 'text-slate-400'}`} />
                   <span className="flex-1 text-left">{item.name}</span>
                   <ChevronDown
                     className={`w-3.5 h-3.5 text-slate-500 transition-transform ${
@@ -277,9 +298,9 @@ export default function AppSidebar({ user, isOpen, onClose }: AppSidebarProps) {
                 </button>
 
                 {isOpenGroup && (
-                  <div className="ml-4 pl-3 border-l border-slate-700/80 space-y-0.5">
+                  <div className="ml-4 pl-3 border-l border-slate-200 space-y-0.5">
                     {visibleChildren.map((child) => {
-                      const isActive = isPathActive(pathname, child.href);
+                      const isActive = isPathActive(pathname, child.href, false, searchParams);
                       const ChildIcon = child.icon;
                       return (
                         <Link
@@ -288,11 +309,11 @@ export default function AppSidebar({ user, isOpen, onClose }: AppSidebarProps) {
                           onClick={onClose}
                           className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[11px] font-medium transition-colors ${
                             isActive
-                              ? 'bg-blue-600 text-white font-semibold shadow-xs'
-                              : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                              ? 'bg-slate-100 text-slate-950 font-semibold'
+                              : 'text-slate-500 hover:bg-slate-50 hover:text-slate-950'
                           }`}
                         >
-                          <ChildIcon className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-slate-500'}`} />
+                          <ChildIcon className={`w-3.5 h-3.5 ${isActive ? 'text-slate-700' : 'text-slate-400'}`} />
                           <span>{child.name}</span>
                         </Link>
                       );
@@ -304,12 +325,8 @@ export default function AppSidebar({ user, isOpen, onClose }: AppSidebarProps) {
           })}
         </nav>
 
-        <div className="p-4 border-t border-slate-800 text-[11px] text-slate-400 flex items-center justify-between">
-          <span>Phiên bản v1.0.0</span>
-          <span className="flex items-center gap-1 text-emerald-400">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-            Trực tuyến
-          </span>
+        <div className="p-4 border-t border-slate-200 text-xs text-slate-500">
+          Hệ thống quản lý nội bộ
         </div>
       </aside>
     </>

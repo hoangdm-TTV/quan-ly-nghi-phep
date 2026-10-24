@@ -1,6 +1,6 @@
 import { requireAuth } from '@/lib/auth/permissions';
 import { getVisibleOutOfficeRequests, getScopedOutOfficeRequests, ScopedOutOfficeFilter } from '@/lib/out-office/queries';
-import { canSubmitPersonalRequests, canApproveWorkflowRequests } from '@/lib/auth/roles';
+import { canSubmitPersonalRequests, canApproveWorkflowRequests, canViewRequestScope } from '@/lib/auth/roles';
 import { getUserDataScopeLabel } from '@/lib/auth/data-scope';
 import { getUsersInScope } from '@/lib/db/queries/users';
 import { redirect } from 'next/navigation';
@@ -25,14 +25,18 @@ export default async function OutOfficeListPage({
   searchParams: { status?: string; tab?: string; employeeId?: string; from?: string; to?: string };
 }) {
   const user = await requireAuth();
-  if (!canSubmitPersonalRequests(user.role)) {
+  const canSubmit = canSubmitPersonalRequests(user.role);
+  const canTrackScope = canViewRequestScope(user.role);
+  if (!canSubmit && !canTrackScope) {
     redirect(canApproveWorkflowRequests(user.role) ? '/approvals/out-office' : '/');
   }
 
   const currentFilter = searchParams?.status || 'ALL';
   const scopeLabel = getUserDataScopeLabel(user);
-  const hasScope = scopeLabel !== 'Cá nhân';
-  const activeTab = hasScope && searchParams?.tab === 'scope' ? 'scope' : 'mine';
+  const hasScope = canTrackScope;
+  const activeTab = hasScope
+    ? (canSubmit && searchParams?.tab === 'mine' ? 'mine' : 'scope')
+    : 'mine';
 
   const filters = [
     { label: 'Tất cả', value: 'ALL' },
@@ -62,7 +66,7 @@ export default async function OutOfficeListPage({
 
   const buildTabUrl = (tab: string) => {
     const params = new URLSearchParams();
-    if (tab === 'scope') params.set('tab', 'scope');
+    if (hasScope) params.set('tab', tab);
     if (currentFilter !== 'ALL') params.set('status', currentFilter);
     const qs = params.toString();
     return qs ? `/out-office?${qs}` : '/out-office';
@@ -70,7 +74,7 @@ export default async function OutOfficeListPage({
 
   const buildFilterUrl = (status: string) => {
     const params = new URLSearchParams();
-    if (activeTab === 'scope') params.set('tab', 'scope');
+    if (hasScope) params.set('tab', activeTab);
     if (status !== 'ALL') params.set('status', status);
     if (searchParams?.employeeId) params.set('employeeId', searchParams.employeeId);
     if (searchParams?.from) params.set('from', searchParams.from);
@@ -87,11 +91,11 @@ export default async function OutOfficeListPage({
           <p className="text-xs text-slate-500 mt-1">
             {activeTab === 'scope'
               ? `Đơn ra ngoài trong phạm vi: ${scopeLabel}`
-              : 'Theo dõi trạng thái xin ra ngoài trong giờ làm việc và xác nhận hoàn tất.'}
+              : 'Theo dõi trạng thái các đơn xin ra ngoài do bạn tạo.'}
           </p>
         </div>
 
-        {user.role !== 'DIRECTOR' && (
+        {canSubmit && activeTab === 'mine' && (
           <Link
             href="/out-office/new"
             className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors"
@@ -104,16 +108,18 @@ export default async function OutOfficeListPage({
 
       {hasScope && (
         <div className="flex items-center gap-1.5">
-          <Link
-            href={buildTabUrl('mine')}
-            className={`px-4 py-2 text-xs font-semibold rounded-lg transition-colors ${
-              activeTab === 'mine'
-                ? 'bg-slate-900 text-white shadow-xs'
-                : 'text-slate-600 bg-slate-100 hover:bg-slate-200'
-            }`}
-          >
-            Đơn của tôi
-          </Link>
+          {canSubmit && (
+            <Link
+              href={buildTabUrl('mine')}
+              className={`px-4 py-2 text-xs font-semibold rounded-lg transition-colors ${
+                activeTab === 'mine'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'text-slate-600 bg-slate-100 hover:bg-slate-200'
+              }`}
+            >
+              Đơn của tôi
+            </Link>
+          )}
           <Link
             href={buildTabUrl('scope')}
             className={`px-4 py-2 text-xs font-semibold rounded-lg transition-colors ${
@@ -122,7 +128,7 @@ export default async function OutOfficeListPage({
                 : 'text-slate-600 bg-slate-100 hover:bg-slate-200'
             }`}
           >
-            {scopeLabel}
+            {user.role === 'MANAGER' ? 'Đơn phòng ban' : 'Toàn bộ đơn công ty'}
           </Link>
         </div>
       )}
@@ -187,7 +193,7 @@ export default async function OutOfficeListPage({
               ? 'Bạn chưa tạo đơn xin ra ngoài nào trong hệ thống.'
               : 'Không có đơn nào phù hợp với bộ lọc hiện tại.'}
           </p>
-          {activeTab === 'mine' && user.role !== 'DIRECTOR' && currentFilter === 'ALL' && (
+          {activeTab === 'mine' && canSubmit && currentFilter === 'ALL' && (
             <div className="pt-2">
               <Link
                 href="/out-office/new"

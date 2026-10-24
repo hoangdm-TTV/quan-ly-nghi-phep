@@ -1,0 +1,6 @@
+In-app Browser JS state was preserved. Completed actions were not rolled back; refresh stale UI handles and continue only the remaining work.
+{"code":"STALE_REF","method":"browser_fill","callIndex":2,"nextAction":"observe_again"}
+ERROR STALE_REF
+{"control":{"documentRevision":"rev_51594a70-74da-44b3-ad71-51165bea9591","error":{"code":"STALE_REF","retryable":true},"requiresSnapshot":true,"status":"error","tabId":"tab_b92f9b6b-f0ab-46e0-bfe5-829896341914"},"kind":"error","schema":"manus.browser/v1"}
+ERROR STALE_REF
+{"control":{"documentRevision":"rev_51594a70-74da-44b3-ad71-51165bea9591","error":{"code":"STALE_REF","retryable":true},"requiresSnapshot":true,"status":"error","tabId":"tab_b92f9b6b-f0ab-46e0-bfe5-829896341914"},"kind":"error","schema":"manus.browser/v1"}

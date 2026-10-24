@@ -1,6 +1,6 @@
 import { query } from '../pool';
 import { SafeUser, UserWithPassword } from '@/lib/types/user';
-import { buildUserDataScope } from '@/lib/auth/data-scope';
+import { buildReportDataScope } from '@/lib/auth/data-scope';
 
 export interface ScopedUserOption {
   id: string;
@@ -13,13 +13,13 @@ export interface ScopedUserOption {
  * Dùng cho dropdown lọc theo nhân viên trong trang danh sách đơn.
  */
 export async function getUsersInScope(user: SafeUser): Promise<ScopedUserOption[]> {
-  const scope = buildUserDataScope(user, 'u');
+  const scope = buildReportDataScope(user, 'u');
   const params: any[] = [...scope.params];
   const sql = `
     SELECT u.id, u.full_name, u.role
     FROM users u
     WHERE ${scope.whereSql}
-      AND u.id != ${params.length + 1}
+      AND u.id != $${params.length + 1}
       AND u.is_active = true
     ORDER BY u.full_name ASC
   `;

@@ -1,7 +1,7 @@
 import { query } from '@/lib/db/pool';
 import { SafeUser } from '@/lib/types/user';
 import { canSubmitPersonalRequests } from '@/lib/auth/roles';
-import { buildUserDataScope } from '@/lib/auth/data-scope';
+import { buildReportDataScope } from '@/lib/auth/data-scope';
 import { OutOfficeStatus, OutOfficeReasonType } from './workflow';
 
 export interface OutOfficeDetail {
@@ -160,8 +160,10 @@ export async function getPendingOutOfficeRequestsForApprover(
   const params: string[] = [approver.id];
   let scopeClause = 'TRUE';
   if (approver.role === 'MANAGER') {
-    // Trưởng phòng duyệt đơn của nhân viên có manager_id trỏ trực tiếp tới mình.
-    scopeClause = `u.manager_id = $1 AND u.role IN ('STAFF', 'TEAM_LEAD', 'ACCOUNTANT')`;
+    if (!approver.department_id) return [];
+    params.push(approver.department_id);
+    // Trưởng phòng xử lý đơn của nhân viên cùng phòng ban.
+    scopeClause = `u.department_id = $2 AND u.role IN ('STAFF', 'TEAM_LEAD', 'ACCOUNTANT')`;
   }
 
   const sql = `
@@ -218,25 +220,25 @@ export async function getScopedOutOfficeRequests(
   user: SafeUser,
   filter: ScopedOutOfficeFilter = {}
 ): Promise<OutOfficeDetail[]> {
-  const scope = buildUserDataScope(user, 'u');
+  const scope = buildReportDataScope(user, 'u');
   const params: any[] = [...scope.params];
   const conditions: string[] = [scope.whereSql];
 
   if (filter.status && filter.status !== 'ALL') {
     params.push(filter.status);
-    conditions.push(`oo.status = ${params.length}`);
+    conditions.push(`oo.status = $${params.length}`);
   }
   if (filter.employeeId) {
     params.push(filter.employeeId);
-    conditions.push(`oo.employee_id = ${params.length}`);
+    conditions.push(`oo.employee_id = $${params.length}`);
   }
   if (filter.fromDate) {
     params.push(filter.fromDate);
-    conditions.push(`oo.request_date >= ${params.length}`);
+    conditions.push(`oo.request_date >= $${params.length}`);
   }
   if (filter.toDate) {
     params.push(filter.toDate);
-    conditions.push(`oo.request_date <= ${params.length}`);
+    conditions.push(`oo.request_date <= $${params.length}`);
   }
 
   const sql = `

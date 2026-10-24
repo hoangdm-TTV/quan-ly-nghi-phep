@@ -21,18 +21,11 @@ export function buildUserDataScope(user: SafeUser, alias = 'u'): UserDataScope {
     };
   }
 
-  if (user.role === 'TEAM_LEAD' && user.team_id) {
-    return {
-      whereSql: `(${alias}.id = $1 OR ${alias}.team_id = $2)`,
-      params: [user.id, user.team_id],
-    };
-  }
-
-  // STAFF và quản lý chưa được gán đơn vị chỉ thấy dữ liệu của chính mình.
+  // STAFF, TEAM_LEAD và quản lý chưa được gán đơn vị chỉ thấy dữ liệu của chính mình.
   return { whereSql: `${alias}.id = $1`, params: [user.id] };
 }
 
-/** Chỉ dùng cho dữ liệu tổng hợp; ACCOUNTANT được xem toàn công ty. */
+/** Dùng cho các truy vấn mở rộng scope; ACCOUNTANT và DIRECTOR được xem toàn công ty. */
 export function buildReportDataScope(user: SafeUser, alias = 'u'): UserDataScope {
   if (user.role === 'DIRECTOR' || user.role === 'ACCOUNTANT') {
     return { whereSql: 'TRUE', params: [] };
@@ -42,7 +35,7 @@ export function buildReportDataScope(user: SafeUser, alias = 'u'): UserDataScope
 
 export function getUserDataScopeLabel(user: SafeUser): string {
   if (user.role === 'DIRECTOR') return 'Toàn công ty';
-  if (user.role === 'ACCOUNTANT') return 'Toàn công ty (chỉ báo cáo)';
+  if (user.role === 'ACCOUNTANT') return 'Toàn công ty (chỉ đọc)';
   if (user.role === 'MANAGER' && user.department_id) return `Phòng ban: ${user.department_name || 'Chưa đặt tên'}`;
   if (user.role === 'TEAM_LEAD' && user.team_id) return `Team: ${user.team_name || 'Chưa đặt tên'}`;
   return 'Cá nhân';

@@ -1,6 +1,6 @@
 import { requireAuth } from '@/lib/auth/permissions';
 import { getVisibleLeaveRequests, getScopedLeaveRequests, ScopedLeaveFilter } from '@/lib/leave/queries';
-import { canSubmitPersonalRequests, canApproveWorkflowRequests } from '@/lib/auth/roles';
+import { canSubmitPersonalRequests, canApproveWorkflowRequests, canViewRequestScope } from '@/lib/auth/roles';
 import { getUserDataScopeLabel } from '@/lib/auth/data-scope';
 import { getUsersInScope } from '@/lib/db/queries/users';
 import { redirect } from 'next/navigation';
@@ -25,14 +25,18 @@ export default async function LeaveListPage({
   searchParams: { status?: string; tab?: string; employeeId?: string; from?: string; to?: string };
 }) {
   const user = await requireAuth();
-  if (!canSubmitPersonalRequests(user.role)) {
+  const canSubmit = canSubmitPersonalRequests(user.role);
+  const canTrackScope = canViewRequestScope(user.role);
+  if (!canSubmit && !canTrackScope) {
     redirect(canApproveWorkflowRequests(user.role) ? '/approvals/leave' : '/');
   }
 
   const currentFilter = searchParams?.status || 'ALL';
   const scopeLabel = getUserDataScopeLabel(user);
-  const hasScope = scopeLabel !== 'Cá nhân';
-  const activeTab = hasScope && searchParams?.tab === 'scope' ? 'scope' : 'mine';
+  const hasScope = canTrackScope;
+  const activeTab = hasScope
+    ? (canSubmit && searchParams?.tab === 'mine' ? 'mine' : 'scope')
+    : 'mine';
 
   const filters = [
     { label: 'Tất cả', value: 'ALL' },
@@ -62,7 +66,7 @@ export default async function LeaveListPage({
 
   const buildTabUrl = (tab: string) => {
     const params = new URLSearchParams();
-    if (tab === 'scope') params.set('tab', 'scope');
+    if (hasScope) params.set('tab', tab);
     if (currentFilter !== 'ALL') params.set('status', currentFilter);
     const qs = params.toString();
     return qs ? `/leave?${qs}` : '/leave';
@@ -70,7 +74,7 @@ export default async function LeaveListPage({
 
   const buildFilterUrl = (status: string) => {
     const params = new URLSearchParams();
-    if (activeTab === 'scope') params.set('tab', 'scope');
+    if (hasScope) params.set('tab', activeTab);
     if (status !== 'ALL') params.set('status', status);
     if (searchParams?.employeeId) params.set('employeeId', searchParams.employeeId);
     if (searchParams?.from) params.set('from', searchParams.from);
@@ -87,11 +91,11 @@ export default async function LeaveListPage({
           <p className="text-xs text-slate-500 mt-1">
             {activeTab === 'scope'
               ? `Đơn nghỉ phép trong phạm vi: ${scopeLabel}`
-              : 'Theo dõi trạng thái và tiến trình phê duyệt các đơn xin nghỉ phép của bạn.'}
+            : 'Theo dõi trạng thái các đơn nghỉ phép do bạn tạo.'}
           </p>
         </div>
 
-        {user.role !== 'DIRECTOR' && (
+        {canSubmit && activeTab === 'mine' && (
           <Link
             href="/leave/new"
             className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors"
@@ -105,16 +109,18 @@ export default async function LeaveListPage({
       {/* Tab chuyển đổi: Của tôi / Trong phạm vi */}
       {hasScope && (
         <div className="flex items-center gap-1.5">
-          <Link
-            href={buildTabUrl('mine')}
-            className={`px-4 py-2 text-xs font-semibold rounded-lg transition-colors ${
-              activeTab === 'mine'
-                ? 'bg-slate-900 text-white shadow-xs'
-                : 'text-slate-600 bg-slate-100 hover:bg-slate-200'
-            }`}
-          >
-            Đơn của tôi
-          </Link>
+          {canSubmit && (
+            <Link
+              href={buildTabUrl('mine')}
+              className={`px-4 py-2 text-xs font-semibold rounded-lg transition-colors ${
+                activeTab === 'mine'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'text-slate-600 bg-slate-100 hover:bg-slate-200'
+              }`}
+            >
+              Đơn của tôi
+            </Link>
+          )}
           <Link
             href={buildTabUrl('scope')}
             className={`px-4 py-2 text-xs font-semibold rounded-lg transition-colors ${
@@ -123,7 +129,7 @@ export default async function LeaveListPage({
                 : 'text-slate-600 bg-slate-100 hover:bg-slate-200'
             }`}
           >
-            {scopeLabel}
+            {user.role === 'MANAGER' ? 'Đơn phòng ban' : 'Toàn bộ đơn công ty'}
           </Link>
         </div>
       )}
@@ -190,7 +196,7 @@ export default async function LeaveListPage({
               ? 'Bạn chưa tạo đơn nghỉ phép nào trong hệ thống.'
               : 'Không có đơn nào phù hợp với bộ lọc hiện tại.'}
           </p>
-          {activeTab === 'mine' && user.role !== 'DIRECTOR' && currentFilter === 'ALL' && (
+          {activeTab === 'mine' && canSubmit && currentFilter === 'ALL' && (
             <div className="pt-2">
               <Link
                 href="/leave/new"

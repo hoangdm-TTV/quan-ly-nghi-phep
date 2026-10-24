@@ -14,7 +14,7 @@ export default function DashboardShell({ user, children }: DashboardShellProps) 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
+    <div className="min-h-screen bg-[#f7f7f5] flex">
       {/* Sidebar navigation */}
       <AppSidebar
         user={user}
@@ -29,7 +29,7 @@ export default function DashboardShell({ user, children }: DashboardShellProps) 
           onOpenSidebar={() => setSidebarOpen(true)}
         />
 
-        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           {children}
         </main>
       </div>
