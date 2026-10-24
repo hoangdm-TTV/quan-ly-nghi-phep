@@ -21,7 +21,6 @@ import {
   X,
   ChevronDown,
   CalendarCheck,
-  Users,
 } from 'lucide-react';
 
 interface AppSidebarProps {
@@ -68,7 +67,6 @@ export default function AppSidebar({ user, isOpen, onClose }: AppSidebarProps) {
   const canApprove = canApproveWorkflowRequests(user.role);
   const canUseRequests = canAccessRequestModules(user.role);
   const canManageHolidays = user.role === 'ACCOUNTANT' || user.role === 'DIRECTOR';
-  const canViewAllRequests = user.role === 'DIRECTOR' || user.role === 'ACCOUNTANT';
 
   const navigation: NavItem[] = [
     {
@@ -82,15 +80,15 @@ export default function AppSidebar({ user, isOpen, onClose }: AppSidebarProps) {
     {
       kind: 'group',
       id: 'leave',
-      name: 'Đơn nghỉ phép',
+      name: 'Nghỉ phép',
       icon: CalendarDays,
       show: canUseRequests,
       children: [
         {
-          name: 'Đơn nghỉ phép của tôi',
+          name: canSubmit ? 'Đơn của tôi' : 'Đơn nghỉ phép',
           href: '/leave',
           icon: FileText,
-          show: canSubmit,
+          show: true,
         },
         {
           name: 'Duyệt đơn nghỉ phép',
@@ -103,15 +101,15 @@ export default function AppSidebar({ user, isOpen, onClose }: AppSidebarProps) {
     {
       kind: 'group',
       id: 'out-office',
-      name: 'Đơn xin ra ngoài',
+      name: 'Ra ngoài',
       icon: Clock,
       show: canUseRequests,
       children: [
         {
-          name: 'Đơn xin ra ngoài của tôi',
+          name: canSubmit ? 'Đơn của tôi' : 'Đơn ra ngoài',
           href: '/out-office',
           icon: FileText,
-          show: canSubmit,
+          show: true,
         },
         {
           name: 'Duyệt đơn ra ngoài',
@@ -120,22 +118,6 @@ export default function AppSidebar({ user, isOpen, onClose }: AppSidebarProps) {
           show: canApprove,
         },
       ],
-    },
-    {
-      kind: 'leaf',
-      name: 'Tất cả đơn nghỉ phép',
-      href: '/all-requests/leave',
-      icon: Users,
-      show: canViewAllRequests,
-      exact: true,
-    },
-    {
-      kind: 'leaf',
-      name: 'Tất cả đơn ra ngoài',
-      href: '/all-requests/out-office',
-      icon: Users,
-      show: canViewAllRequests,
-      exact: true,
     },
     {
       kind: 'leaf',

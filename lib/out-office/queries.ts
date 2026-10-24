@@ -1,6 +1,7 @@
 import { query } from '@/lib/db/pool';
 import { SafeUser } from '@/lib/types/user';
 import { canSubmitPersonalRequests } from '@/lib/auth/roles';
+import { buildUserDataScope } from '@/lib/auth/data-scope';
 import { OutOfficeStatus, OutOfficeReasonType } from './workflow';
 
 export interface OutOfficeDetail {
@@ -202,13 +203,43 @@ export async function getPendingOutOfficeRequestsForApprover(
   return res.rows;
 }
 
+export interface ScopedOutOfficeFilter {
+  status?: string;
+  employeeId?: string;
+  fromDate?: string;
+  toDate?: string;
+}
+
 /**
- * Lấy tất cả đơn ra ngoài trong công ty — dành cho Giám đốc và Kế toán (chỉ đọc).
+ * Lấy đơn ra ngoài theo phạm vi quyền của người dùng (cá nhân / phòng / team / toàn công ty).
+ * Hỗ trợ lọc theo trạng thái, nhân viên cụ thể, và khoảng ngày ra ngoài.
  */
-export async function getAllOutOfficeRequests(
-  statusFilter?: string
+export async function getScopedOutOfficeRequests(
+  user: SafeUser,
+  filter: ScopedOutOfficeFilter = {}
 ): Promise<OutOfficeDetail[]> {
-  let sql = `
+  const scope = buildUserDataScope(user, 'u');
+  const params: any[] = [...scope.params];
+  const conditions: string[] = [scope.whereSql];
+
+  if (filter.status && filter.status !== 'ALL') {
+    params.push(filter.status);
+    conditions.push(`oo.status = ${params.length}`);
+  }
+  if (filter.employeeId) {
+    params.push(filter.employeeId);
+    conditions.push(`oo.employee_id = ${params.length}`);
+  }
+  if (filter.fromDate) {
+    params.push(filter.fromDate);
+    conditions.push(`oo.request_date >= ${params.length}`);
+  }
+  if (filter.toDate) {
+    params.push(filter.toDate);
+    conditions.push(`oo.request_date <= ${params.length}`);
+  }
+
+  const sql = `
     SELECT 
       oo.id,
       oo.employee_id,
@@ -234,16 +265,9 @@ export async function getAllOutOfficeRequests(
     LEFT JOIN departments d ON u.department_id = d.id
     LEFT JOIN teams t ON u.team_id = t.id
     LEFT JOIN users app ON oo.approver_id = app.id
+    WHERE ${conditions.join(' AND ')}
+    ORDER BY oo.request_date DESC, oo.created_at DESC
   `;
-
-  const params: any[] = [];
-
-  if (statusFilter && statusFilter !== 'ALL') {
-    params.push(statusFilter);
-    sql += ` WHERE oo.status = $` + params.length;
-  }
-
-  sql += ` ORDER BY oo.created_at DESC`;
 
   const res = await query<OutOfficeDetail>(sql, params);
   return res.rows;

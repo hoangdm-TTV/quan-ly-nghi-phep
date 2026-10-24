@@ -1,6 +1,7 @@
 import { query } from '@/lib/db/pool';
 import { SafeUser } from '@/lib/types/user';
 import { canSubmitPersonalRequests } from '@/lib/auth/roles';
+import { buildUserDataScope } from '@/lib/auth/data-scope';
 import { LeaveStatus, ApprovalAction } from './workflow';
 
 export interface LeaveRequestDetail {
@@ -233,13 +234,43 @@ export async function getPendingLeaveRequestsForApprover(
   return res.rows;
 }
 
+export interface ScopedLeaveFilter {
+  status?: string;
+  employeeId?: string;
+  fromDate?: string;
+  toDate?: string;
+}
+
 /**
- * Lấy tất cả đơn nghỉ phép trong công ty — dành cho Giám đốc và Kế toán (chỉ đọc).
+ * Lấy đơn nghỉ phép theo phạm vi quyền của người dùng (cá nhân / phòng / team / toàn công ty).
+ * Hỗ trợ lọc theo trạng thái, nhân viên cụ thể, và khoảng ngày nghỉ.
  */
-export async function getAllLeaveRequests(
-  statusFilter?: string
+export async function getScopedLeaveRequests(
+  user: SafeUser,
+  filter: ScopedLeaveFilter = {}
 ): Promise<LeaveRequestDetail[]> {
-  let sql = `
+  const scope = buildUserDataScope(user, 'u');
+  const params: any[] = [...scope.params];
+  const conditions: string[] = [scope.whereSql];
+
+  if (filter.status && filter.status !== 'ALL') {
+    params.push(filter.status);
+    conditions.push(`lr.status = ${params.length}`);
+  }
+  if (filter.employeeId) {
+    params.push(filter.employeeId);
+    conditions.push(`lr.employee_id = ${params.length}`);
+  }
+  if (filter.fromDate) {
+    params.push(filter.fromDate);
+    conditions.push(`lr.start_date >= ${params.length}`);
+  }
+  if (filter.toDate) {
+    params.push(filter.toDate);
+    conditions.push(`lr.start_date <= ${params.length}`);
+  }
+
+  const sql = `
     SELECT 
       lr.id,
       lr.employee_id,
@@ -266,16 +297,9 @@ export async function getAllLeaveRequests(
     LEFT JOIN departments d ON u.department_id = d.id
     LEFT JOIN teams t ON u.team_id = t.id
     LEFT JOIN users app ON lr.approver_id = app.id
+    WHERE ${conditions.join(' AND ')}
+    ORDER BY lr.start_date DESC, lr.created_at DESC
   `;
-
-  const params: any[] = [];
-
-  if (statusFilter && statusFilter !== 'ALL') {
-    params.push(statusFilter);
-    sql += ` WHERE lr.status = $` + params.length;
-  }
-
-  sql += ` ORDER BY lr.created_at DESC`;
 
   const res = await query<LeaveRequestDetail>(sql, params);
   return res.rows;

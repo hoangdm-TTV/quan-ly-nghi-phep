@@ -1,5 +1,5 @@
 import { requireAuth } from '@/lib/auth/permissions';
-import { getDashboardStats, getRecentActivities, getScopeReport } from '@/lib/dashboard/queries';
+import { getDashboardStats, getRecentActivities, getScopeReport, getScopeActivityFeed } from '@/lib/dashboard/queries';
 import { getUserDataScopeLabel } from '@/lib/auth/data-scope';
 import { getRoleLabel } from '@/lib/auth/role-labels';
 import { getPendingLeaveRequestsForApprover } from '@/lib/leave/queries';
@@ -17,6 +17,9 @@ import {
   Sparkles,
   FileText,
   UserCheck,
+  CalendarRange,
+  Briefcase,
+  Users,
 } from 'lucide-react';
 
 function validDateFilter(value?: string): string | undefined {
@@ -40,12 +43,13 @@ export default async function DashboardPage({
   }
 
   // Nạp báo cáo tổng hợp; widgets cá nhân chỉ dành cho role có quyền xem đơn.
-  const [stats, recentActivities, pendingLeaves, pendingOutOffices, scopeReport] = await Promise.all([
+  const [stats, recentActivities, pendingLeaves, pendingOutOffices, scopeReport, scopeActivity] = await Promise.all([
     getDashboardStats(user),
     getRecentActivities(user),
     getPendingLeaveRequestsForApprover(user),
     getPendingOutOfficeRequestsForApprover(user),
     getScopeReport(user, reportFrom, reportTo),
+    getScopeActivityFeed(user, reportFrom, reportTo),
   ]);
   const scopeLabel = getUserDataScopeLabel(user);
 
@@ -303,7 +307,97 @@ export default async function DashboardPage({
         </section>
       )}
 
-      {/* 4. Chi tiết hoạt động/đơn cá nhân. */}
+      {/* Bảng hoạt động theo ngày trong phạm vi quyền hạn */}
+      {scopeLabel !== 'Cá nhân' && (
+        <section className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <CalendarRange className="w-4 h-4 text-blue-600" />
+                Hoạt động theo ngày
+              </h3>
+              <p className="text-xs text-slate-500 mt-1">
+                Ai xin nghỉ, loại đơn gì, ngày nào — trong phạm vi {scopeLabel}
+                {reportFrom || reportTo ? ` · ${reportFrom || '...'} → ${reportTo || '...'}` : ''}
+              </p>
+            </div>
+          </div>
+
+          {scopeActivity.length === 0 ? (
+            <p className="rounded-xl bg-slate-50 p-5 text-center text-xs text-slate-500">
+              Chưa có hoạt động nào trong khoảng thời gian này.
+            </p>
+          ) : (
+            <div className="overflow-x-auto rounded-xl border border-slate-200">
+              <table className="min-w-full divide-y divide-slate-200 text-left text-xs">
+                <thead className="bg-slate-50 text-slate-600 font-semibold uppercase tracking-wider">
+                  <tr>
+                    <th className="px-4 py-3">Ngày</th>
+                    <th className="px-4 py-3">Nhân viên</th>
+                    <th className="px-4 py-3">Loại đơn</th>
+                    <th className="px-4 py-3">Chi tiết</th>
+                    <th className="px-4 py-3">Trạng thái</th>
+                    <th className="px-4 py-3 text-right">Xem</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {scopeActivity.map((item) => (
+                    <tr key={`${item.type}-${item.id}`} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="px-4 py-3 font-medium text-slate-900 whitespace-nowrap">
+                        {item.dateLabel}
+                      </td>
+                      <td className="px-4 py-3 text-slate-700 whitespace-nowrap">
+                        <div className="flex items-center gap-1.5">
+                          <Users className="w-3 h-3 text-slate-400" />
+                          {item.employeeName}
+                        </div>
+                        {item.departmentName && (
+                          <span className="text-[10px] text-slate-400 ml-4.5">{item.departmentName}</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium ${
+                          item.type === 'LEAVE'
+                            ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                            : 'bg-teal-50 text-teal-700 border border-teal-200'
+                        }`}>
+                          {item.type === 'LEAVE' ? (
+                            <><CalendarDays className="w-3 h-3" /> Nghỉ phép</>
+                          ) : (
+                            <><Briefcase className="w-3 h-3" /> Ra ngoài</>
+                          )}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-slate-600 whitespace-nowrap">
+                        {item.detailLabel}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <span className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-full ${
+                          item.status === 'COMPLETED' || item.status === 'WAITING_FOR_DOC'
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            : item.status === 'REJECTED'
+                            ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                            : 'bg-amber-50 text-amber-700 border border-amber-200'
+                        }`}>
+                          {item.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right whitespace-nowrap">
+                        <Link
+                          href={item.link}
+                          className="inline-flex items-center text-xs font-semibold text-blue-600 hover:text-blue-800"
+                        >
+                          Chi tiết <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      )}
       {(
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Cột trái: Đơn gần đây của cá nhân (Chiếm 2 cột) */}

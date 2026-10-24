@@ -1,5 +1,32 @@
 import { query } from '../pool';
 import { SafeUser, UserWithPassword } from '@/lib/types/user';
+import { buildUserDataScope } from '@/lib/auth/data-scope';
+
+export interface ScopedUserOption {
+  id: string;
+  full_name: string;
+  role: string;
+}
+
+/**
+ * Lấy danh sách nhân viên trong phạm vi quyền của người dùng (trừ chính họ).
+ * Dùng cho dropdown lọc theo nhân viên trong trang danh sách đơn.
+ */
+export async function getUsersInScope(user: SafeUser): Promise<ScopedUserOption[]> {
+  const scope = buildUserDataScope(user, 'u');
+  const params: any[] = [...scope.params];
+  const sql = `
+    SELECT u.id, u.full_name, u.role
+    FROM users u
+    WHERE ${scope.whereSql}
+      AND u.id != ${params.length + 1}
+      AND u.is_active = true
+    ORDER BY u.full_name ASC
+  `;
+  params.push(user.id);
+  const res = await query<ScopedUserOption>(sql, params);
+  return res.rows;
+}
 
 /**
  * Tìm người dùng theo email (kèm password_hash để xác thực phía server)

@@ -1,6 +1,6 @@
 import { query } from '@/lib/db/pool';
 import { SafeUser } from '@/lib/types/user';
-import { buildReportDataScope } from '@/lib/auth/data-scope';
+import { buildReportDataScope, buildUserDataScope } from '@/lib/auth/data-scope';
 import { getPendingLeaveRequestsForApprover } from '@/lib/leave/queries';
 import { getPendingOutOfficeRequestsForApprover } from '@/lib/out-office/queries';
 
@@ -311,4 +311,119 @@ export async function getRecentActivities(user: SafeUser): Promise<RecentActivit
   combined.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   return combined.slice(0, 5);
+}
+
+export interface ScopeActivityItem {
+  id: string;
+  type: 'LEAVE' | 'OUT_OFFICE';
+  employeeName: string;
+  departmentName: string | null;
+  dateLabel: string;
+  detailLabel: string;
+  status: string;
+  link: string;
+  sortDate: Date;
+}
+
+/**
+ * Lấy danh sách hoạt động (nghỉ phép + ra ngoài) trong phạm vi quyền hạn,
+ * gộp và sắp xếp theo ngày diễn ra. Dùng cho bảng theo dõi trên Dashboard.
+ */
+export async function getScopeActivityFeed(
+  user: SafeUser,
+  fromDate?: string,
+  toDate?: string,
+  limit = 15
+): Promise<ScopeActivityItem[]> {
+  const scope = buildUserDataScope(user, 'u');
+  const leaveParams: any[] = [...scope.params];
+  const leaveConditions: string[] = [scope.whereSql];
+  if (fromDate) {
+    leaveParams.push(fromDate);
+    leaveConditions.push(`lr.start_date >= ${leaveParams.length}`);
+  }
+  if (toDate) {
+    leaveParams.push(toDate);
+    leaveConditions.push(`lr.start_date <= ${leaveParams.length}`);
+  }
+
+  const leaveSql = `
+    SELECT
+      lr.id,
+      u.full_name AS employee_name,
+      d.name AS department_name,
+      TO_CHAR(lr.start_date, 'DD/MM/YYYY') AS date_label,
+      CONCAT(lr.duration_days, ' ngày (', TO_CHAR(lr.start_date, 'DD/MM'), ' → ', TO_CHAR(lr.end_date, 'DD/MM'), ')') AS detail_label,
+      lr.status,
+      lr.start_date AS sort_date
+    FROM leave_requests lr
+    JOIN users u ON lr.employee_id = u.id
+    LEFT JOIN departments d ON u.department_id = d.id
+    WHERE ${leaveConditions.join(' AND ')}
+    ORDER BY lr.start_date DESC
+    LIMIT ${leaveParams.length + 1}
+  `;
+  leaveParams.push(limit);
+
+  const outOfficeParams: any[] = [...scope.params];
+  const outOfficeConditions: string[] = [scope.whereSql];
+  if (fromDate) {
+    outOfficeParams.push(fromDate);
+    outOfficeConditions.push(`oo.request_date >= ${outOfficeParams.length}`);
+  }
+  if (toDate) {
+    outOfficeParams.push(toDate);
+    outOfficeConditions.push(`oo.request_date <= ${outOfficeParams.length}`);
+  }
+
+  const outOfficeSql = `
+    SELECT
+      oo.id,
+      u.full_name AS employee_name,
+      d.name AS department_name,
+      TO_CHAR(oo.request_date, 'DD/MM/YYYY') AS date_label,
+      CONCAT(oo.start_time, ' - ', oo.end_time, ' (', oo.estimated_hours, 'h)') AS detail_label,
+      oo.status,
+      oo.request_date AS sort_date
+    FROM out_office_requests oo
+    JOIN users u ON oo.employee_id = u.id
+    LEFT JOIN departments d ON u.department_id = d.id
+    WHERE ${outOfficeConditions.join(' AND ')}
+    ORDER BY oo.request_date DESC
+    LIMIT ${outOfficeParams.length + 1}
+  `;
+  outOfficeParams.push(limit);
+
+  const [leaveRes, outOfficeRes] = await Promise.all([
+    query(leaveSql, leaveParams),
+    query(outOfficeSql, outOfficeParams),
+  ]);
+
+  const items: ScopeActivityItem[] = [
+    ...leaveRes.rows.map((r: any) => ({
+      id: r.id,
+      type: 'LEAVE' as const,
+      employeeName: r.employee_name,
+      departmentName: r.department_name,
+      dateLabel: r.date_label,
+      detailLabel: r.detail_label,
+      status: r.status,
+      link: `/leave/${r.id}`,
+      sortDate: r.sort_date,
+    })),
+    ...outOfficeRes.rows.map((r: any) => ({
+      id: r.id,
+      type: 'OUT_OFFICE' as const,
+      employeeName: r.employee_name,
+      departmentName: r.department_name,
+      dateLabel: r.date_label,
+      detailLabel: r.detail_label,
+      status: r.status,
+      link: `/out-office/${r.id}`,
+      sortDate: r.sort_date,
+    })),
+  ];
+
+  items.sort((a, b) => new Date(b.sortDate).getTime() - new Date(a.sortDate).getTime());
+  return items.slice(0, limit);
 }
