@@ -1,6 +1,6 @@
 import { requireAuth } from '@/lib/auth/permissions';
 import { getVisibleOutOfficeRequests } from '@/lib/out-office/queries';
-import { getUserDataScopeLabel } from '@/lib/auth/data-scope';
+import { canSubmitPersonalRequests, canApproveWorkflowRequests } from '@/lib/auth/roles';
 import { redirect } from 'next/navigation';
 import OutOfficeStatusBadge from '@/components/out-office/out-office-status-badge';
 import Link from 'next/link';
@@ -16,11 +16,11 @@ export default async function OutOfficeListPage({
   searchParams: { status?: string };
 }) {
   const user = await requireAuth();
-  if (user.role === 'ACCOUNTANT') redirect('/');
+  if (!canSubmitPersonalRequests(user.role)) {
+    redirect(canApproveWorkflowRequests(user.role) ? '/approvals/out-office' : '/');
+  }
   const currentFilter = searchParams?.status || 'ALL';
   const requests = await getVisibleOutOfficeRequests(user, currentFilter);
-  const scopeLabel = getUserDataScopeLabel(user);
-  const isPersonalScope = scopeLabel === 'Cá nhân';
 
   const filters = [
     { label: 'Tất cả', value: 'ALL' },
@@ -34,13 +34,9 @@ export default async function OutOfficeListPage({
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-900">
-            {isPersonalScope ? 'Đơn xin ra ngoài của tôi (Gate Pass)' : 'Danh sách đơn ra ngoài (Gate Pass)'}
-          </h2>
+          <h2 className="text-xl font-bold text-slate-900">Đơn xin ra ngoài của tôi</h2>
           <p className="text-xs text-slate-500 mt-1">
-            {isPersonalScope
-              ? 'Theo dõi trạng thái xin ra ngoài trong giờ làm việc và xác nhận hoàn tất với Trưởng phòng hoặc Giám đốc.'
-              : `Các đơn trong phạm vi được phép xem: ${scopeLabel}.`}
+            Theo dõi trạng thái xin ra ngoài trong giờ làm việc và xác nhận hoàn tất với Trưởng phòng hoặc Giám đốc.
           </p>
         </div>
 
@@ -84,7 +80,7 @@ export default async function OutOfficeListPage({
           <h3 className="text-sm font-semibold text-slate-800">Không có đơn xin ra ngoài nào</h3>
           <p className="text-xs text-slate-500 max-w-sm mx-auto">
             {currentFilter === 'ALL'
-              ? isPersonalScope ? 'Bạn chưa tạo đơn xin ra ngoài nào trong hệ thống.' : `Chưa có đơn nào trong phạm vi ${scopeLabel}.`
+              ? 'Bạn chưa tạo đơn xin ra ngoài nào trong hệ thống.'
               : 'Không có đơn nào phù hợp với bộ lọc hiện tại.'}
           </p>
           {user.role !== 'DIRECTOR' && currentFilter === 'ALL' && (
@@ -105,7 +101,6 @@ export default async function OutOfficeListPage({
             <table className="min-w-full divide-y divide-slate-200 text-left text-xs">
               <thead className="bg-slate-50 text-slate-600 font-semibold uppercase tracking-wider">
                 <tr>
-                  {!isPersonalScope && <th className="px-6 py-3.5">Nhân viên</th>}
                   <th className="px-6 py-3.5">Ngày ra ngoài</th>
                   <th className="px-6 py-3.5">Khung giờ</th>
                   <th className="px-6 py-3.5">Số giờ</th>
@@ -118,12 +113,6 @@ export default async function OutOfficeListPage({
               <tbody className="divide-y divide-slate-100 bg-white">
                 {requests.map((r) => (
                   <tr key={r.id} className="hover:bg-slate-50/80 transition-colors">
-                    {!isPersonalScope && (
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="font-semibold text-slate-900">{r.employee_name}</div>
-                        <div className="text-[11px] text-slate-500">{r.department_name || 'Chưa phân bổ'}{r.team_name ? ` • ${r.team_name}` : ''}</div>
-                      </td>
-                    )}
                     <td className="px-6 py-4 font-medium text-slate-900 whitespace-nowrap">
                       <div className="flex items-center gap-1.5">
                         <Calendar className="w-3.5 h-3.5 text-slate-400" />

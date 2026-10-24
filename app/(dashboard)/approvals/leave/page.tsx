@@ -1,4 +1,5 @@
 import { requireAuth } from '@/lib/auth/permissions';
+import { canApproveWorkflowRequests, canSubmitPersonalRequests } from '@/lib/auth/roles';
 import { redirect } from 'next/navigation';
 import { getPendingLeaveRequestsForApprover } from '@/lib/leave/queries';
 import LeaveStatusBadge from '@/components/leave/leave-status-badge';
@@ -13,8 +14,8 @@ export const metadata = {
 export default async function ApprovalsLeavePage() {
   const user = await requireAuth();
 
-  if (user.role !== 'MANAGER' && user.role !== 'DIRECTOR') {
-    redirect(user.role === 'ACCOUNTANT' ? '/' : '/leave');
+  if (!canApproveWorkflowRequests(user.role)) {
+    redirect(canSubmitPersonalRequests(user.role) ? '/leave' : '/');
   }
 
   const pendingRequests = await getPendingLeaveRequestsForApprover(user);

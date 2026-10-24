@@ -1,6 +1,6 @@
 import { query } from '@/lib/db/pool';
 import { SafeUser } from '@/lib/types/user';
-import { buildUserDataScope } from '@/lib/auth/data-scope';
+import { canSubmitPersonalRequests } from '@/lib/auth/roles';
 import { OutOfficeStatus, OutOfficeReasonType } from './workflow';
 
 export interface OutOfficeDetail {
@@ -37,14 +37,13 @@ export interface OutOfficeApprovalRecord {
 }
 
 /**
- * Lấy danh sách đơn ra ngoài trong phạm vi dữ liệu của người dùng hiện tại
+ * Danh sách đơn ra ngoài của chính người dùng đang đăng nhập.
  */
 export async function getVisibleOutOfficeRequests(
   user: SafeUser,
   statusFilter?: string
 ): Promise<OutOfficeDetail[]> {
-  if (user.role === 'ACCOUNTANT') return [];
-  const scope = buildUserDataScope(user, 'u');
+  if (!canSubmitPersonalRequests(user.role)) return [];
   let sql = `
     SELECT 
       oo.id,
@@ -71,10 +70,10 @@ export async function getVisibleOutOfficeRequests(
     LEFT JOIN departments d ON u.department_id = d.id
     LEFT JOIN teams t ON u.team_id = t.id
     LEFT JOIN users app ON oo.approver_id = app.id
-    WHERE ${scope.whereSql}
+    WHERE oo.employee_id = $1
   `;
 
-  const params: any[] = [...scope.params];
+  const params: any[] = [user.id];
 
   if (statusFilter && statusFilter !== 'ALL') {
     params.push(statusFilter);

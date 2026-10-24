@@ -1,6 +1,6 @@
 import { query } from '@/lib/db/pool';
 import { SafeUser } from '@/lib/types/user';
-import { buildUserDataScope } from '@/lib/auth/data-scope';
+import { canSubmitPersonalRequests } from '@/lib/auth/roles';
 import { LeaveStatus, ApprovalAction } from './workflow';
 
 export interface LeaveRequestDetail {
@@ -38,14 +38,13 @@ export interface ApprovalHistoryRecord {
 }
 
 /**
- * Lấy danh sách đơn nghỉ phép trong phạm vi dữ liệu của người dùng hiện tại
+ * Danh sách đơn nghỉ phép của chính người dùng đang đăng nhập.
  */
 export async function getVisibleLeaveRequests(
   user: SafeUser,
   statusFilter?: string
 ): Promise<LeaveRequestDetail[]> {
-  if (user.role === 'ACCOUNTANT') return [];
-  const scope = buildUserDataScope(user, 'u');
+  if (!canSubmitPersonalRequests(user.role)) return [];
   let sql = `
     SELECT 
       lr.id,
@@ -73,10 +72,10 @@ export async function getVisibleLeaveRequests(
     LEFT JOIN departments d ON u.department_id = d.id
     LEFT JOIN teams t ON u.team_id = t.id
     LEFT JOIN users app ON lr.approver_id = app.id
-    WHERE ${scope.whereSql}
+    WHERE lr.employee_id = $1
   `;
 
-  const params: any[] = [...scope.params];
+  const params: any[] = [user.id];
 
   if (statusFilter && statusFilter !== 'ALL') {
     params.push(statusFilter);

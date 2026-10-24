@@ -1,4 +1,5 @@
 import { requireAuth } from '@/lib/auth/permissions';
+import { canApproveWorkflowRequests, canSubmitPersonalRequests } from '@/lib/auth/roles';
 import { redirect } from 'next/navigation';
 import { getPendingOutOfficeRequestsForApprover } from '@/lib/out-office/queries';
 import OutOfficeStatusBadge from '@/components/out-office/out-office-status-badge';
@@ -13,9 +14,8 @@ export const metadata = {
 export default async function ApprovalsOutOfficePage() {
   const user = await requireAuth();
 
-  // Chỉ Trưởng phòng hoặc Giám đốc có thẩm quyền duyệt đơn ra ngoài.
-  if (user.role !== 'MANAGER' && user.role !== 'DIRECTOR') {
-    redirect(user.role === 'ACCOUNTANT' ? '/' : '/out-office');
+  if (!canApproveWorkflowRequests(user.role)) {
+    redirect(canSubmitPersonalRequests(user.role) ? '/out-office' : '/');
   }
 
   const pendingRequests = await getPendingOutOfficeRequestsForApprover(user);

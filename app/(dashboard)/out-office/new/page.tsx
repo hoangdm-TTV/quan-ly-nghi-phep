@@ -1,4 +1,5 @@
 import { requireAuth } from '@/lib/auth/permissions';
+import { canSubmitPersonalRequests, canApproveWorkflowRequests } from '@/lib/auth/roles';
 import { redirect } from 'next/navigation';
 import OutOfficeForm from '@/components/out-office/out-office-form';
 
@@ -9,11 +10,8 @@ export const metadata = {
 export default async function NewOutOfficePage() {
   const user = await requireAuth();
 
-  if (user.role === 'DIRECTOR') {
-    redirect('/out-office');
-  }
-  if (user.role === 'ACCOUNTANT') {
-    redirect('/');
+  if (!canSubmitPersonalRequests(user.role)) {
+    redirect(canApproveWorkflowRequests(user.role) ? '/approvals/out-office' : '/');
   }
 
   return (

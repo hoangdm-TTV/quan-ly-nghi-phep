@@ -1,4 +1,5 @@
 import { requireAuth } from '@/lib/auth/permissions';
+import { canSubmitPersonalRequests, canApproveWorkflowRequests } from '@/lib/auth/roles';
 import { redirect } from 'next/navigation';
 import LeaveForm from '@/components/leave/leave-form';
 
@@ -9,11 +10,8 @@ export const metadata = {
 export default async function NewLeavePage() {
   const user = await requireAuth();
 
-  if (user.role === 'DIRECTOR') {
-    redirect('/leave');
-  }
-  if (user.role === 'ACCOUNTANT') {
-    redirect('/');
+  if (!canSubmitPersonalRequests(user.role)) {
+    redirect(canApproveWorkflowRequests(user.role) ? '/approvals/leave' : '/');
   }
 
   return (
