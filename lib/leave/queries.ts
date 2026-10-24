@@ -79,7 +79,7 @@ export async function getVisibleLeaveRequests(
 
   if (statusFilter && statusFilter !== 'ALL') {
     params.push(statusFilter);
-    sql += ` AND lr.status = $${params.length}`;
+    sql += ` AND lr.status = $` + params.length;
   }
 
   sql += ` ORDER BY lr.created_at DESC`;
@@ -272,7 +272,7 @@ export async function getAllLeaveRequests(
 
   if (statusFilter && statusFilter !== 'ALL') {
     params.push(statusFilter);
-    sql += ` WHERE lr.status = ${params.length}`;
+    sql += ` WHERE lr.status = $` + params.length;
   }
 
   sql += ` ORDER BY lr.created_at DESC`;

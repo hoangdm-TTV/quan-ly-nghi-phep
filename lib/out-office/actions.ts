@@ -16,7 +16,7 @@ const createOutOfficeSchema = z.object({
   reasonType: z.enum(['WORK', 'PERSONAL'], {
     errorMap: () => ({ message: 'Vui lòng chọn loại lý do: Công việc hoặc Việc riêng' }),
   }),
-  reason: z.string().min(5, 'Lý do xin ra ngoài phải có ít nhất 5 ký tự').max(1000, 'Lý do quá dài'),
+  reason: z.string().trim().min(5, 'Lý do xin ra ngoài phải có ít nhất 5 ký tự').max(1000, 'Lý do quá dài'),
 });
 
 export type OutOfficeActionState = {
@@ -62,37 +62,43 @@ export async function createOutOfficeRequestAction(
   let estimatedHours: number;
   try {
     estimatedHours = calculateEstimatedHours(startTime, endTime);
-  } catch (err: any) {
-    return { error: err.message || 'Khoảng thời gian không hợp lệ.' };
+  } catch {
+    return { error: 'Khoảng thời gian không hợp lệ.' };
   }
 
-  // 2. Kiểm tra trùng thời gian với đơn khác trong cùng một ngày của nhân viên
-  const overlapCheck = await pool.query(
-    `SELECT id FROM out_office_requests 
-     WHERE employee_id = $1 
-       AND request_date = $2 
-       AND status NOT IN ('REJECTED')
-       AND start_time < $3 
-       AND end_time > $4
-     LIMIT 1`,
-    [currentUser.id, requestDate, endTime, startTime]
-  );
-
-  if (overlapCheck.rows.length > 0) {
-    return { error: 'Bạn đã có một đơn ra ngoài khác trong cùng khoảng thời gian này.' };
-  }
-
-  // 3. Ghi dữ liệu vào database với trạng thái PENDING
+  // 2. Kiểm tra trùng + ghi đơn trong cùng transaction để chống race condition
+  const client = await pool.connect();
   try {
-    await pool.query(
-      `INSERT INTO out_office_requests 
+    await client.query('BEGIN');
+    const overlapCheck = await client.query(
+      `SELECT id FROM out_office_requests
+       WHERE employee_id = $1
+         AND request_date = $2
+         AND status NOT IN ('REJECTED')
+         AND start_time < $3
+         AND end_time > $4
+       LIMIT 1`,
+      [currentUser.id, requestDate, endTime, startTime]
+    );
+
+    if (overlapCheck.rows.length > 0) {
+      await client.query('ROLLBACK');
+      return { error: 'Bạn đã có một đơn ra ngoài khác trong cùng khoảng thời gian này.' };
+    }
+
+    await client.query(
+      `INSERT INTO out_office_requests
         (employee_id, request_date, start_time, end_time, estimated_hours, reason_type, reason, status)
        VALUES ($1, $2, $3, $4, $5, $6, $7, 'PENDING')`,
-      [currentUser.id, requestDate, startTime, endTime, estimatedHours, reasonType, reason]
+      [currentUser.id, requestDate, startTime, endTime, estimatedHours, reasonType, reason.trim()]
     );
-  } catch (err: any) {
-    console.error('[Create Gate Pass Error]', err.message);
+    await client.query('COMMIT');
+  } catch (error) {
+    try { await client.query('ROLLBACK'); } catch {}
+    console.error('[Create Gate Pass Error]', error);
     return { error: 'Không thể tạo đơn xin ra ngoài lúc này. Vui lòng thử lại sau.' };
+  } finally {
+    client.release();
   }
 
   revalidatePath('/out-office');
@@ -162,10 +168,10 @@ export async function approveOutOfficeRequestAction(
     );
 
     await client.query('COMMIT');
-  } catch (err: any) {
-    await client.query('ROLLBACK');
-    console.error('[Approve Gate Pass Error]', err.message);
-    return { error: 'Có lỗi xảy ra khi phê duyệt đơn: ' + err.message };
+  } catch (error) {
+    try { await client.query('ROLLBACK'); } catch {}
+    console.error('[Approve Gate Pass Error]', error);
+    return { error: 'Có lỗi xảy ra khi phê duyệt đơn. Vui lòng thử lại sau.' };
   } finally {
     client.release();
   }
@@ -241,10 +247,10 @@ export async function rejectOutOfficeRequestAction(
     );
 
     await client.query('COMMIT');
-  } catch (err: any) {
-    await client.query('ROLLBACK');
-    console.error('[Reject Gate Pass Error]', err.message);
-    return { error: 'Có lỗi xảy ra khi từ chối đơn: ' + err.message };
+  } catch (error) {
+    try { await client.query('ROLLBACK'); } catch {}
+    console.error('[Reject Gate Pass Error]', error);
+    return { error: 'Có lỗi xảy ra khi từ chối đơn. Vui lòng thử lại sau.' };
   } finally {
     client.release();
   }

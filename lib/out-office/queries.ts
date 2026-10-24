@@ -77,7 +77,7 @@ export async function getVisibleOutOfficeRequests(
 
   if (statusFilter && statusFilter !== 'ALL') {
     params.push(statusFilter);
-    sql += ` AND oo.status = $${params.length}`;
+    sql += ` AND oo.status = $` + params.length;
   }
 
   sql += ` ORDER BY oo.created_at DESC`;
@@ -240,7 +240,7 @@ export async function getAllOutOfficeRequests(
 
   if (statusFilter && statusFilter !== 'ALL') {
     params.push(statusFilter);
-    sql += ` WHERE oo.status = ${params.length}`;
+    sql += ` WHERE oo.status = $` + params.length;
   }
 
   sql += ` ORDER BY oo.created_at DESC`;

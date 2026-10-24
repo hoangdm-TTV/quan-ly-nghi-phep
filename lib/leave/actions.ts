@@ -13,7 +13,7 @@ import { evaluateLeaveApproval, evaluateLeaveRejection, LeaveStatus } from './wo
 const createLeaveSchema = z.object({
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Ngày bắt đầu không hợp lệ (YYYY-MM-DD)'),
   endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Ngày kết thúc không hợp lệ (YYYY-MM-DD)'),
-  reason: z.string().min(5, 'Lý do nghỉ phép phải có ít nhất 5 ký tự').max(1000, 'Lý do quá dài'),
+  reason: z.string().trim().min(5, 'Lý do nghỉ phép phải có ít nhất 5 ký tự').max(1000, 'Lý do quá dài'),
 });
 
 export type LeaveActionState = {
@@ -169,43 +169,49 @@ export async function createLeaveRequestAction(
   let durationDays: number;
   try {
     durationDays = await calculateWorkingDaysWithHolidays(startDate, endDate);
-  } catch (err: any) {
-    return { error: err.message || 'Khoảng ngày không hợp lệ.' };
+  } catch {
+    return { error: 'Khoảng ngày không hợp lệ.' };
   }
 
   if (durationDays <= 0) {
     return {
-      error: 'Khoảng thời gian bạn chọn không có ngày làm việc nào (toàn bộ rơi vào ngày Chủ Nhật).',
+      error: 'Khoảng thời gian bạn chọn không có ngày làm việc nào (toàn bộ rơi vào ngày Chủ Nhật hoặc ngày lễ).',
     };
   }
 
-  // 4. Kiểm tra xem có đơn nào đang trùng khoảng thời gian không
-  const overlapCheck = await pool.query(
-    `SELECT id FROM leave_requests 
-     WHERE employee_id = $1 
-       AND status NOT IN ('REJECTED')
-       AND start_date <= $2 
-       AND end_date >= $3
-     LIMIT 1`,
-    [currentUser.id, endDate, startDate]
-  );
-
-  if (overlapCheck.rows.length > 0) {
-    return {
-      error: 'Bạn đã có một đơn nghỉ phép khác đang chờ xử lý hoặc đã duyệt trong khoảng thời gian này.',
-    };
-  }
-
-  // 5. Ghi vào database với trạng thái khởi đầu PENDING
+  // 4. Kiểm tra trùng + ghi đơn trong cùng transaction để chống race condition
+  const client = await pool.connect();
   try {
-    await pool.query(
+    await client.query('BEGIN');
+    const overlapCheck = await client.query(
+      `SELECT id FROM leave_requests
+       WHERE employee_id = $1
+         AND status NOT IN ('REJECTED')
+         AND start_date <= $2
+         AND end_date >= $3
+       LIMIT 1`,
+      [currentUser.id, endDate, startDate]
+    );
+
+    if (overlapCheck.rows.length > 0) {
+      await client.query('ROLLBACK');
+      return {
+        error: 'Bạn đã có một đơn nghỉ phép khác đang chờ xử lý hoặc đã duyệt trong khoảng thời gian này.',
+      };
+    }
+
+    await client.query(
       `INSERT INTO leave_requests (employee_id, start_date, end_date, duration_days, reason, status)
        VALUES ($1, $2, $3, $4, $5, 'PENDING')`,
-      [currentUser.id, startDate, endDate, durationDays, reason]
+      [currentUser.id, startDate, endDate, durationDays, reason.trim()]
     );
-  } catch (err: any) {
-    console.error('[Create Leave Error]', err.message);
+    await client.query('COMMIT');
+  } catch (error) {
+    try { await client.query('ROLLBACK'); } catch {}
+    console.error('[Create Leave Error]', error);
     return { error: 'Không thể tạo đơn nghỉ phép lúc này. Vui lòng thử lại sau.' };
+  } finally {
+    client.release();
   }
 
   revalidatePath('/leave');
@@ -283,10 +289,10 @@ export async function approveLeaveRequestAction(
     );
 
     await client.query('COMMIT');
-  } catch (err: any) {
-    await client.query('ROLLBACK');
-    console.error('[Approve Leave Error]', err.message);
-    return { error: 'Có lỗi xảy ra trong quá trình xử lý phê duyệt: ' + err.message };
+  } catch (error) {
+    try { await client.query('ROLLBACK'); } catch {}
+    console.error('[Approve Leave Error]', error);
+    return { error: 'Có lỗi xảy ra trong quá trình xử lý phê duyệt. Vui lòng thử lại sau.' };
   } finally {
     client.release();
   }
@@ -371,10 +377,10 @@ export async function rejectLeaveRequestAction(
     );
 
     await client.query('COMMIT');
-  } catch (err: any) {
-    await client.query('ROLLBACK');
-    console.error('[Reject Leave Error]', err.message);
-    return { error: 'Có lỗi xảy ra trong quá trình từ chối đơn: ' + err.message };
+  } catch (error) {
+    try { await client.query('ROLLBACK'); } catch {}
+    console.error('[Reject Leave Error]', error);
+    return { error: 'Có lỗi xảy ra trong quá trình từ chối đơn. Vui lòng thử lại sau.' };
   } finally {
     client.release();
   }

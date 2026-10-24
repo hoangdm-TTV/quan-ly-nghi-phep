@@ -49,12 +49,10 @@ export async function query<T extends QueryResultRow = any>(
   } catch (error: any) {
     // Không log connection string, chỉ log thông điệp lỗi kỹ thuật nội bộ phía server
     console.error('[DB Error]', {
-      message: error.message,
       code: error.code,
-      query: text,
       duration: `${Date.now() - start}ms`,
     });
-    throw new Error('Database query failed: ' + (error.code || 'UNKNOWN_ERROR'));
+    throw new Error('Database query failed.');
   }
 }
 

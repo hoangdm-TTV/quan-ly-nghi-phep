@@ -47,7 +47,7 @@ export default function OutOfficeForm() {
   const initialState: OutOfficeActionState = {};
   const [state, formAction] = useFormState(createOutOfficeRequestAction, initialState);
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = new Date().toLocaleDateString('en-CA');
   const [requestDate, setRequestDate] = useState(todayStr);
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
@@ -69,7 +69,7 @@ export default function OutOfficeForm() {
         <p className="font-semibold text-amber-900">
           Quy trình ra ngoài (Gate Pass):
         </p>
-        <p>1. <strong>Trước khi đi:</strong> Gửi đơn để Trưởng phòng cùng phòng ban hoặc Giám đốc duyệt.</p>
+        <p>1. <strong>Trước khi đi:</strong> Gửi đơn để Trưởng phòng trực tiếp (manager_id) hoặc Giám đốc duyệt.</p>
         <p>2. <strong>Sau khi về:</strong> Trưởng phòng hoặc Giám đốc xác nhận hoàn tất đơn.</p>
       </div>
 

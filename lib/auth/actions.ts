@@ -65,7 +65,7 @@ export async function loginAction(
     // 5. Thiết lập Cookie HttpOnly an toàn
     setSessionCookie(sessionId, expiresAt);
   } catch (err: any) {
-    console.error('[Login Action Error]', err.message);
+    console.error('[Login Action Error]', err);
     return { error: 'Hệ thống đang bận hoặc có lỗi kết nối database. Vui lòng thử lại sau.' };
   }
 
