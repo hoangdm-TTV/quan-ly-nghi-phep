@@ -19,7 +19,7 @@ export default async function NewOutOfficePage() {
       <div>
         <h2 className="text-xl font-bold text-slate-900">Tạo đơn xin ra ngoài (Gate Pass)</h2>
         <p className="text-xs text-slate-500 mt-1">
-          Đăng ký khung giờ và lý do ra ngoài trong ngày làm việc. Đơn sẽ được chuyển đến Trưởng phòng cùng phòng ban hoặc Giám đốc duyệt.
+          Đăng ký khung giờ và lý do ra ngoài trong ngày làm việc. Đơn sẽ được chuyển đến Trưởng phòng trực tiếp (manager_id) hoặc Giám đốc duyệt.
         </p>
       </div>
 

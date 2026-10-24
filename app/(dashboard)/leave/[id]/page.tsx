@@ -30,7 +30,6 @@ export default async function LeaveDetailPage({
   params: { id: string };
 }) {
   const currentUser = await requireAuth();
-  if (currentUser.role === 'ACCOUNTANT') redirect('/');
   const request = await getLeaveRequestById(params.id);
 
   if (!request) {
@@ -53,13 +52,16 @@ export default async function LeaveDetailPage({
   const documentMetadata = await getLeaveDocumentMetadataById(request.id);
   const history = await getLeaveApprovalHistory(request.id);
 
-  // Kiểm tra xem người đang xem có thẩm quyền duyệt đơn này tại thời điểm hiện tại không
-  const approvalEvaluation = evaluateLeaveApproval(
-    currentUser,
-    applicant,
-    request.status,
-    request.duration_days
-  );
+  // Kế toán chỉ xem (chỉ đọc), không duyệt.
+  const isReadOnly = currentUser.role === 'ACCOUNTANT';
+  const approvalEvaluation = isReadOnly
+    ? { allowed: false }
+    : evaluateLeaveApproval(
+        currentUser,
+        applicant,
+        request.status,
+        request.duration_days
+      );
   const canApproveNow = approvalEvaluation.allowed;
 
   return (
@@ -88,10 +90,14 @@ export default async function LeaveDetailPage({
             </p>
           </div>
 
-          {canApproveNow && (
+          {(canApproveNow || isReadOnly) && (
             <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
               <p className="text-xs font-semibold text-slate-700 mb-2">Thao tác xử lý đơn:</p>
-              <ApprovalActions requestId={request.id} />
+              {isReadOnly ? (
+                <p className="text-xs text-slate-500 italic">Tài khoản Kế toán chỉ xem (chỉ đọc), không phê duyệt.</p>
+              ) : (
+                <ApprovalActions requestId={request.id} />
+              )}
             </div>
           )}
         </div>

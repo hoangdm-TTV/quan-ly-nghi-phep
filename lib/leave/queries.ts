@@ -181,21 +181,19 @@ export async function getPendingLeaveRequestsForApprover(
   const params: any[] = [approver.id];
 
   if (approver.role === 'DIRECTOR') {
-    // Cấp 2 sau Manager và đơn của Manager/ACCOUNTANT theo luồng hiện có.
+    // Cấp 2 sau Manager và đơn của Manager theo luồng hiện có.
     whereClause = `
       (
         lr.status = 'APPROVED_BY_LEAD'
-        OR (lr.status = 'PENDING' AND u.role IN ('MANAGER', 'ACCOUNTANT'))
+        OR (lr.status = 'PENDING' AND u.role = 'MANAGER')
       )
     `;
   } else if (approver.role === 'MANAGER') {
-    // Trưởng phòng duyệt cấp 1 cho nhân viên và Team Lead cùng phòng ban.
-    if (!approver.department_id) return [];
-    params.push(approver.department_id);
+    // Trưởng phòng duyệt cấp 1 cho nhân viên có manager_id trỏ trực tiếp tới mình.
     whereClause = `
       lr.status = 'PENDING'
-      AND u.department_id = $2
-      AND u.role IN ('STAFF', 'TEAM_LEAD')
+      AND u.manager_id = $1
+      AND u.role IN ('STAFF', 'TEAM_LEAD', 'ACCOUNTANT')
     `;
   }
 
@@ -230,6 +228,54 @@ export async function getPendingLeaveRequestsForApprover(
       AND ${whereClause}
     ORDER BY lr.created_at ASC
   `;
+
+  const res = await query<LeaveRequestDetail>(sql, params);
+  return res.rows;
+}
+
+/**
+ * Lấy tất cả đơn nghỉ phép trong công ty — dành cho Giám đốc và Kế toán (chỉ đọc).
+ */
+export async function getAllLeaveRequests(
+  statusFilter?: string
+): Promise<LeaveRequestDetail[]> {
+  let sql = `
+    SELECT 
+      lr.id,
+      lr.employee_id,
+      u.full_name AS employee_name,
+      u.email AS employee_email,
+      u.role AS employee_role,
+      u.department_id,
+      d.name AS department_name,
+      u.team_id,
+      t.name AS team_name,
+      TO_CHAR(lr.start_date, 'YYYY-MM-DD') AS start_date,
+      TO_CHAR(lr.end_date, 'YYYY-MM-DD') AS end_date,
+      lr.duration_days::float AS duration_days,
+      lr.reason,
+      lr.status,
+      lr.document_url,
+      lr.approver_id,
+      app.full_name AS approver_name,
+      lr.rejection_reason,
+      lr.created_at,
+      lr.updated_at
+    FROM leave_requests lr
+    JOIN users u ON lr.employee_id = u.id
+    LEFT JOIN departments d ON u.department_id = d.id
+    LEFT JOIN teams t ON u.team_id = t.id
+    LEFT JOIN users app ON lr.approver_id = app.id
+  `;
+
+  const params: any[] = [];
+
+  if (statusFilter && statusFilter !== 'ALL') {
+    params.push(statusFilter);
+    sql += ` WHERE lr.status = ${params.length}`;
+  }
+
+  sql += ` ORDER BY lr.created_at DESC`;
 
   const res = await query<LeaveRequestDetail>(sql, params);
   return res.rows;

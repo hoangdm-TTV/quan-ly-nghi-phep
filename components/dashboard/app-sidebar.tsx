@@ -19,6 +19,8 @@ import {
   FileText,
   X,
   ChevronDown,
+  CalendarCheck,
+  Users,
 } from 'lucide-react';
 
 interface AppSidebarProps {
@@ -64,6 +66,8 @@ export default function AppSidebar({ user, isOpen, onClose }: AppSidebarProps) {
   const canSubmit = canSubmitPersonalRequests(user.role);
   const canApprove = canApproveWorkflowRequests(user.role);
   const canUseRequests = canAccessRequestModules(user.role);
+  const canManageHolidays = user.role === 'ACCOUNTANT' || user.role === 'DIRECTOR';
+  const canViewAllRequests = user.role === 'DIRECTOR' || user.role === 'ACCOUNTANT';
 
   const navigation: NavItem[] = [
     {
@@ -115,6 +119,30 @@ export default function AppSidebar({ user, isOpen, onClose }: AppSidebarProps) {
           show: canApprove,
         },
       ],
+    },
+    {
+      kind: 'leaf',
+      name: 'Tất cả đơn nghỉ phép',
+      href: '/all-requests/leave',
+      icon: Users,
+      show: canViewAllRequests,
+      exact: true,
+    },
+    {
+      kind: 'leaf',
+      name: 'Tất cả đơn ra ngoài',
+      href: '/all-requests/out-office',
+      icon: Users,
+      show: canViewAllRequests,
+      exact: true,
+    },
+    {
+      kind: 'leaf',
+      name: 'Quản lý ngày lễ',
+      href: '/holidays',
+      icon: CalendarCheck,
+      show: canManageHolidays,
+      exact: true,
     },
     {
       kind: 'leaf',

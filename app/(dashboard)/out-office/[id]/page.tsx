@@ -27,7 +27,6 @@ export default async function OutOfficeDetailPage({
   params: { id: string };
 }) {
   const currentUser = await requireAuth();
-  if (currentUser.role === 'ACCOUNTANT') redirect('/');
   const request = await getOutOfficeRequestById(params.id);
 
   if (!request) {
@@ -49,8 +48,11 @@ export default async function OutOfficeDetailPage({
 
   const history = await getOutOfficeApprovalHistory(request.id);
 
-  // Kiểm tra thẩm quyền duyệt của người xem hiện tại
-  const approvalEval = evaluateOutOfficeApproval(currentUser, applicant, request.status);
+  // Kế toán chỉ xem (chỉ đọc), không duyệt.
+  const isReadOnly = currentUser.role === 'ACCOUNTANT';
+  const approvalEval = isReadOnly
+    ? { allowed: false }
+    : evaluateOutOfficeApproval(currentUser, applicant, request.status);
   const canApproveNow = approvalEval.allowed;
 
   return (
@@ -77,10 +79,14 @@ export default async function OutOfficeDetailPage({
             </p>
           </div>
 
-          {canApproveNow && (
+          {(canApproveNow || isReadOnly) && (
             <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
               <p className="text-xs font-semibold text-slate-700 mb-2">Thao tác duyệt đơn:</p>
-              <OutOfficeApprovalActions requestId={request.id} currentStatus={request.status} />
+              {isReadOnly ? (
+                <p className="text-xs text-slate-500 italic">Tài khoản Kế toán chỉ xem (chỉ đọc), không phê duyệt.</p>
+              ) : (
+                <OutOfficeApprovalActions requestId={request.id} currentStatus={request.status} />
+              )}
             </div>
           )}
         </div>

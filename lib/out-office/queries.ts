@@ -159,9 +159,8 @@ export async function getPendingOutOfficeRequestsForApprover(
   const params: string[] = [approver.id];
   let scopeClause = 'TRUE';
   if (approver.role === 'MANAGER') {
-    if (!approver.department_id) return [];
-    params.push(approver.department_id);
-    scopeClause = `u.department_id = $2 AND u.role IN ('STAFF', 'TEAM_LEAD')`;
+    // Trưởng phòng duyệt đơn của nhân viên có manager_id trỏ trực tiếp tới mình.
+    scopeClause = `u.manager_id = $1 AND u.role IN ('STAFF', 'TEAM_LEAD', 'ACCOUNTANT')`;
   }
 
   const sql = `
@@ -198,6 +197,53 @@ export async function getPendingOutOfficeRequestsForApprover(
       oo.request_date ASC,
       oo.start_time ASC
   `;
+
+  const res = await query<OutOfficeDetail>(sql, params);
+  return res.rows;
+}
+
+/**
+ * Lấy tất cả đơn ra ngoài trong công ty — dành cho Giám đốc và Kế toán (chỉ đọc).
+ */
+export async function getAllOutOfficeRequests(
+  statusFilter?: string
+): Promise<OutOfficeDetail[]> {
+  let sql = `
+    SELECT 
+      oo.id,
+      oo.employee_id,
+      u.full_name AS employee_name,
+      u.email AS employee_email,
+      u.role AS employee_role,
+      d.name AS department_name,
+      t.name AS team_name,
+      TO_CHAR(oo.request_date, 'YYYY-MM-DD') AS request_date,
+      TO_CHAR(oo.start_time, 'HH24:MI') AS start_time,
+      TO_CHAR(oo.end_time, 'HH24:MI') AS end_time,
+      oo.estimated_hours::float AS estimated_hours,
+      oo.reason_type,
+      oo.reason,
+      oo.status,
+      oo.approver_id,
+      app.full_name AS approver_name,
+      oo.rejection_reason,
+      oo.created_at,
+      oo.updated_at
+    FROM out_office_requests oo
+    JOIN users u ON oo.employee_id = u.id
+    LEFT JOIN departments d ON u.department_id = d.id
+    LEFT JOIN teams t ON u.team_id = t.id
+    LEFT JOIN users app ON oo.approver_id = app.id
+  `;
+
+  const params: any[] = [];
+
+  if (statusFilter && statusFilter !== 'ALL') {
+    params.push(statusFilter);
+    sql += ` WHERE oo.status = ${params.length}`;
+  }
+
+  sql += ` ORDER BY oo.created_at DESC`;
 
   const res = await query<OutOfficeDetail>(sql, params);
   return res.rows;

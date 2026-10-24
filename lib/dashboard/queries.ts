@@ -57,7 +57,8 @@ export interface RecentActivityItem {
  * Lấy các chỉ số thống kê thực tế từ PostgreSQL cho người dùng hiện tại
  */
 export async function getDashboardStats(user: SafeUser): Promise<DashboardStats> {
-  if (user.role === 'ACCOUNTANT') {
+  // Giám đốc không tạo đơn nên không có thống kê cá nhân.
+  if (user.role === 'DIRECTOR') {
     return {
       myLeaveTotal: 0, myLeavePending: 0, myLeaveApproved: 0, myLeaveRejected: 0,
       myOutOfficeTotal: 0, myOutOfficePending: 0, myOutOfficeActive: 0, myOutOfficeCompleted: 0,
@@ -246,7 +247,7 @@ export async function getScopeReport(
  * Lấy danh sách hoạt động gần đây của người dùng
  */
 export async function getRecentActivities(user: SafeUser): Promise<RecentActivityItem[]> {
-  if (user.role === 'ACCOUNTANT') return [];
+  if (user.role === 'DIRECTOR') return [];
 
   const leaveQuery = `
     SELECT 

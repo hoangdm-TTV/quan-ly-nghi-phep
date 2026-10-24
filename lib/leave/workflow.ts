@@ -44,18 +44,19 @@ export function evaluateLeaveApproval(
         };
   }
 
-  if (applicant.role === 'STAFF' || applicant.role === 'TEAM_LEAD') {
-    const isSameDepartmentManager =
+  if (applicant.role === 'STAFF' || applicant.role === 'TEAM_LEAD' || applicant.role === 'ACCOUNTANT') {
+    // Trưởng phòng chỉ duyệt đơn của nhân viên có manager_id trỏ trực tiếp tới mình.
+    const isDirectManager =
       approver.role === 'MANAGER' &&
-      Boolean(approver.department_id) &&
-      approver.department_id === applicant.department_id;
+      Boolean(applicant.manager_id) &&
+      approver.id === applicant.manager_id;
 
-    if (!isSameDepartmentManager) {
+    if (!isDirectManager) {
       return {
         allowed: false,
         reason: durationDays > 1
-          ? 'Đơn nghỉ nhiều ngày phải được Trưởng phòng cùng phòng ban duyệt cấp 1 trước.'
-          : 'Đơn nghỉ Staff/Team Lead phải do Trưởng phòng cùng phòng ban duyệt cấp 1.',
+          ? 'Đơn nghỉ nhiều ngày phải được Trưởng phòng trực tiếp (manager_id) duyệt cấp 1 trước.'
+          : 'Đơn nghỉ phải do Trưởng phòng trực tiếp (manager_id) duyệt cấp 1.',
       };
     }
 
@@ -65,8 +66,8 @@ export function evaluateLeaveApproval(
     return { allowed: true, nextStatus: 'APPROVED_BY_LEAD', action: 'APPROVED_LEAD' };
   }
 
-  // Đơn của Manager (hoặc dữ liệu Accountant cũ) được Director xử lý trực tiếp.
-  if (applicant.role === 'MANAGER' || applicant.role === 'ACCOUNTANT') {
+  // Đơn của Manager được Director xử lý trực tiếp.
+  if (applicant.role === 'MANAGER') {
     return approver.role === 'DIRECTOR'
       ? { allowed: true, nextStatus: 'WAITING_FOR_DOC', action: 'APPROVED_DIRECTOR' }
       : { allowed: false, reason: 'Đơn của Trưởng phòng phải do Giám đốc duyệt trực tiếp.' };

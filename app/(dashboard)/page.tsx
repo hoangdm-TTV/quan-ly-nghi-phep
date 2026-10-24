@@ -71,8 +71,8 @@ export default async function DashboardPage({
           </p>
         </div>
 
-        {/* Accountant chỉ xem báo cáo; Giám đốc không tạo đơn. */}
-        {user.role !== 'DIRECTOR' && user.role !== 'ACCOUNTANT' && (
+        {/* Giám đốc không tạo đơn; Kế toán xin nghỉ như nhân viên thường. */}
+        {user.role !== 'DIRECTOR' && (
           <div className="flex flex-wrap items-center gap-2.5">
             <Link
               href="/leave/new"
@@ -137,8 +137,8 @@ export default async function DashboardPage({
         </div>
       )}
 
-      {/* 3. Widget cá nhân và chờ duyệt không hiển thị cho ACCOUNTANT. */}
-      {user.role !== 'ACCOUNTANT' && (
+      {/* 3. Widget cá nhân và chờ duyệt. */}
+      {(
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Tổng đơn nghỉ phép */}
         <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
@@ -302,8 +302,8 @@ export default async function DashboardPage({
         </section>
       )}
 
-      {/* 4. Chi tiết hoạt động/đơn cá nhân chỉ dành cho role có quyền xem đơn. */}
-      {user.role !== 'ACCOUNTANT' && (
+      {/* 4. Chi tiết hoạt động/đơn cá nhân. */}
+      {(
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Cột trái: Đơn gần đây của cá nhân (Chiếm 2 cột) */}
         <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 space-y-4">
@@ -442,13 +442,13 @@ export default async function DashboardPage({
             </h4>
             <div className="space-y-2 text-xs leading-relaxed text-slate-300">
               <p>
-                • <strong>Nghỉ phép:</strong> Lịch làm việc T2 – T7 (đã tự động loại trừ Chủ Nhật).
+                • <strong>Nghỉ phép:</strong> Lịch làm việc T2 – T7 (đã tự động loại trừ Chủ Nhật và ngày lễ).
               </p>
               <p>
                 • <strong>Duyệt đa cấp:</strong> Đơn nghỉ từ 2 ngày trở lên yêu cầu Giám đốc phê duyệt cấp 2.
               </p>
               <p>
-                • <strong>Ra ngoài:</strong> Manager cùng phòng hoặc Director duyệt; xác nhận hoàn tất khi về.
+                • <strong>Ra ngoài:</strong> Trưởng phòng trực tiếp (manager_id) hoặc Giám đốc duyệt; xác nhận hoàn tất khi về.
               </p>
             </div>
           </div>

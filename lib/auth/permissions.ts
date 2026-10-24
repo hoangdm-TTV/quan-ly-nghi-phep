@@ -79,11 +79,6 @@ export function canAccessTeam(
  * Kiểm tra quyền truy cập dữ liệu của một nhân viên cụ thể
  */
 export function canAccessUserData(currentUser: SafeUser, targetUser: SafeUser): boolean {
-  // Accountant chỉ được xem báo cáo tổng hợp, không được đọc row-level data.
-  if (currentUser.role === 'ACCOUNTANT') {
-    return false;
-  }
-
   // Được truy cập dữ liệu của chính mình
   if (currentUser.id === targetUser.id) {
     return true;
@@ -91,6 +86,11 @@ export function canAccessUserData(currentUser: SafeUser, targetUser: SafeUser): 
 
   // Chỉ Giám đốc được xem dữ liệu toàn bộ nhân viên.
   if (currentUser.role === 'DIRECTOR') {
+    return true;
+  }
+
+  // Kế toán được xem dữ liệu toàn công ty (chỉ đọc, đối soát).
+  if (currentUser.role === 'ACCOUNTANT') {
     return true;
   }
 

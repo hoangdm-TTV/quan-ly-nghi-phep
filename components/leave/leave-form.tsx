@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { useFormState, useFormStatus } from 'react-dom';
 import { createLeaveRequestAction, LeaveActionState } from '@/lib/leave/actions';
 import { Calendar, FileText, AlertCircle, Loader2, ArrowLeft, Send } from 'lucide-react';
@@ -109,12 +109,12 @@ export default function LeaveForm() {
             Số ngày làm việc dự kiến: <span className="text-base text-blue-700 font-bold">{calculatedDays}</span> ngày
           </p>
           <p className="text-blue-600">
-            • Lịch làm việc công ty: Thứ 2 – Thứ 7 (Hệ thống đã tự động trừ ngày Chủ Nhật).
+            • Lịch làm việc công ty: Thứ 2 – Thứ 7 (Hệ thống đã tự động trừ ngày Chủ Nhật và ngày lễ).
           </p>
           <p className="text-blue-600">
             {calculatedDays <= 1
-              ? '• Đơn tối đa 1 ngày: Trưởng phòng cùng phòng ban duyệt.'
-              : '• Đơn từ 2 ngày trở lên: Cần 2 cấp phê duyệt (Cấp 1 duyệt xong sẽ chuyển đến Giám đốc).'}
+              ? '• Đơn tối đa 1 ngày: Trưởng phòng trực tiếp (manager_id) duyệt.'
+              : '• Đơn từ 2 ngày trở lên: Cần 2 cấp phê duyệt (Trưởng phòng duyệt cấp 1 xong sẽ chuyển đến Giám đốc).'}
           </p>
         </div>
       )}

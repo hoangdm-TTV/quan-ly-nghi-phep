@@ -29,7 +29,7 @@ export async function uploadLeaveDocumentAction(
   formData: FormData
 ): Promise<LeaveActionState> {
   const currentUser = await requireAuth();
-  if (currentUser.role === 'ACCOUNTANT' || currentUser.role === 'DIRECTOR') {
+  if (currentUser.role === 'DIRECTOR') {
     return { error: 'Tài khoản này không có quyền nộp giấy nghỉ phép.' };
   }
 
@@ -143,12 +143,9 @@ export async function createLeaveRequestAction(
 ): Promise<LeaveActionState> {
   const currentUser = await requireAuth();
 
-  // 1. Kiểm tra nghiệp vụ: Giám đốc không tạo đơn nghỉ phép trên hệ thống
+  // Giám đốc không tạo đơn nghỉ phép trên hệ thống
   if (currentUser.role === 'DIRECTOR') {
     return { error: 'Tài khoản Giám đốc (DIRECTOR) không tạo đơn nghỉ phép trên ứng dụng.' };
-  }
-  if (currentUser.role === 'ACCOUNTANT') {
-    return { error: 'Tài khoản ACCOUNTANT chỉ được xem báo cáo, không được tạo đơn nghỉ phép.' };
   }
 
   // 2. Validate dữ liệu đầu vào
