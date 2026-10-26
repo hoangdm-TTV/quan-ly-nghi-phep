@@ -208,6 +208,8 @@ export async function getPendingOutOfficeRequestsForApprover(
 export interface ScopedOutOfficeFilter {
   status?: string;
   employeeId?: string;
+  departmentId?: string;
+  teamId?: string;
   fromDate?: string;
   toDate?: string;
 }
@@ -231,6 +233,14 @@ export async function getScopedOutOfficeRequests(
   if (filter.employeeId) {
     params.push(filter.employeeId);
     conditions.push(`oo.employee_id = $${params.length}`);
+  }
+  if (filter.departmentId) {
+    params.push(filter.departmentId);
+    conditions.push(`u.department_id = $${params.length}`);
+  }
+  if (filter.teamId) {
+    params.push(filter.teamId);
+    conditions.push(`u.team_id = $${params.length}`);
   }
   if (filter.fromDate) {
     params.push(filter.fromDate);

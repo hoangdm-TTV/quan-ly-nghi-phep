@@ -7,8 +7,50 @@
   --foreground: #0f172a;
 }
 
+html,
+body {
+  font-family: "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+/* Cỡ chữ dễ đọc hơn trên màn hình Windows; chỉ các thành phần có class
+   font-semibold/bold/black mới được nhấn mạnh theo chủ ý của giao diện. */
+.text-xs {
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+}
+
+.text-sm {
+  font-size: 0.9375rem;
+  line-height: 1.45rem;
+}
+
+.font-medium {
+  font-weight: 400;
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+.font-bold,
+.font-black {
+  font-weight: 700;
 }

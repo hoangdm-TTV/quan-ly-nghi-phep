@@ -2,9 +2,10 @@ import { requireAuth } from '@/lib/auth/permissions';
 import { getVisibleLeaveRequests, getScopedLeaveRequests, ScopedLeaveFilter } from '@/lib/leave/queries';
 import { canSubmitPersonalRequests, canApproveWorkflowRequests, canViewRequestScope } from '@/lib/auth/roles';
 import { getUserDataScopeLabel } from '@/lib/auth/data-scope';
-import { getUsersInScope } from '@/lib/db/queries/users';
+import { getFilterOptionsInScope, getUsersInScope } from '@/lib/db/queries/users';
 import { redirect } from 'next/navigation';
 import LeaveStatusBadge from '@/components/leave/leave-status-badge';
+import ScopeFilterForm from '@/components/requests/scope-filter-form';
 import Link from 'next/link';
 import { Plus, FileText, ArrowRight, Calendar, Filter } from 'lucide-react';
 
@@ -22,7 +23,7 @@ function validDate(value?: string): string | undefined {
 export default async function LeaveListPage({
   searchParams,
 }: {
-  searchParams: { status?: string; tab?: string; employeeId?: string; from?: string; to?: string };
+  searchParams: { status?: string; tab?: string; employeeId?: string; departmentId?: string; teamId?: string; from?: string; to?: string };
 }) {
   const user = await requireAuth();
   const canSubmit = canSubmitPersonalRequests(user.role);
@@ -49,17 +50,21 @@ export default async function LeaveListPage({
 
   let requests;
   let scopedUsers: Awaited<ReturnType<typeof getUsersInScope>> = [];
+  let filterOptions: Awaited<ReturnType<typeof getFilterOptionsInScope>> = { departments: [], teams: [] };
 
   if (activeTab === 'scope' && hasScope) {
     const filter: ScopedLeaveFilter = {
       status: currentFilter,
       employeeId: searchParams?.employeeId || undefined,
+      departmentId: searchParams?.departmentId || undefined,
+      teamId: searchParams?.teamId || undefined,
       fromDate: validDate(searchParams?.from),
       toDate: validDate(searchParams?.to),
     };
-    [requests, scopedUsers] = await Promise.all([
+    [requests, scopedUsers, filterOptions] = await Promise.all([
       getScopedLeaveRequests(user, filter),
-      getUsersInScope(user),
+      getUsersInScope(user, searchParams?.departmentId, searchParams?.teamId),
+      getFilterOptionsInScope(user, searchParams?.departmentId, searchParams?.teamId),
     ]);
   } else {
     requests = await getVisibleLeaveRequests(user, currentFilter);
@@ -78,6 +83,8 @@ export default async function LeaveListPage({
     if (hasScope) params.set('tab', activeTab);
     if (status !== 'ALL') params.set('status', status);
     if (searchParams?.employeeId) params.set('employeeId', searchParams.employeeId);
+    if (searchParams?.departmentId) params.set('departmentId', searchParams.departmentId);
+    if (searchParams?.teamId) params.set('teamId', searchParams.teamId);
     if (searchParams?.from) params.set('from', searchParams.from);
     if (searchParams?.to) params.set('to', searchParams.to);
     const qs = params.toString();
@@ -145,62 +152,18 @@ export default async function LeaveListPage({
 
       {/* Scope Filter Bar */}
       {activeTab === 'scope' && (
-        <form method="get" className="bg-white rounded-2xl p-4 sm:p-5 shadow-xs border border-slate-200/90 flex flex-col sm:flex-row sm:items-end gap-3.5">
-          <input type="hidden" name="tab" value="scope" />
-          {currentFilter !== 'ALL' && <input type="hidden" name="status" value={currentFilter} />}
-          <div className="flex-1 min-w-[200px]">
-            <label htmlFor="emp" className="block text-xs font-bold text-slate-700 mb-1.5">
-              Nhân viên
-            </label>
-            <select
-              id="emp"
-              name="employeeId"
-              defaultValue={searchParams?.employeeId || ''}
-              className="w-full rounded-xl border border-slate-300 bg-slate-50/50 px-3.5 py-2 text-xs sm:text-sm font-medium text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#005a3c]"
-            >
-              <option value="">Tất cả nhân viên</option>
-              {scopedUsers.map((u) => (
-                <option key={u.id} value={u.id}>{u.full_name}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label htmlFor="from" className="block text-xs font-bold text-slate-700 mb-1.5">Từ ngày</label>
-            <input
-              id="from"
-              name="from"
-              type="date"
-              defaultValue={searchParams?.from}
-              className="rounded-xl border border-slate-300 bg-slate-50/50 px-3.5 py-2 text-xs sm:text-sm font-medium text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#005a3c]"
-            />
-          </div>
-          <div>
-            <label htmlFor="to" className="block text-xs font-bold text-slate-700 mb-1.5">Đến ngày</label>
-            <input
-              id="to"
-              name="to"
-              type="date"
-              defaultValue={searchParams?.to}
-              className="rounded-xl border border-slate-300 bg-slate-50/50 px-3.5 py-2 text-xs sm:text-sm font-medium text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#005a3c]"
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="submit"
-              className="rounded-xl bg-[#005a3c] px-4 py-2.5 text-xs sm:text-sm font-bold text-white hover:bg-[#044e3f] shadow-xs transition-colors"
-            >
-              Lọc kết quả
-            </button>
-            {(searchParams?.employeeId || searchParams?.from || searchParams?.to) && (
-              <Link
-                href={buildFilterUrl(currentFilter)}
-                className="px-3 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900"
-              >
-                Xóa lọc
-              </Link>
-            )}
-          </div>
-        </form>
+        <ScopeFilterForm
+          basePath="/leave"
+          status={currentFilter}
+          departmentId={searchParams?.departmentId}
+          teamId={searchParams?.teamId}
+          employeeId={searchParams?.employeeId}
+          from={searchParams?.from}
+          to={searchParams?.to}
+          departments={filterOptions.departments}
+          teams={filterOptions.teams}
+          users={scopedUsers}
+        />
       )}
 
       {/* Filter Status Pills */}

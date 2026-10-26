@@ -8,17 +8,35 @@ export interface ScopedUserOption {
   role: string;
 }
 
+export interface ScopedFilterOptions {
+  departments: Array<{ id: string; name: string }>;
+  teams: Array<{ id: string; name: string; department_id: string | null }>;
+}
+
 /**
  * Lấy danh sách nhân viên trong phạm vi quyền của người dùng (trừ chính họ).
  * Dùng cho dropdown lọc theo nhân viên trong trang danh sách đơn.
  */
-export async function getUsersInScope(user: SafeUser): Promise<ScopedUserOption[]> {
+export async function getUsersInScope(
+  user: SafeUser,
+  departmentId?: string,
+  teamId?: string
+): Promise<ScopedUserOption[]> {
   const scope = buildReportDataScope(user, 'u');
   const params: any[] = [...scope.params];
+  const conditions = [scope.whereSql];
+  if (departmentId) {
+    params.push(departmentId);
+    conditions.push(`u.department_id = $${params.length}`);
+  }
+  if (teamId) {
+    params.push(teamId);
+    conditions.push(`u.team_id = $${params.length}`);
+  }
   const sql = `
     SELECT u.id, u.full_name, u.role
     FROM users u
-    WHERE ${scope.whereSql}
+    WHERE ${conditions.join(' AND ')}
       AND u.id != $${params.length + 1}
       AND u.is_active = true
     ORDER BY u.full_name ASC
@@ -26,6 +44,44 @@ export async function getUsersInScope(user: SafeUser): Promise<ScopedUserOption[
   params.push(user.id);
   const res = await query<ScopedUserOption>(sql, params);
   return res.rows;
+}
+
+/** Lấy các phòng ban/team thực tế có nhân sự trong phạm vi được xem. */
+export async function getFilterOptionsInScope(
+  user: SafeUser,
+  departmentId?: string,
+  teamId?: string
+): Promise<ScopedFilterOptions> {
+  const scope = buildReportDataScope(user, 'u');
+  const baseParams: any[] = [...scope.params];
+  const conditions = [scope.whereSql];
+  if (departmentId) {
+    baseParams.push(departmentId);
+    conditions.push(`u.department_id = $${baseParams.length}`);
+  }
+  if (teamId) {
+    baseParams.push(teamId);
+    conditions.push(`u.team_id = $${baseParams.length}`);
+  }
+  const [departments, teams] = await Promise.all([
+    query<{ id: string; name: string }>(
+      `SELECT DISTINCT d.id, d.name
+         FROM users u
+         JOIN departments d ON d.id = u.department_id
+        WHERE ${conditions.join(' AND ')}
+        ORDER BY d.name`,
+      baseParams
+    ),
+    query<{ id: string; name: string; department_id: string | null }>(
+      `SELECT DISTINCT t.id, t.name, t.department_id
+         FROM users u
+         JOIN teams t ON t.id = u.team_id
+        WHERE ${conditions.join(' AND ')}
+        ORDER BY t.name`,
+      baseParams
+    ),
+  ]);
+  return { departments: departments.rows, teams: teams.rows };
 }
 
 /**
