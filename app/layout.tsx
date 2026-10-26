@@ -3,12 +3,13 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Quản lý Nghỉ phép & Đơn ra ngoài | Hệ thống nhân sự nội bộ",
-    template: "%s | Quản lý Nghỉ phép & Đơn ra ngoài",
+    default: "TRI THỨC VIỆT | Quản lý Nghỉ phép & Đơn ra ngoài",
+    template: "%s | Tri Thức Việt",
   },
   description:
-    "Hệ thống nội bộ quản lý nghỉ phép và đơn xin ra ngoài cho doanh nghiệp: quy trình phê duyệt nhiều cấp, phân quyền theo vai trò, dashboard đối soát chấm công.",
+    "Hệ thống nội bộ quản lý nghỉ phép và đơn xin ra ngoài cho cán bộ công nhân viên công ty Tri Thức Việt: quy trình phê duyệt nhiều cấp, phân quyền theo vai trò, dashboard đối soát chấm công.",
   keywords: [
+    "tri thức việt",
     "quản lý nghỉ phép",
     "đơn xin ra ngoài",
     "phê duyệt nghỉ phép",
@@ -17,15 +18,15 @@ export const metadata: Metadata = {
     "gate pass",
     "leave management",
   ],
-  authors: [{ name: "HR Internal System" }],
+  authors: [{ name: "Tri Thức Việt IT & HR" }],
   robots: {
     index: false,
     follow: false,
   },
   openGraph: {
-    title: "Quản lý Nghỉ phép & Đơn ra ngoài",
+    title: "TRI THỨC VIỆT | Quản lý Nghỉ phép & Đơn ra ngoài",
     description:
-      "Hệ thống nội bộ quản lý nghỉ phép và đơn xin ra ngoài cho doanh nghiệp.",
+      "Hệ thống nội bộ quản lý nghỉ phép và đơn xin ra ngoài công ty Tri Thức Việt.",
     locale: "vi_VN",
     type: "website",
   },
@@ -34,7 +35,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#1e3a5f",
+  themeColor: "#005a3c",
 };
 
 export default function RootLayout({
@@ -44,7 +45,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi">
-      <body className="antialiased min-h-screen">{children}</body>
+      <body className="antialiased min-h-screen text-slate-900 bg-[#f1f5f9]">{children}</body>
     </html>
   );
 }

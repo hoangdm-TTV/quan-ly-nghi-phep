@@ -14,7 +14,19 @@ import { getRoleLabel } from '@/lib/auth/role-labels';
 import { getPendingLeaveRequestsForApprover } from '@/lib/leave/queries';
 import { getPendingOutOfficeRequestsForApprover } from '@/lib/out-office/queries';
 import Link from 'next/link';
-import { ArrowRight, Clock, FileText, Plus, UserCheck } from 'lucide-react';
+import {
+  ArrowRight,
+  Clock,
+  CalendarDays,
+  FileText,
+  Plus,
+  UserCheck,
+  AlertCircle,
+  CheckCircle2,
+  TrendingUp,
+  Building2,
+  CalendarCheck2,
+} from 'lucide-react';
 
 function validDateFilter(value?: string): string | undefined {
   if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return undefined;
@@ -53,30 +65,31 @@ const emptyReport: ScopeReport = {
   },
 };
 
-const statusLabels: Record<string, string> = {
-  PENDING: 'Chờ duyệt',
-  APPROVED_BY_LEAD: 'Chờ Giám đốc',
-  WAITING_FOR_DOC: 'Chờ nộp giấy',
-  APPROVED: 'Đã duyệt',
-  COMPLETED: 'Hoàn tất',
-  REJECTED: 'Từ chối',
+const statusLabels: Record<string, { label: string; class: string }> = {
+  PENDING: { label: 'Chờ duyệt', class: 'bg-amber-50 text-amber-800 border-amber-200' },
+  APPROVED_BY_LEAD: { label: 'Chờ Giám đốc', class: 'bg-blue-50 text-blue-800 border-blue-200' },
+  WAITING_FOR_DOC: { label: 'Chờ nộp giấy', class: 'bg-teal-50 text-teal-800 border-teal-200' },
+  APPROVED: { label: 'Đã duyệt', class: 'bg-emerald-50 text-[#005a3c] border-emerald-200' },
+  COMPLETED: { label: 'Hoàn tất', class: 'bg-emerald-50 text-[#005a3c] border-emerald-200' },
+  REJECTED: { label: 'Từ chối', class: 'bg-rose-50 text-rose-800 border-rose-200' },
 };
 
-function StatusLabel({ status }: { status: string }) {
-  const tone = status === 'COMPLETED' || status === 'WAITING_FOR_DOC' || status === 'APPROVED'
-    ? 'text-emerald-700'
-    : status === 'REJECTED'
-      ? 'text-rose-700'
-      : 'text-amber-700';
-  return <span className={`text-xs font-medium ${tone}`}>{statusLabels[status] || status}</span>;
+function StatusBadge({ status }: { status: string }) {
+  const cfg = statusLabels[status] || { label: status, class: 'bg-slate-50 text-slate-700 border-slate-200' };
+  return (
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${cfg.class}`}>
+      <span className="w-1.5 h-1.5 rounded-full mr-1.5 bg-current opacity-70"></span>
+      {cfg.label}
+    </span>
+  );
 }
 
 function SectionHeading({ title, detail, action }: { title: string; detail?: string; action?: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-2 border-b border-slate-200 pb-3 sm:flex-row sm:items-end sm:justify-between">
+    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between pb-2 border-b border-slate-200/90">
       <div>
-        <h2 className="text-base font-semibold text-slate-900">{title}</h2>
-        {detail && <p className="mt-1 text-sm text-slate-500">{detail}</p>}
+        <h2 className="text-base sm:text-lg font-bold text-slate-900">{title}</h2>
+        {detail && <p className="text-xs sm:text-sm text-slate-500">{detail}</p>}
       </div>
       {action}
     </div>
@@ -98,147 +111,347 @@ function ReportSection({
 }) {
   const { totals } = report;
   return (
-    <section className="space-y-5 border-y border-slate-200 py-5">
+    <section className="bg-white rounded-2xl p-5 sm:p-6 shadow-xs border border-slate-200/90 space-y-5">
       <SectionHeading
-        title={showDepartmentBreakdown ? 'Báo cáo toàn công ty' : 'Báo cáo phòng ban'}
-        detail={`${scopeLabel} · Số liệu theo ngày bắt đầu nghỉ hoặc ngày xin ra ngoài.`}
+        title="Báo cáo thống kê tổng hợp"
+        detail={`Phạm vi số liệu: ${scopeLabel}`}
+        action={
+          <form method="get" className="flex items-center gap-2 flex-wrap">
+            <input
+              type="date"
+              name="from"
+              defaultValue={reportFrom}
+              className="text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white"
+            />
+            <span className="text-xs text-slate-400">→</span>
+            <input
+              type="date"
+              name="to"
+              defaultValue={reportTo}
+              className="text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white"
+            />
+            <button
+              type="submit"
+              className="px-3 py-1.5 rounded-lg bg-[#005a3c] text-white text-xs font-semibold hover:bg-[#044e3f] transition-colors"
+            >
+              Lọc
+            </button>
+          </form>
+        }
       />
 
-      <form action="/" method="get" className="flex flex-col gap-3 sm:flex-row sm:items-end">
-        <div className="flex flex-col gap-1">
-          <label htmlFor="report-from" className="text-xs text-slate-600">Từ ngày</label>
-          <input id="report-from" name="from" type="date" defaultValue={reportFrom} className="h-9 rounded-md border border-slate-300 bg-white px-2.5 text-sm text-slate-800 focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-200" />
+      {/* Metric Cards Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="bg-gradient-to-br from-emerald-50/80 to-emerald-100/40 p-4 rounded-xl border border-emerald-200/80">
+          <p className="text-xs font-bold text-[#005a3c] uppercase tracking-wider">Tổng đơn nghỉ phép</p>
+          <p className="mt-1.5 text-2xl sm:text-3xl font-black text-slate-900">{totals.leaveTotal}</p>
+          <p className="mt-1 text-xs text-slate-600">
+            <span className="font-semibold text-amber-700">{totals.leavePending} chờ</span> · {totals.leaveApproved} duyệt
+          </p>
         </div>
-        <div className="flex flex-col gap-1">
-          <label htmlFor="report-to" className="text-xs text-slate-600">Đến ngày</label>
-          <input id="report-to" name="to" type="date" defaultValue={reportTo} className="h-9 rounded-md border border-slate-300 bg-white px-2.5 text-sm text-slate-800 focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-200" />
-        </div>
-        <div className="flex gap-2">
-          <button type="submit" className="h-9 rounded-md bg-slate-900 px-3.5 text-sm font-medium text-white hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2">Lọc</button>
-          {(reportFrom || reportTo) && <Link href="/" className="inline-flex h-9 items-center px-2 text-sm text-slate-600 underline-offset-4 hover:text-slate-900 hover:underline">Xóa lọc</Link>}
-        </div>
-      </form>
 
-      <dl className="grid grid-cols-2 border-y border-slate-200 sm:grid-cols-4">
-        <ReportMetric label="Đơn nghỉ phép" value={totals.leaveTotal} detail={`${totals.leavePending} đang chờ`} />
-        <ReportMetric label="Ngày nghỉ đã duyệt" value={Number(totals.leaveDays.toFixed(1))} detail="Ngày" />
-        <ReportMetric label="Đơn ra ngoài" value={totals.outOfficeTotal} detail={`${totals.outOfficePending} đang chờ`} />
-        <ReportMetric label="Giờ ra ngoài đã duyệt" value={Number(totals.outOfficeHours.toFixed(2))} detail="Giờ dự kiến" />
-      </dl>
+        <div className="bg-gradient-to-br from-teal-50/80 to-teal-100/40 p-4 rounded-xl border border-teal-200/80">
+          <p className="text-xs font-bold text-teal-800 uppercase tracking-wider">Tổng ngày nghỉ</p>
+          <p className="mt-1.5 text-2xl sm:text-3xl font-black text-slate-900">{Number(totals.leaveDays.toFixed(1))}</p>
+          <p className="mt-1 text-xs text-slate-600">Ngày làm việc</p>
+        </div>
 
-      {showDepartmentBreakdown && (
-        <div>
-          <div className="mb-2 flex items-baseline justify-between gap-3">
-            <h3 className="text-sm font-semibold text-slate-800">Theo phòng ban</h3>
-            <span className="text-xs text-slate-500">{report.departments.length} phòng ban</span>
-          </div>
-          {report.departments.length === 0 ? (
-            <p className="border-y border-slate-200 py-5 text-sm text-slate-500">Chưa có dữ liệu trong phạm vi ngày đã chọn.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[640px] border-collapse text-left text-sm">
-                <thead>
-                  <tr className="border-b border-slate-300 text-xs font-medium text-slate-500">
-                    <th scope="col" className="py-2.5 pr-4">Phòng ban</th>
-                    <th scope="col" className="px-3 py-2.5 text-right">Đơn nghỉ</th>
-                    <th scope="col" className="px-3 py-2.5 text-right">Ngày đã duyệt</th>
-                    <th scope="col" className="px-3 py-2.5 text-right">Đơn ra ngoài</th>
-                    <th scope="col" className="py-2.5 pl-3 text-right">Giờ đã duyệt</th>
+        <div className="bg-gradient-to-br from-blue-50/80 to-blue-100/40 p-4 rounded-xl border border-blue-200/80">
+          <p className="text-xs font-bold text-blue-800 uppercase tracking-wider">Tổng đơn ra ngoài</p>
+          <p className="mt-1.5 text-2xl sm:text-3xl font-black text-slate-900">{totals.outOfficeTotal}</p>
+          <p className="mt-1 text-xs text-slate-600">
+            <span className="font-semibold text-amber-700">{totals.outOfficePending} chờ</span> · {totals.outOfficeCompleted} hoàn tất
+          </p>
+        </div>
+
+        <div className="bg-gradient-to-br from-cyan-50/80 to-cyan-100/40 p-4 rounded-xl border border-cyan-200/80">
+          <p className="text-xs font-bold text-cyan-800 uppercase tracking-wider">Tổng giờ ra ngoài</p>
+          <p className="mt-1.5 text-2xl sm:text-3xl font-black text-slate-900">{Number(totals.outOfficeHours.toFixed(1))}h</p>
+          <p className="mt-1 text-xs text-slate-600">Giờ thực tế</p>
+        </div>
+      </div>
+
+      {showDepartmentBreakdown && report.departments.length > 0 && (
+        <div className="pt-2">
+          <h3 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
+            <Building2 className="w-4 h-4 text-[#005a3c]" />
+            <span>Chi tiết theo phòng ban</span>
+          </h3>
+          <div className="overflow-x-auto rounded-xl border border-slate-200">
+            <table className="w-full text-left text-xs sm:text-sm">
+              <thead className="bg-slate-50 text-slate-700 font-semibold border-b border-slate-200">
+                <tr>
+                  <th className="py-3 px-4">Phòng ban</th>
+                  <th className="py-3 px-3 text-right">Đơn nghỉ</th>
+                  <th className="py-3 px-3 text-right">Ngày nghỉ</th>
+                  <th className="py-3 px-3 text-right">Đơn ra ngoài</th>
+                  <th className="py-3 px-4 text-right">Giờ ra ngoài</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {report.departments.map((dep) => (
+                  <tr key={dep.departmentName} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="py-3 px-4 font-semibold text-slate-800">{dep.departmentName}</td>
+                    <td className="py-3 px-3 text-right font-medium text-slate-700">
+                      {dep.leaveTotal} <span className="text-xs text-slate-400">({dep.leavePending} chờ)</span>
+                    </td>
+                    <td className="py-3 px-3 text-right font-medium text-slate-700">{Number(dep.leaveDays.toFixed(1))}</td>
+                    <td className="py-3 px-3 text-right font-medium text-slate-700">
+                      {dep.outOfficeTotal} <span className="text-xs text-slate-400">({dep.outOfficePending} chờ)</span>
+                    </td>
+                    <td className="py-3 px-4 text-right font-medium text-slate-700">{Number(dep.outOfficeHours.toFixed(2))}h</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {report.departments.map((department) => (
-                    <tr key={department.departmentName} className="border-b border-slate-100 last:border-b-0">
-                      <th scope="row" className="py-3 pr-4 font-medium text-slate-800">{department.departmentName}</th>
-                      <td className="px-3 py-3 text-right tabular-nums text-slate-700">{department.leaveTotal}<span className="ml-1.5 text-xs text-slate-400">({department.leavePending} chờ)</span></td>
-                      <td className="px-3 py-3 text-right tabular-nums text-slate-700">{Number(department.leaveDays.toFixed(1))}</td>
-                      <td className="px-3 py-3 text-right tabular-nums text-slate-700">{department.outOfficeTotal}<span className="ml-1.5 text-xs text-slate-400">({department.outOfficePending} chờ)</span></td>
-                      <td className="py-3 pl-3 text-right tabular-nums text-slate-700">{Number(department.outOfficeHours.toFixed(2))}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </section>
   );
 }
 
-function ReportMetric({ label, value, detail }: { label: string; value: string | number; detail: string }) {
-  return (
-    <div className="min-w-0 border-b border-slate-100 px-3 py-4 first:pl-0 sm:border-b-0 sm:border-r sm:py-4 sm:first:pl-0 sm:last:border-r-0">
-      <dt className="text-xs text-slate-500">{label}</dt>
-      <dd className="mt-1 text-2xl font-semibold tabular-nums tracking-tight text-slate-900">{value}</dd>
-      <p className="mt-1 text-xs text-slate-500">{detail}</p>
-    </div>
-  );
-}
-
 function PersonalSummary({ stats, isManager }: { stats: DashboardStats; isManager: boolean }) {
   return (
-    <section className="space-y-3">
-      <SectionHeading title="Đơn của tôi" detail="Chỉ gồm các đơn do bạn tạo." action={<Link href="/leave?tab=mine" className="text-sm font-medium text-slate-700 underline-offset-4 hover:text-slate-950 hover:underline">Xem đơn của tôi</Link>} />
+    <section className="space-y-4">
+      <SectionHeading
+        title="Đơn cá nhân của tôi"
+        detail="Theo dõi nhanh tình trạng nghỉ phép và ra ngoài cá nhân"
+        action={
+          <div className="flex items-center gap-3 text-xs sm:text-sm font-semibold">
+            <Link href="/leave?tab=mine" className="text-[#005a3c] hover:underline">
+              Xem đơn nghỉ phép →
+            </Link>
+          </div>
+        }
+      />
+
       <div className="grid gap-4 sm:grid-cols-2">
-        <PersonalMetric label="Nghỉ phép" total={stats.myLeaveTotal} pending={stats.myLeavePending} done={stats.myLeaveApproved} doneLabel="đã duyệt / hoàn tất" href="/leave?tab=mine" />
-        <PersonalMetric label="Ra ngoài" total={stats.myOutOfficeTotal} pending={stats.myOutOfficePending} done={stats.myOutOfficeCompleted} doneLabel="hoàn tất" href="/out-office?tab=mine" />
+        {/* KPI Card 1: Nghỉ phép */}
+        <Link
+          href="/leave?tab=mine"
+          className="group bg-white rounded-2xl p-5 shadow-xs border border-slate-200/90 hover:border-emerald-300 hover:shadow-md transition-all flex flex-col justify-between"
+        >
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-emerald-100/80 text-[#005a3c] border border-emerald-200 flex items-center justify-center shrink-0">
+                <CalendarDays className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900 group-hover:text-[#005a3c] transition-colors">
+                  Đơn nghỉ phép
+                </h3>
+                <p className="text-xs text-slate-500">Số đơn đã tạo trong năm</p>
+              </div>
+            </div>
+            <span className="text-3xl font-black text-slate-900 tabular-nums">
+              {stats.myLeaveTotal}
+            </span>
+          </div>
+
+          <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                {stats.myLeavePending} đang chờ
+              </span>
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold bg-emerald-50 text-[#005a3c] border border-emerald-200">
+                {stats.myLeaveApproved} đã duyệt
+              </span>
+            </div>
+            <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-[#005a3c] group-hover:translate-x-1 transition-all" />
+          </div>
+        </Link>
+
+        {/* KPI Card 2: Ra ngoài */}
+        <Link
+          href="/out-office?tab=mine"
+          className="group bg-white rounded-2xl p-5 shadow-xs border border-slate-200/90 hover:border-blue-300 hover:shadow-md transition-all flex flex-col justify-between"
+        >
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-blue-100/80 text-blue-700 border border-blue-200 flex items-center justify-center shrink-0">
+                <Clock className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-700 transition-colors">
+                  Đơn ra ngoài
+                </h3>
+                <p className="text-xs text-slate-500">Số lượt xin ra ngoài cổng</p>
+              </div>
+            </div>
+            <span className="text-3xl font-black text-slate-900 tabular-nums">
+              {stats.myOutOfficeTotal}
+            </span>
+          </div>
+
+          <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                {stats.myOutOfficePending} đang chờ
+              </span>
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold bg-emerald-50 text-[#005a3c] border border-emerald-200">
+                {stats.myOutOfficeCompleted} hoàn tất
+              </span>
+            </div>
+            <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-blue-700 group-hover:translate-x-1 transition-all" />
+          </div>
+        </Link>
       </div>
-      {isManager && <p className="text-xs text-slate-500">Đơn cá nhân tách biệt với hàng đợi duyệt và báo cáo phòng ban.</p>}
     </section>
   );
 }
 
-function PersonalMetric({ label, total, pending, done, doneLabel, href }: {
-  label: string;
-  total: number;
-  pending: number;
-  done: number;
-  doneLabel: string;
-  href: string;
+function ApprovalQueue({
+  leaveRequests,
+  outOfficeRequests,
+}: {
+  leaveRequests: Array<{ id: string; employee_name: string; start_date: string; end_date: string; duration_days: number }>;
+  outOfficeRequests: Array<{ id: string; employee_name: string; request_date: string; start_time: string; end_time: string }>;
 }) {
+  const total = leaveRequests.length + outOfficeRequests.length;
+  if (total === 0) return null;
+
   return (
-    <Link href={href} className="group flex items-center justify-between gap-4 border-b border-slate-200 py-4 hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300">
-      <div>
-        <p className="text-sm font-medium text-slate-700">{label}</p>
-        <p className="mt-1 text-xs text-slate-500"><span className="text-amber-700">{pending} chờ</span><span className="mx-1.5 text-slate-300">/</span><span className="text-emerald-700">{done} {doneLabel}</span></p>
+    <section className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-white rounded-2xl p-5 sm:p-6 shadow-xs border border-amber-200/90 space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+            <AlertCircle className="w-5 h-5" />
+          </div>
+          <div>
+            <h2 className="text-base font-bold text-slate-900">
+              Hàng đợi phê duyệt cần xử lý ({total} đơn)
+            </h2>
+            <p className="text-xs text-slate-600">
+              Có đơn của nhân viên đang chờ bạn xem xét và phê duyệt.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {leaveRequests.length > 0 && (
+            <Link
+              href="/approvals/leave"
+              className="px-3 py-1.5 text-xs font-bold rounded-lg bg-[#005a3c] text-white hover:bg-[#044e3f] shadow-xs transition-colors"
+            >
+              Duyệt nghỉ phép ({leaveRequests.length})
+            </Link>
+          )}
+          {outOfficeRequests.length > 0 && (
+            <Link
+              href="/approvals/out-office"
+              className="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-800 text-white hover:bg-slate-900 shadow-xs transition-colors"
+            >
+              Duyệt ra ngoài ({outOfficeRequests.length})
+            </Link>
+          )}
+        </div>
       </div>
-      <div className="flex items-center gap-2">
-        <span className="text-2xl font-semibold tabular-nums text-slate-900">{total}</span>
-        <ArrowRight className="h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-0.5" />
+
+      <div className="grid sm:grid-cols-2 gap-3 pt-1">
+        {leaveRequests.slice(0, 3).map((r) => (
+          <Link
+            key={r.id}
+            href={`/leave/${r.id}`}
+            className="p-3 bg-white rounded-xl border border-amber-200/70 hover:border-amber-400 hover:shadow-xs transition-all flex items-center justify-between"
+          >
+            <div>
+              <p className="text-xs font-bold text-slate-900">{r.employee_name}</p>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                Nghỉ phép: {r.start_date} → {r.end_date} ({r.duration_days} ngày)
+              </p>
+            </div>
+            <span className="text-xs font-semibold text-[#005a3c] flex items-center gap-1">
+              Xem đơn <ArrowRight className="w-3.5 h-3.5" />
+            </span>
+          </Link>
+        ))}
+        {outOfficeRequests.slice(0, 3).map((r) => (
+          <Link
+            key={r.id}
+            href={`/out-office/${r.id}`}
+            className="p-3 bg-white rounded-xl border border-amber-200/70 hover:border-amber-400 hover:shadow-xs transition-all flex items-center justify-between"
+          >
+            <div>
+              <p className="text-xs font-bold text-slate-900">{r.employee_name}</p>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                Ra ngoài: {r.request_date} ({r.start_time} - {r.end_time})
+              </p>
+            </div>
+            <span className="text-xs font-semibold text-blue-700 flex items-center gap-1">
+              Xem đơn <ArrowRight className="w-3.5 h-3.5" />
+            </span>
+          </Link>
+        ))}
       </div>
-    </Link>
+    </section>
   );
 }
 
 function PersonalActivity({ activities }: { activities: RecentActivityItem[] }) {
   return (
-    <section className="space-y-3">
+    <section className="bg-white rounded-2xl p-5 sm:p-6 shadow-xs border border-slate-200/90 space-y-4">
       <SectionHeading
-        title="Hoạt động gần đây"
-        detail="Các đơn cá nhân mới cập nhật."
-        action={<div className="flex gap-4 text-sm"><Link href="/leave?tab=mine" className="text-slate-600 underline-offset-4 hover:text-slate-900 hover:underline">Nghỉ phép</Link><Link href="/out-office?tab=mine" className="text-slate-600 underline-offset-4 hover:text-slate-900 hover:underline">Ra ngoài</Link></div>}
+        title="Hoạt động gần đây của tôi"
+        detail="Các đơn nghỉ phép & ra ngoài mới nhất"
+        action={
+          <div className="flex items-center gap-3 text-xs font-semibold">
+            <Link href="/leave?tab=mine" className="text-slate-600 hover:text-[#005a3c]">
+              Xem tất cả đơn nghỉ
+            </Link>
+            <span className="text-slate-300">·</span>
+            <Link href="/out-office?tab=mine" className="text-slate-600 hover:text-[#005a3c]">
+              Xem đơn ra ngoài
+            </Link>
+          </div>
+        }
       />
+
       {activities.length === 0 ? (
-        <div className="border-b border-slate-200 py-6">
-          <p className="text-sm font-medium text-slate-700">Chưa có đơn gần đây.</p>
-          <p className="mt-1 text-sm text-slate-500">Đơn bạn tạo sẽ xuất hiện ở đây.</p>
+        <div className="py-8 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200">
+          <CalendarCheck2 className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+          <p className="text-sm font-semibold text-slate-700">Chưa có đơn nào gần đây</p>
+          <p className="text-xs text-slate-400 mt-1">Các đơn bạn tạo sẽ xuất hiện và cập nhật trạng thái tại đây</p>
         </div>
       ) : (
-        <ul className="divide-y divide-slate-100">
+        <div className="divide-y divide-slate-100">
           {activities.map((item) => (
-            <li key={`${item.type}-${item.id}`} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-800">{item.title}</p>
-                <p className="mt-1 text-xs text-slate-500">{item.dateInfo}</p>
+            <div
+              key={`${item.type}-${item.id}`}
+              className="py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 hover:bg-slate-50/70 px-2 rounded-xl transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                    item.type === 'LEAVE'
+                      ? 'bg-emerald-100/70 text-[#005a3c]'
+                      : 'bg-blue-100/70 text-blue-700'
+                  }`}
+                >
+                  {item.type === 'LEAVE' ? (
+                    <CalendarDays className="w-4 h-4" />
+                  ) : (
+                    <Clock className="w-4 h-4" />
+                  )}
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-slate-900">{item.title}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{item.dateInfo}</p>
+                </div>
               </div>
-              <div className="flex items-center gap-4">
-                <StatusLabel status={item.status} />
-                <Link href={item.link} className="text-sm text-slate-600 underline-offset-4 hover:text-slate-950 hover:underline">Chi tiết</Link>
+
+              <div className="flex items-center gap-3 self-end sm:self-center">
+                <StatusBadge status={item.status} />
+                <Link
+                  href={item.link}
+                  className="px-3 py-1 text-xs font-semibold rounded-lg bg-slate-100 text-slate-700 hover:bg-[#005a3c] hover:text-white transition-colors"
+                >
+                  Chi tiết
+                </Link>
               </div>
-            </li>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
     </section>
   );
@@ -246,82 +459,42 @@ function PersonalActivity({ activities }: { activities: RecentActivityItem[] }) 
 
 function ManagerActivity({ activities }: { activities: ScopeActivityItem[] }) {
   return (
-    <section className="space-y-3">
-      <SectionHeading title="Hoạt động phòng ban" detail="Đơn trong phạm vi phòng ban của bạn." />
-      {activities.length === 0 ? (
-        <p className="border-b border-slate-200 py-5 text-sm text-slate-500">Chưa có hoạt động trong khoảng thời gian này.</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[700px] border-collapse text-left text-sm">
-            <thead>
-              <tr className="border-b border-slate-300 text-xs font-medium text-slate-500">
-                <th scope="col" className="py-2.5 pr-4">Ngày</th>
-                <th scope="col" className="px-3 py-2.5">Nhân viên</th>
-                <th scope="col" className="px-3 py-2.5">Loại đơn</th>
-                <th scope="col" className="px-3 py-2.5">Chi tiết</th>
-                <th scope="col" className="px-3 py-2.5">Trạng thái</th>
-                <th scope="col" className="py-2.5 pl-3 text-right">Mở</th>
-              </tr>
-            </thead>
-            <tbody>
-              {activities.map((item) => (
-                <tr key={`${item.type}-${item.id}`} className="border-b border-slate-100 last:border-b-0">
-                  <td className="whitespace-nowrap py-3 pr-4 text-slate-600">{item.dateLabel}</td>
-                  <td className="px-3 py-3 font-medium text-slate-800">{item.employeeName}<span className="mt-0.5 block text-xs font-normal text-slate-500">{item.departmentName || 'Chưa phân bổ'}</span></td>
-                  <td className="whitespace-nowrap px-3 py-3 text-slate-600">{item.type === 'LEAVE' ? 'Nghỉ phép' : 'Ra ngoài'}</td>
-                  <td className="whitespace-nowrap px-3 py-3 text-slate-600">{item.detailLabel}</td>
-                  <td className="px-3 py-3"><StatusLabel status={item.status} /></td>
-                  <td className="py-3 pl-3 text-right"><Link href={item.link} className="text-sm text-slate-700 underline-offset-4 hover:text-slate-950 hover:underline">Chi tiết</Link></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </section>
-  );
-}
-
-function ApprovalQueue({ leaveRequests, outOfficeRequests }: {
-  leaveRequests: Awaited<ReturnType<typeof getPendingLeaveRequestsForApprover>>;
-  outOfficeRequests: Awaited<ReturnType<typeof getPendingOutOfficeRequestsForApprover>>;
-}) {
-  const total = leaveRequests.length + outOfficeRequests.length;
-  return (
-    <section className="space-y-3">
+    <section className="bg-white rounded-2xl p-5 sm:p-6 shadow-xs border border-slate-200/90 space-y-4">
       <SectionHeading
-        title="Cần xử lý"
-        detail="Chỉ gồm đơn đến đúng lượt duyệt của bạn."
-        action={<span className="text-2xl font-semibold tabular-nums text-slate-900">{total}</span>}
+        title="Hoạt động phòng ban gần đây"
+        detail="Đơn từ cán bộ công nhân viên trong phòng ban của bạn"
       />
-      {total === 0 ? (
-        <p className="border-b border-slate-200 py-5 text-sm text-slate-500">Không có đơn nào đang chờ bạn xử lý.</p>
+
+      {activities.length === 0 ? (
+        <div className="py-6 text-center text-xs text-slate-400">
+          Chưa có hoạt động mới trong phòng ban.
+        </div>
       ) : (
         <div className="divide-y divide-slate-100">
-          {leaveRequests.slice(0, 4).map((request) => (
-            <Link key={request.id} href={`/leave/${request.id}`} className="group flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
+          {activities.slice(0, 5).map((act) => (
+            <div
+              key={`${act.type}-${act.id}`}
+              className="py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
+            >
               <div>
-                <p className="text-sm font-medium text-slate-800">{request.employee_name}<span className="mx-2 text-slate-300">/</span>Nghỉ phép</p>
-                <p className="mt-1 text-xs text-slate-500">{request.start_date} – {request.end_date} · {request.duration_days} ngày</p>
+                <p className="text-sm font-semibold text-slate-800">
+                  {act.employeeName} · {act.detailLabel}
+                </p>
+                <p className="text-xs text-slate-500 mt-0.5">{act.dateLabel}</p>
               </div>
-              <span className="inline-flex items-center text-sm text-slate-600 group-hover:text-slate-950">Mở đơn <ArrowRight className="ml-1 h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" /></span>
-            </Link>
-          ))}
-          {outOfficeRequests.slice(0, 4).map((request) => (
-            <Link key={request.id} href={`/out-office/${request.id}`} className="group flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-800">{request.employee_name}<span className="mx-2 text-slate-300">/</span>Ra ngoài</p>
-                <p className="mt-1 text-xs text-slate-500">{request.request_date} · {request.start_time}–{request.end_time}</p>
+              <div className="flex items-center gap-3">
+                <StatusBadge status={act.status} />
+                <Link
+                  href={act.link}
+                  className="text-xs font-semibold text-[#005a3c] hover:underline"
+                >
+                  Chi tiết →
+                </Link>
               </div>
-              <span className="inline-flex items-center text-sm text-slate-600 group-hover:text-slate-950">Mở đơn <ArrowRight className="ml-1 h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" /></span>
-            </Link>
+            </div>
           ))}
         </div>
       )}
-      <div className="flex flex-wrap gap-x-5 gap-y-2 pt-1 text-sm">
-        <Link href="/approvals/leave" className="font-medium text-slate-700 underline-offset-4 hover:text-slate-950 hover:underline">Hàng đợi nghỉ phép ({leaveRequests.length})</Link>
-        <Link href="/approvals/out-office" className="font-medium text-slate-700 underline-offset-4 hover:text-slate-950 hover:underline">Hàng đợi ra ngoài ({outOfficeRequests.length})</Link>
-      </div>
     </section>
   );
 }
@@ -356,48 +529,101 @@ export default async function DashboardPage({
     needsReport ? getScopeReport(user, reportFrom, reportTo) : Promise.resolve(emptyReport),
     isManager ? getScopeActivityFeed(user, reportFrom, reportTo) : Promise.resolve([] as ScopeActivityItem[]),
   ]);
+
   const totalPending = pendingLeaves.length + pendingOutOffices.length;
-  const organization = user.department_name || user.team_name || 'Phạm vi cá nhân';
   const roleDescription = isAccountant
-    ? 'Theo dõi dữ liệu toàn công ty · Chỉ đọc'
+    ? 'Theo dõi dữ liệu toàn công ty · Chế độ chỉ đọc đối soát'
     : isDirector
-      ? 'Theo dõi và phê duyệt · Toàn công ty'
-      : isManager
-        ? `Đơn cá nhân và hoạt động · ${organization}`
-        : 'Đơn nghỉ phép và ra ngoài của bạn';
+    ? 'Hệ thống phê duyệt & Giám sát vận hành toàn công ty'
+    : isManager
+    ? `Quản lý phê duyệt & Đơn phòng ban ${user.department_name || ''}`
+    : 'Cổng thông tin gửi đơn nghỉ phép & đơn ra ngoài cá nhân';
 
   return (
-    <div className="space-y-8 sm:space-y-10">
-      <header className="flex flex-col gap-5 border-b border-slate-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-sm text-slate-500">{getRoleLabel(user.role)}{user.department_name ? ` · ${user.department_name}` : ''}</p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-950">Tổng quan</h1>
-          <p className="mt-1.5 text-sm text-slate-600">{roleDescription}</p>
-        </div>
-        {canSubmit && (
-          <div className="flex flex-wrap gap-2">
-            <Link href="/leave/new" className="inline-flex h-9 items-center rounded-md bg-slate-900 px-3.5 text-sm font-medium text-white hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2"><Plus className="mr-1.5 h-4 w-4" />Nghỉ phép</Link>
-            <Link href="/out-office/new" className="inline-flex h-9 items-center rounded-md border border-slate-300 bg-white px-3.5 text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2"><Clock className="mr-1.5 h-4 w-4" />Ra ngoài</Link>
+    <div className="space-y-6 sm:space-y-8">
+      {/* Welcome Hero Card */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-emerald-900 via-[#005a3c] to-teal-800 rounded-2xl p-6 sm:p-8 text-white shadow-md">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-5">
+          <div>
+            <div className="flex items-center gap-2 flex-wrap mb-2">
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-white/20 text-white backdrop-blur-xs">
+                {getRoleLabel(user.role)}
+              </span>
+              {user.department_name && (
+                <span className="text-xs text-emerald-100 font-medium">
+                  {user.department_name}
+                </span>
+              )}
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
+              Xin chào, {user.full_name}
+            </h1>
+            <p className="mt-1 text-xs sm:text-sm text-emerald-100 max-w-xl">
+              {roleDescription}
+            </p>
           </div>
-        )}
-      </header>
+
+          {canSubmit && (
+            <div className="flex items-center gap-3 flex-wrap">
+              <Link
+                href="/leave/new"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-[#005a3c] font-bold text-xs sm:text-sm hover:bg-emerald-50 shadow-sm transition-all"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Tạo đơn nghỉ phép</span>
+              </Link>
+              <Link
+                href="/out-office/new"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-800/80 text-white border border-emerald-400/40 font-bold text-xs sm:text-sm hover:bg-emerald-800 transition-all"
+              >
+                <Clock className="w-4 h-4" />
+                <span>Tạo đơn ra ngoài</span>
+              </Link>
+            </div>
+          )}
+        </div>
+
+        {/* Subtle decorative background circles */}
+        <div className="absolute -right-12 -bottom-12 w-48 h-48 rounded-full bg-white/5 pointer-events-none" />
+        <div className="absolute right-36 -top-12 w-32 h-32 rounded-full bg-white/5 pointer-events-none" />
+      </div>
 
       {isAccountant && (
-        <p className="border-l-2 border-slate-400 pl-3 text-sm text-slate-600">
-          Báo cáo bên dưới là số liệu tổng hợp. Để xem từng đơn, mở mục <Link href="/leave?tab=scope" className="font-medium text-slate-800 underline underline-offset-4">Nghỉ phép</Link> hoặc <Link href="/out-office?tab=scope" className="font-medium text-slate-800 underline underline-offset-4">Ra ngoài</Link>; dữ liệu chi tiết ở chế độ chỉ đọc.
-        </p>
+        <div className="bg-amber-50 border border-amber-200/90 rounded-xl p-4 text-xs sm:text-sm text-amber-900 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div>
+            <p className="font-bold">Chế độ đối soát số liệu Kế toán</p>
+            <p className="mt-0.5 text-xs text-amber-700">
+              Báo cáo bên dưới hiển thị số liệu tổng hợp toàn công ty. Để xem chi tiết từng đơn, hãy mở mục{' '}
+              <Link href="/leave?tab=scope" className="font-semibold underline">Nghỉ phép</Link> hoặc{' '}
+              <Link href="/out-office?tab=scope" className="font-semibold underline">Ra ngoài</Link>.
+            </p>
+          </div>
+        </div>
       )}
 
+      {/* Approvals Queue if approver */}
       {isApprover && <ApprovalQueue leaveRequests={pendingLeaves} outOfficeRequests={pendingOutOffices} />}
-      {needsReport && <ReportSection report={scopeReport} scopeLabel={scopeLabel} reportFrom={reportFrom} reportTo={reportTo} showDepartmentBreakdown={isDirector || isAccountant} />}
-      {hasPersonalDashboard && <PersonalSummary stats={stats} isManager={isManager} />}
-      {isManager && <ManagerActivity activities={scopeActivity} />}
-      {hasPersonalDashboard && <PersonalActivity activities={recentActivities} />}
 
-      {(isDirector || isAccountant) && totalPending === 0 && isDirector && (
-        <p className="flex items-center gap-2 text-sm text-slate-500"><UserCheck className="h-4 w-4" />Không có đơn nào đang chờ bạn xử lý.</p>
+      {/* Reports if manager/director/accountant */}
+      {needsReport && (
+        <ReportSection
+          report={scopeReport}
+          scopeLabel={scopeLabel}
+          reportFrom={reportFrom}
+          reportTo={reportTo}
+          showDepartmentBreakdown={isDirector || isAccountant}
+        />
       )}
-      {(isDirector || isAccountant) && <div className="flex items-center gap-2 border-t border-slate-200 pt-4 text-xs text-slate-500"><FileText className="h-4 w-4" />Phạm vi báo cáo: {scopeLabel}</div>}
+
+      {/* Personal KPI stats */}
+      {hasPersonalDashboard && <PersonalSummary stats={stats} isManager={isManager} />}
+
+      {/* Manager activity */}
+      {isManager && <ManagerActivity activities={scopeActivity} />}
+
+      {/* Recent activities */}
+      {hasPersonalDashboard && <PersonalActivity activities={recentActivities} />}
     </div>
   );
 }

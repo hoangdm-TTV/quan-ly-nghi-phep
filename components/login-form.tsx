@@ -11,16 +11,16 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="w-full flex items-center justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
+      className="w-full flex items-center justify-center py-3 px-4 rounded-xl shadow-xs text-sm font-bold text-white bg-[#005a3c] hover:bg-[#044e3f] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#005a3c] disabled:opacity-50 transition-all"
     >
       {pending ? (
         <>
           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          Đang xác thực...
+          Đang xác thực tài khoản...
         </>
       ) : (
         <>
-          Đăng nhập
+          Đăng nhập hệ thống
           <ArrowRight className="w-4 h-4 ml-2" />
         </>
       )}
@@ -35,7 +35,7 @@ export default function LoginForm() {
   return (
     <form action={formAction} className="space-y-5">
       {state.error && (
-        <div className="flex items-center p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg">
+        <div className="flex items-center p-3 text-sm text-rose-800 bg-rose-50 border border-rose-200 rounded-xl">
           <AlertCircle className="w-4 h-4 mr-2 flex-shrink-0" />
           <span>{state.error}</span>
         </div>
@@ -44,12 +44,12 @@ export default function LoginForm() {
       <div>
         <label
           htmlFor="email"
-          className="block text-sm font-medium text-slate-700 mb-1"
+          className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5"
         >
           Địa chỉ Email
         </label>
         <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
             <Mail className="w-4 h-4" />
           </div>
           <input
@@ -58,8 +58,8 @@ export default function LoginForm() {
             type="email"
             autoComplete="email"
             required
-            placeholder="example@company.com"
-            className="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="ten.nv@trithucviet.vn"
+            className="block w-full pl-10 pr-3.5 py-2.5 border border-slate-300 rounded-xl text-sm font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#005a3c] focus:border-[#005a3c]"
           />
         </div>
       </div>
@@ -67,12 +67,12 @@ export default function LoginForm() {
       <div>
         <label
           htmlFor="password"
-          className="block text-sm font-medium text-slate-700 mb-1"
+          className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5"
         >
           Mật khẩu
         </label>
         <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
             <Lock className="w-4 h-4" />
           </div>
           <input
@@ -82,12 +82,14 @@ export default function LoginForm() {
             autoComplete="current-password"
             required
             placeholder="••••••••"
-            className="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="block w-full pl-10 pr-3.5 py-2.5 border border-slate-300 rounded-xl text-sm font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#005a3c] focus:border-[#005a3c]"
           />
         </div>
       </div>
 
-      <SubmitButton />
+      <div className="pt-2">
+        <SubmitButton />
+      </div>
     </form>
   );
 }

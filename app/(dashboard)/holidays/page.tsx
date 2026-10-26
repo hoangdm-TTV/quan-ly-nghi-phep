@@ -7,7 +7,7 @@ import HolidayListClient from '@/components/holidays/holiday-list-client';
 import { Calendar, Plus, CalendarDays } from 'lucide-react';
 
 export const metadata = {
-  title: 'Quản lý ngày lễ | Leave & Gate Pass',
+  title: 'Quản lý ngày lễ | Tri Thức Việt',
 };
 
 export default async function HolidaysPage() {
@@ -20,23 +20,23 @@ export default async function HolidaysPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-slate-900">Quản lý ngày lễ</h2>
-          <p className="text-xs text-slate-500 mt-1">
-            Quản lý danh sách ngày nghỉ lễ công ty. Hệ thống sẽ tự động trừ các ngày này khi tính số ngày nghỉ phép.
-          </p>
-        </div>
+      <div className="bg-white rounded-2xl p-6 shadow-xs border border-slate-200/90">
+        <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+          Quản lý ngày lễ công ty
+        </h1>
+        <p className="text-xs sm:text-sm text-slate-500 mt-1">
+          Quản lý danh sách ngày nghỉ lễ công ty Tri Thức Việt. Hệ thống sẽ tự động trừ các ngày này khi tính số ngày nghỉ phép.
+        </p>
       </div>
 
-      <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-start gap-3">
-        <CalendarDays className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-        <div className="text-xs text-blue-800 space-y-1">
-          <p className="font-semibold text-blue-900">Lịch làm việc công ty: Thứ 2 – Thứ 7</p>
-          <p>• Hệ thống tự động trừ ngày Chủ Nhật khi tính số ngày nghỉ phép.</p>
-          <p>• Các ngày lễ trong danh sách dưới đây cũng được trừ khi tính số ngày nghỉ.</p>
-          <p>• Ngày lễ có thể là 1 ngày hoặc một khoảng ngày (ví dụ: nghỉ Tết từ 25/01 đến 01/02).</p>
-          <p>• Bật/tắt ngày lễ bằng trường &ldquo;Áp dụng&rdquo; mà không cần xóa.</p>
+      <div className="bg-emerald-50/80 border border-emerald-200/90 rounded-2xl p-5 flex items-start gap-3 shadow-xs">
+        <CalendarDays className="w-5 h-5 text-[#005a3c] shrink-0 mt-0.5" />
+        <div className="text-xs sm:text-sm text-emerald-950 space-y-1.5 font-medium">
+          <p className="font-bold text-[#005a3c] text-sm">Quy định lịch làm việc công ty: Thứ 2 – Thứ 7</p>
+          <p>• Hệ thống tự động trừ ngày Chủ Nhật khi tính số ngày nghỉ phép thực tế.</p>
+          <p>• Các ngày lễ trong danh sách dưới đây cũng được tự động trừ khi tính thời lượng nghỉ.</p>
+          <p>• Ngày lễ có thể là 1 ngày hoặc một khoảng ngày (ví dụ: nghỉ Tết Âm lịch từ 25/01 đến 01/02).</p>
+          <p>• Bạn có thể bật/tắt trạng thái áp dụng của từng ngày lễ mà không cần xóa dữ liệu.</p>
         </div>
       </div>
 

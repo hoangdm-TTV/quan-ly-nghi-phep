@@ -14,7 +14,7 @@ export default function DashboardShell({ user, children }: DashboardShellProps) 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#f7f7f5] flex">
+    <div className="min-h-screen bg-[#f1f5f9] flex antialiased">
       {/* Sidebar navigation */}
       <AppSidebar
         user={user}
@@ -22,8 +22,8 @@ export default function DashboardShell({ user, children }: DashboardShellProps) 
         onClose={() => setSidebarOpen(false)}
       />
 
-      {/* Main layout container (offset 256px on desktop) */}
-      <div className="flex-1 flex flex-col min-w-0 lg:pl-64">
+      {/* Main layout container (offset 288px on desktop for w-72) */}
+      <div className="flex-1 flex flex-col min-w-0 lg:pl-72">
         <AppHeader
           user={user}
           onOpenSidebar={() => setSidebarOpen(true)}
