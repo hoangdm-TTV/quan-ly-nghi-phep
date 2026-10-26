@@ -24,6 +24,7 @@ import {
   ChevronDown,
   CalendarCheck,
 } from 'lucide-react';
+import BrandLogo from '@/components/brand/brand-logo';
 
 interface AppSidebarProps {
   user: SafeUser;
@@ -89,7 +90,7 @@ export default function AppSidebar({ user, isOpen, onClose }: AppSidebarProps) {
     {
       kind: 'group',
       id: 'leave',
-        name: 'Nghỉ phép',
+      name: 'Nghỉ phép',
       icon: CalendarDays,
       show: canUseRequests,
       children: [
@@ -116,7 +117,7 @@ export default function AppSidebar({ user, isOpen, onClose }: AppSidebarProps) {
     {
       kind: 'group',
       id: 'out-office',
-        name: 'Ra ngoài',
+      name: 'Ra ngoài',
       icon: Clock,
       show: canUseRequests,
       children: [
@@ -196,43 +197,43 @@ export default function AppSidebar({ user, isOpen, onClose }: AppSidebarProps) {
       {isOpen && (
         <div
           onClick={onClose}
-          className="fixed inset-0 z-40 bg-slate-950/30 lg:hidden transition-opacity"
+          className="fixed inset-0 z-40 bg-slate-950/40 backdrop-blur-xs lg:hidden transition-opacity"
         />
       )}
 
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-50 w-64 border-r border-slate-200 bg-white text-slate-700 flex flex-col transition-transform duration-200 ease-in-out lg:translate-x-0 ${
+        className={`fixed top-0 bottom-0 left-0 z-50 w-64 border-r border-slate-200/90 bg-white text-slate-700 flex flex-col transition-transform duration-200 ease-in-out lg:translate-x-0 shadow-sm ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="h-16 flex items-center justify-between px-5 border-b border-slate-200">
-          <Link href="/" className="flex items-center gap-3" onClick={onClose}>
-            <div className="w-8 h-8 rounded-md bg-slate-900 text-white flex items-center justify-center font-bold text-sm">
-              LP
-            </div>
-            <div>
-              <span className="text-sm font-semibold text-slate-900 tracking-tight">Leave & Gate Pass</span>
-              <p className="text-[10px] text-slate-500">Quản lý nội bộ</p>
-            </div>
-          </Link>
+        {/* Sidebar Brand Header */}
+        <div className="min-h-[72px] sm:min-h-[76px] flex items-center justify-between px-4 border-b border-slate-200/90">
+          <BrandLogo
+            size="sm"
+            subtitle="Nghỉ phép & Đơn ra ngoài"
+            showBadge={true}
+            href="/"
+          />
 
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-500 hover:text-slate-900 lg:hidden rounded-md hover:bg-slate-100"
+            className="p-1.5 text-slate-400 hover:text-slate-700 lg:hidden rounded-lg hover:bg-slate-100 transition-colors"
+            aria-label="Đóng menu"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="p-3 mx-3 my-3 bg-slate-50 rounded-lg border border-slate-200">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-semibold text-xs">
+        {/* User Card */}
+        <div className="p-3 mx-3 my-3 bg-slate-50/80 rounded-xl border border-slate-200/80">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-full bg-emerald-100 text-[#005a3c] border border-emerald-200 flex items-center justify-center font-bold text-xs shrink-0">
               {user.full_name.slice(0, 2).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold text-slate-900 truncate">{user.full_name}</p>
               <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="inline-block px-1.5 py-0.5 text-[10px] font-medium rounded bg-slate-100 text-slate-700 border border-slate-200">
+                <span className="inline-block px-1.5 py-0.5 text-[9px] font-semibold rounded bg-white text-slate-700 border border-slate-200">
                   {getRoleLabel(user.role)}
                 </span>
                 {user.department_name && (
@@ -245,9 +246,10 @@ export default function AppSidebar({ user, isOpen, onClose }: AppSidebarProps) {
           </div>
         </div>
 
-        <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
-          <p className="px-3 text-xs font-medium text-slate-500 mb-2">
-            Điều hướng
+        {/* Navigation Items */}
+        <nav className="flex-1 px-3 py-1 space-y-1 overflow-y-auto">
+          <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">
+            Hệ thống quản lý
           </p>
 
           {visibleItems.map((item) => {
@@ -259,13 +261,13 @@ export default function AppSidebar({ user, isOpen, onClose }: AppSidebarProps) {
                   key={item.name}
                   href={item.href}
                   onClick={onClose}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium transition-colors ${
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${
                     isActive
-                      ? 'bg-slate-100 text-slate-950 font-semibold'
+                      ? 'bg-emerald-50/80 text-[#005a3c] font-semibold border border-emerald-200/60 shadow-2xs'
                       : 'text-slate-600 hover:bg-slate-50 hover:text-slate-950'
                   }`}
                 >
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-slate-800' : 'text-slate-400'}`} />
+                  <Icon className={`w-4 h-4 ${isActive ? 'text-[#005a3c]' : 'text-slate-400'}`} />
                   <span>{item.name}</span>
                 </Link>
               );
@@ -281,24 +283,24 @@ export default function AppSidebar({ user, isOpen, onClose }: AppSidebarProps) {
                 <button
                   type="button"
                   onClick={() => toggleGroup(item.id)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium transition-colors ${
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-colors ${
                     groupActive
-                      ? 'bg-slate-50 text-slate-900'
+                      ? 'bg-slate-50 text-slate-900 font-medium'
                       : 'text-slate-600 hover:bg-slate-50 hover:text-slate-950'
                   }`}
                   aria-expanded={isOpenGroup}
                 >
-                  <GroupIcon className={`w-4 h-4 ${groupActive ? 'text-slate-700' : 'text-slate-400'}`} />
+                  <GroupIcon className={`w-4 h-4 ${groupActive ? 'text-[#005a3c]' : 'text-slate-400'}`} />
                   <span className="flex-1 text-left">{item.name}</span>
                   <ChevronDown
-                    className={`w-3.5 h-3.5 text-slate-500 transition-transform ${
+                    className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${
                       isOpenGroup ? 'rotate-0' : '-rotate-90'
                     }`}
                   />
                 </button>
 
                 {isOpenGroup && (
-                  <div className="ml-4 pl-3 border-l border-slate-200 space-y-0.5">
+                  <div className="ml-4 pl-3 border-l-2 border-slate-100 space-y-0.5">
                     {visibleChildren.map((child) => {
                       const isActive = isPathActive(pathname, child.href, false, searchParams);
                       const ChildIcon = child.icon;
@@ -307,13 +309,13 @@ export default function AppSidebar({ user, isOpen, onClose }: AppSidebarProps) {
                           key={child.href}
                           href={child.href}
                           onClick={onClose}
-                          className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[11px] font-medium transition-colors ${
+                          className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[11px] font-medium transition-all ${
                             isActive
-                              ? 'bg-slate-100 text-slate-950 font-semibold'
+                              ? 'bg-emerald-50 text-[#005a3c] font-semibold'
                               : 'text-slate-500 hover:bg-slate-50 hover:text-slate-950'
                           }`}
                         >
-                          <ChildIcon className={`w-3.5 h-3.5 ${isActive ? 'text-slate-700' : 'text-slate-400'}`} />
+                          <ChildIcon className={`w-3.5 h-3.5 ${isActive ? 'text-[#005a3c]' : 'text-slate-400'}`} />
                           <span>{child.name}</span>
                         </Link>
                       );
@@ -325,8 +327,10 @@ export default function AppSidebar({ user, isOpen, onClose }: AppSidebarProps) {
           })}
         </nav>
 
-        <div className="p-4 border-t border-slate-200 text-xs text-slate-500">
-          Hệ thống quản lý nội bộ
+        {/* Sidebar Footer */}
+        <div className="p-3.5 border-t border-slate-200/90 text-[11px] text-slate-400 flex items-center justify-between">
+          <span>Tri Thức Việt © 2026</span>
+          <span className="text-[10px] px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded font-mono">v1.2</span>
         </div>
       </aside>
     </>

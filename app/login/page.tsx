@@ -1,10 +1,10 @@
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth/permissions';
 import LoginForm from '@/components/login-form';
-import { ShieldCheck } from 'lucide-react';
+import BrandLogo from '@/components/brand/brand-logo';
 
 export const metadata = {
-  title: 'Đăng nhập | Leave & Gate Pass Management',
+  title: 'Đăng nhập | TRI THỨC VIỆT - Quản lý Nghỉ phép & Đơn ra ngoài',
 };
 
 export default async function LoginPage() {
@@ -14,23 +14,24 @@ export default async function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center px-4 py-12 bg-slate-50">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="flex justify-center mb-3">
-          <div className="p-3 bg-blue-100 rounded-full text-blue-600">
-            <ShieldCheck className="w-8 h-8" />
-          </div>
+    <div className="min-h-screen flex flex-col justify-center items-center px-4 py-12 bg-[#f8fafc]">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md flex flex-col items-center text-center">
+        <div className="mb-6 flex justify-center">
+          <BrandLogo
+            size="lg"
+            subtitle="Quản lý Nghỉ phép & Đơn ra ngoài"
+            showBadge={true}
+            href="/login"
+            className="flex-col sm:flex-row text-center sm:text-left items-center justify-center"
+          />
         </div>
-        <h2 className="text-center text-2xl font-bold tracking-tight text-slate-900">
-          Leave & Gate Pass
-        </h2>
-        <p className="mt-1 text-center text-sm text-slate-600">
-          Hệ thống Quản lý Nghỉ phép & Đơn ra ngoài nội bộ
+        <p className="text-xs sm:text-sm text-slate-500 max-w-sm">
+          Cổng thông tin nội bộ dành cho cán bộ công nhân viên công ty Tri Thức Việt
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-6 shadow-sm border border-slate-200 rounded-xl sm:px-10">
+      <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white py-8 px-6 shadow-sm border border-slate-200/90 rounded-2xl sm:px-10">
           <LoginForm />
         </div>
       </div>
