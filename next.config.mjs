@@ -11,7 +11,8 @@ const nextConfig = {
   // 3. Cấu hình cho Server Actions
   experimental: {
     serverActions: {
-      bodySizeLimit: "6mb",
+      // Chừa thêm dung lượng cho multipart/form-data ngoài file tối đa 50MB.
+      bodySizeLimit: "55mb",
       // BẮT BUỘC: Cho phép Server Actions chấp nhận request từ Dev Tunnel & Localhost
       allowedOrigins: [
         "*.devtunnels.ms",

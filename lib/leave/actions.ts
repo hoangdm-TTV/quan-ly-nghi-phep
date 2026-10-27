@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation';
 import type { PoolClient } from 'pg';
 import { pool } from '@/lib/db/pool';
 import { requireAuth } from '@/lib/auth/permissions';
-import { getSafeUserById } from '@/lib/db/queries/users';
+import { getSafeUserById, hasActiveManagerForDepartment } from '@/lib/db/queries/users';
 import { calculateWorkingDaysWithHolidays } from './calculator';
 import { evaluateLeaveApproval, evaluateLeaveRejection, LeaveStatus } from './workflow';
 
@@ -21,7 +21,7 @@ export type LeaveActionState = {
   error?: string;
 };
 
-const MAX_LEAVE_DOCUMENT_SIZE = 5 * 1024 * 1024;
+const MAX_LEAVE_DOCUMENT_SIZE = 50 * 1024 * 1024;
 
 /** Chủ đơn nộp giấy đã ký sau khi được duyệt; tệp và trạng thái được lưu cùng một transaction. */
 export async function uploadLeaveDocumentAction(
@@ -43,7 +43,7 @@ export async function uploadLeaveDocumentAction(
   }
   const file = fileValue as File;
   if (file.size <= 0 || file.size > MAX_LEAVE_DOCUMENT_SIZE) {
-    return { error: 'Tệp phải có dung lượng lớn hơn 0 và không vượt quá 5 MB.' };
+    return { error: 'Tệp phải có dung lượng lớn hơn 0 và không vượt quá 50 MB.' };
   }
   if (!['application/pdf', 'image/png', 'image/jpeg'].includes(file.type)) {
     return { error: 'Chỉ chấp nhận tệp PDF, PNG hoặc JPEG.' };
@@ -260,12 +260,17 @@ export async function approveLeaveRequestAction(
       return { error: 'Không tìm thấy thông tin nhân viên tạo đơn.' };
     }
 
+    const directorDirectApproval = currentUser.role === 'DIRECTOR'
+      && leaveRequest.status === 'PENDING'
+      && !(await hasActiveManagerForDepartment(applicant.department_id));
+
     // 2. Kiểm tra thẩm quyền phê duyệt
     const evaluation = evaluateLeaveApproval(
       currentUser,
       applicant,
       leaveRequest.status as LeaveStatus,
-      leaveRequest.duration_days
+      leaveRequest.duration_days,
+      directorDirectApproval
     );
 
     if (!evaluation.allowed || !evaluation.nextStatus || !evaluation.action) {
@@ -348,12 +353,17 @@ export async function rejectLeaveRequestAction(
       return { error: 'Không tìm thấy thông tin nhân viên tạo đơn.' };
     }
 
+    const directorDirectApproval = currentUser.role === 'DIRECTOR'
+      && leaveRequest.status === 'PENDING'
+      && !(await hasActiveManagerForDepartment(applicant.department_id));
+
     // 2. Kiểm tra thẩm quyền từ chối
     const evaluation = evaluateLeaveRejection(
       currentUser,
       applicant,
       leaveRequest.status as LeaveStatus,
-      leaveRequest.duration_days
+      leaveRequest.duration_days,
+      directorDirectApproval
     );
 
     if (!evaluation.allowed) {

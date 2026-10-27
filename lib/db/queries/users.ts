@@ -126,3 +126,21 @@ export async function getSafeUserById(id: string): Promise<SafeUser | null> {
   const result = await query<SafeUser>(sql, [id]);
   return result.rows[0] || null;
 }
+
+/** Kiểm tra phòng ban có Trưởng phòng đang hoạt động hay chưa. */
+export async function hasActiveManagerForDepartment(departmentId: string | null): Promise<boolean> {
+  if (!departmentId) return false;
+
+  const result = await query<{ exists: boolean }>(
+    `SELECT EXISTS (
+       SELECT 1
+       FROM users
+       WHERE department_id = $1
+         AND role = 'MANAGER'
+         AND is_active = true
+     ) AS exists`,
+    [departmentId]
+  );
+
+  return Boolean(result.rows[0]?.exists);
+}

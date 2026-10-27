@@ -187,6 +187,20 @@ export async function getPendingLeaveRequestsForApprover(
       (
         lr.status = 'APPROVED_BY_LEAD'
         OR (lr.status = 'PENDING' AND u.role = 'MANAGER')
+        OR (
+          lr.status = 'PENDING'
+          AND u.role IN ('STAFF', 'TEAM_LEAD', 'ACCOUNTANT')
+          AND (
+            u.department_id IS NULL
+            OR NOT EXISTS (
+              SELECT 1
+              FROM users active_manager
+              WHERE active_manager.department_id = u.department_id
+                AND active_manager.role = 'MANAGER'
+                AND active_manager.is_active = true
+            )
+          )
+        )
       )
     `;
   } else if (approver.role === 'MANAGER') {

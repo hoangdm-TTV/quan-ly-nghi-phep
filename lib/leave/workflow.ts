@@ -21,7 +21,8 @@ export function evaluateLeaveApproval(
   approver: SafeUser,
   applicant: SafeUser,
   currentStatus: LeaveStatus,
-  durationDays: number
+  durationDays: number,
+  directorDirectApproval = false
 ): WorkflowEvaluation {
   if (approver.id === applicant.id) {
     return { allowed: false, reason: 'Bạn không được phép tự phê duyệt đơn nghỉ phép của chính mình.' };
@@ -42,6 +43,10 @@ export function evaluateLeaveApproval(
           allowed: false,
           reason: 'Đơn đã được Trưởng phòng duyệt cấp 1; chỉ Giám đốc mới có quyền duyệt cấp 2.',
         };
+  }
+
+  if (directorDirectApproval && approver.role === 'DIRECTOR' && currentStatus === 'PENDING') {
+    return { allowed: true, nextStatus: 'WAITING_FOR_DOC', action: 'APPROVED_DIRECTOR' };
   }
 
   if (applicant.role === 'STAFF' || applicant.role === 'TEAM_LEAD' || applicant.role === 'ACCOUNTANT') {
@@ -81,8 +86,9 @@ export function evaluateLeaveRejection(
   approver: SafeUser,
   applicant: SafeUser,
   currentStatus: LeaveStatus,
-  durationDays: number
+  durationDays: number,
+  directorDirectApproval = false
 ): { allowed: boolean; reason?: string } {
-  const result = evaluateLeaveApproval(approver, applicant, currentStatus, durationDays);
+  const result = evaluateLeaveApproval(approver, applicant, currentStatus, durationDays, directorDirectApproval);
   return result.allowed ? { allowed: true } : { allowed: false, reason: result.reason };
 }

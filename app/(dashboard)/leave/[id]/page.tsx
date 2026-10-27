@@ -2,7 +2,7 @@ import { notFound, redirect } from 'next/navigation';
 import { requireAuth, canAccessUserData } from '@/lib/auth/permissions';
 import { getLeaveRequestById, getLeaveApprovalHistory, getLeaveDocumentMetadataById } from '@/lib/leave/queries';
 import { evaluateLeaveApproval } from '@/lib/leave/workflow';
-import { getSafeUserById } from '@/lib/db/queries/users';
+import { getSafeUserById, hasActiveManagerForDepartment } from '@/lib/db/queries/users';
 import LeaveStatusBadge from '@/components/leave/leave-status-badge';
 import LeaveDocumentForm from '@/components/leave/leave-document-form';
 import ApprovalActions from '@/components/leave/approval-actions';
@@ -54,13 +54,17 @@ export default async function LeaveDetailPage({
 
   // Kế toán chỉ xem (chỉ đọc), không duyệt.
   const isReadOnly = currentUser.role === 'ACCOUNTANT';
+  const directorDirectApproval = currentUser.role === 'DIRECTOR'
+    && request.status === 'PENDING'
+    && !(await hasActiveManagerForDepartment(applicant.department_id));
   const approvalEvaluation = isReadOnly
     ? { allowed: false }
     : evaluateLeaveApproval(
         currentUser,
         applicant,
         request.status,
-        request.duration_days
+        request.duration_days,
+        directorDirectApproval
       );
   const canApproveNow = approvalEvaluation.allowed;
 

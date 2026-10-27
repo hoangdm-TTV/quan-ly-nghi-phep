@@ -108,7 +108,9 @@ export default async function ApprovalsLeavePage() {
                   <span className={`px-2.5 py-1 rounded-lg text-[11px] font-black uppercase tracking-wide ${
                     req.status === 'PENDING' ? 'bg-amber-100 text-amber-900' : 'bg-violet-100 text-violet-900'
                   }`}>
-                    {req.status === 'PENDING' ? 'Chưa duyệt cấp 1' : 'Chưa duyệt cấp 2'}
+                    {req.status === 'PENDING'
+                      ? user.role === 'DIRECTOR' ? 'Chờ Giám đốc duyệt trực tiếp' : 'Chưa duyệt cấp 1'
+                      : 'Chưa duyệt cấp 2'}
                   </span>
                   <LeaveStatusBadge status={req.status} />
                   <Link
@@ -146,7 +148,7 @@ export default async function ApprovalsLeavePage() {
                   </span>
                   <span className="font-semibold text-slate-800">
                     {req.status === 'PENDING'
-                      ? 'Duyệt Cấp 1 (Trưởng phòng)'
+                      ? user.role === 'DIRECTOR' ? 'Giám đốc duyệt trực tiếp' : 'Duyệt Cấp 1 (Trưởng phòng)'
                       : 'Duyệt Cấp 2 (Giám đốc)'}
                   </span>
                 </div>
