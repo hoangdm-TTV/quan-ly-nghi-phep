@@ -145,7 +145,7 @@ export default async function LeaveListPage({
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            {user.role === 'MANAGER' ? 'Đơn phòng ban' : 'Toàn bộ đơn công ty'}
+            {user.role === 'MANAGER' ? 'Đơn phòng ban' : user.role === 'TEAM_LEAD' ? 'Đơn trong team' : 'Toàn bộ đơn công ty'}
           </Link>
         </div>
       )}

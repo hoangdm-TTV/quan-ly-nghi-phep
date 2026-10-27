@@ -21,7 +21,14 @@ export function buildUserDataScope(user: SafeUser, alias = 'u'): UserDataScope {
     };
   }
 
-  // STAFF, TEAM_LEAD và quản lý chưa được gán đơn vị chỉ thấy dữ liệu của chính mình.
+  if (user.role === 'TEAM_LEAD' && user.team_id) {
+    return {
+      whereSql: `(${alias}.id = $1 OR ${alias}.team_id = $2)`,
+      params: [user.id, user.team_id],
+    };
+  }
+
+  // STAFF và người chưa được gán phạm vi chỉ thấy dữ liệu của chính mình.
   return { whereSql: `${alias}.id = $1`, params: [user.id] };
 }
 

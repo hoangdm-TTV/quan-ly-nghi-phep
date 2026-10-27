@@ -11,7 +11,6 @@ import {
   canViewRequestScope,
   canManageHolidays,
 } from '@/lib/auth/roles';
-import { getRoleLabel } from '@/lib/auth/role-labels';
 import {
   LayoutDashboard,
   CalendarDays,
@@ -102,7 +101,7 @@ export default function AppSidebar({ user, isOpen, onClose }: AppSidebarProps) {
           show: canSubmit,
         },
         {
-          name: user.role === 'MANAGER' ? 'Đơn phòng ban' : 'Toàn bộ đơn công ty',
+          name: user.role === 'MANAGER' ? 'Đơn phòng ban' : user.role === 'TEAM_LEAD' ? 'Đơn trong team' : 'Toàn bộ đơn công ty',
           href: '/leave?tab=scope',
           icon: FolderOpen,
           show: canTrackScope,
@@ -129,7 +128,7 @@ export default function AppSidebar({ user, isOpen, onClose }: AppSidebarProps) {
           show: canSubmit,
         },
         {
-          name: user.role === 'MANAGER' ? 'Đơn phòng ban' : 'Toàn bộ đơn công ty',
+          name: user.role === 'MANAGER' ? 'Đơn phòng ban' : user.role === 'TEAM_LEAD' ? 'Đơn trong team' : 'Toàn bộ đơn công ty',
           href: '/out-office?tab=scope',
           icon: FolderOpen,
           show: canTrackScope,
@@ -235,7 +234,7 @@ export default function AppSidebar({ user, isOpen, onClose }: AppSidebarProps) {
               <p className="text-sm font-bold text-slate-900 truncate">{user.full_name}</p>
               <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                 <span className="inline-block px-2 py-0.5 text-[10px] font-bold rounded-md bg-white text-[#005a3c] border border-emerald-200 shadow-2xs">
-                  {getRoleLabel(user.role)}
+                  {user.position || 'Chưa cập nhật chức vụ'}
                 </span>
                 {user.department_name && (
                   <span className="text-xs text-slate-600 truncate font-medium">

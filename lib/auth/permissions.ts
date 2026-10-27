@@ -99,6 +99,11 @@ export function canAccessUserData(currentUser: SafeUser, targetUser: SafeUser): 
     return true;
   }
 
-  // STAFF và TEAM_LEAD không được xem dữ liệu nhân viên khác.
+  // Team Lead được xem dữ liệu thành viên trong cùng team.
+  if (currentUser.role === 'TEAM_LEAD' && currentUser.team_id && currentUser.team_id === targetUser.team_id) {
+    return true;
+  }
+
+  // STAFF không được xem dữ liệu nhân viên khác.
   return false;
 }

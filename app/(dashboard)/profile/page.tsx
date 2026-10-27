@@ -1,7 +1,6 @@
 import { requireAuth } from '@/lib/auth/permissions';
 import { redirect } from 'next/navigation';
 import { User, Mail, Shield, Building, Users, KeyRound, CheckCircle2 } from 'lucide-react';
-import { getRoleLabel } from '@/lib/auth/role-labels';
 
 export const metadata = {
   title: 'Hồ sơ tài khoản | Tri Thức Việt',
@@ -32,7 +31,7 @@ export default async function ProfilePage() {
           </div>
           <div className="pt-1">
             <span className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-[#005a3c] border border-emerald-200">
-              {getRoleLabel(user.role)}
+              {user.position || 'Chưa cập nhật chức vụ'}
             </span>
           </div>
 
@@ -104,7 +103,7 @@ export default async function ProfilePage() {
                     : user.role === 'MANAGER'
                     ? 'Duyệt đơn nghỉ phép và đơn ra ngoài của Staff/Team Lead trong phòng ban; nghỉ nhiều ngày chuyển tiếp Giám đốc.'
                     : user.role === 'TEAM_LEAD'
-                    ? 'Không có quyền duyệt; chỉ tạo và theo dõi đơn của mình/theo phạm vi được phép xem.'
+                    ? 'Không có quyền duyệt; được tạo và theo dõi đơn của mình cùng các đơn trong team.'
                     : 'Nhân viên không có quyền phê duyệt.'}
                 </div>
               </div>

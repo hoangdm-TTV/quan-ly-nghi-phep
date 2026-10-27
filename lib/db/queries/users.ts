@@ -90,7 +90,7 @@ export async function getFilterOptionsInScope(
  */
 export async function getUserByEmail(email: string): Promise<UserWithPassword | null> {
   const sql = `
-    SELECT id, email, full_name, role, department_id, team_id, manager_id, password_hash, is_active, created_at, updated_at
+    SELECT id, email, full_name, role, position, department_id, team_id, manager_id, password_hash, is_active, created_at, updated_at
     FROM users
     WHERE LOWER(email) = LOWER($1)
     LIMIT 1
@@ -110,6 +110,7 @@ export async function getSafeUserById(id: string): Promise<SafeUser | null> {
       u.email, 
       u.full_name, 
       u.role, 
+      u.position,
       u.department_id, 
       d.name AS department_name,
       u.team_id, 

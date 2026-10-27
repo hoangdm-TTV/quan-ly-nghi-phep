@@ -5,6 +5,7 @@ export interface User {
   email: string;
   full_name: string;
   role: UserRole;
+  position: string | null;
   department_id: string | null;
   team_id: string | null;
   manager_id: string | null;
@@ -19,6 +20,7 @@ export interface SafeUser {
   email: string;
   full_name: string;
   role: UserRole;
+  position: string | null;
   department_id: string | null;
   department_name?: string | null;
   team_id: string | null;

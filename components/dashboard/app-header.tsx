@@ -4,8 +4,6 @@ import { SafeUser } from '@/lib/types/user';
 import LogoutButton from '@/components/logout-button';
 import Link from 'next/link';
 import { Menu, Plus, Calendar, Clock, UserCheck } from 'lucide-react';
-import { getRoleLabel } from '@/lib/auth/role-labels';
-import { UserRole } from '@/lib/types/user';
 import { canSubmitPersonalRequests } from '@/lib/auth/roles';
 import BrandLogo from '@/components/brand/brand-logo';
 
@@ -97,7 +95,7 @@ export default function AppHeader({ user, onOpenSidebar }: AppHeaderProps) {
                     roleBadgeColors[user.role] || 'bg-slate-100 text-slate-700 border-slate-200'
                   }`}
                 >
-                  {getRoleLabel(user.role as UserRole)}
+                  {user.position || 'Chưa cập nhật chức vụ'}
                 </span>
                 {user.department_name && (
                   <span className="text-[11px] text-slate-500 truncate max-w-[130px]">

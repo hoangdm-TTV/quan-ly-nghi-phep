@@ -10,7 +10,6 @@ import {
   type RecentActivityItem,
 } from '@/lib/dashboard/queries';
 import { getUserDataScopeLabel } from '@/lib/auth/data-scope';
-import { getRoleLabel } from '@/lib/auth/role-labels';
 import { getPendingLeaveRequestsForApprover } from '@/lib/leave/queries';
 import { getPendingOutOfficeRequestsForApprover } from '@/lib/out-office/queries';
 import Link from 'next/link';
@@ -547,7 +546,7 @@ export default async function DashboardPage({
           <div>
             <div className="flex items-center gap-2 flex-wrap mb-2">
               <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-white/20 text-white backdrop-blur-xs">
-                {getRoleLabel(user.role)}
+                {user.position || 'Chưa cập nhật chức vụ'}
               </span>
               {user.department_name && (
                 <span className="text-xs text-emerald-100 font-medium">
