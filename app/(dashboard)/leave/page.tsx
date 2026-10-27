@@ -44,7 +44,7 @@ export default async function LeaveListPage({
     { label: 'Chờ duyệt', value: 'PENDING' },
     { label: 'Chờ Giám đốc', value: 'APPROVED_BY_LEAD' },
     { label: 'Chờ nộp giấy', value: 'WAITING_FOR_DOC' },
-    { label: 'Đã duyệt / Hoàn tất', value: 'COMPLETED' },
+    { label: 'Đã hoàn tất', value: 'COMPLETED' },
     { label: 'Từ chối', value: 'REJECTED' },
   ];
 

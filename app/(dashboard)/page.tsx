@@ -67,7 +67,7 @@ const emptyReport: ScopeReport = {
 const statusLabels: Record<string, { label: string; class: string }> = {
   PENDING: { label: 'Chờ duyệt', class: 'bg-amber-50 text-amber-800 border-amber-200' },
   APPROVED_BY_LEAD: { label: 'Chờ Giám đốc', class: 'bg-blue-50 text-blue-800 border-blue-200' },
-  WAITING_FOR_DOC: { label: 'Chờ nộp giấy', class: 'bg-teal-50 text-teal-800 border-teal-200' },
+  WAITING_FOR_DOC: { label: 'Chờ nộp giấy', class: 'bg-violet-50 text-violet-800 border-violet-200' },
   APPROVED: { label: 'Đã duyệt', class: 'bg-emerald-50 text-[#005a3c] border-emerald-200' },
   COMPLETED: { label: 'Hoàn tất', class: 'bg-emerald-50 text-[#005a3c] border-emerald-200' },
   REJECTED: { label: 'Từ chối', class: 'bg-rose-50 text-rose-800 border-rose-200' },

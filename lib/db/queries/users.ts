@@ -25,14 +25,10 @@ export async function getUsersInScope(
   const scope = buildReportDataScope(user, 'u');
   const params: any[] = [...scope.params];
   const conditions = [scope.whereSql];
-  if (departmentId) {
-    params.push(departmentId);
-    conditions.push(`u.department_id = $${params.length}`);
-  }
-  if (teamId) {
-    params.push(teamId);
-    conditions.push(`u.team_id = $${params.length}`);
-  }
+  // Không thu hẹp danh sách option theo lựa chọn hiện tại; người dùng
+  // có thể đổi trực tiếp sang phòng ban/team/nhân viên khác.
+  void departmentId;
+  void teamId;
   const sql = `
     SELECT u.id, u.full_name, u.role
     FROM users u
@@ -55,14 +51,11 @@ export async function getFilterOptionsInScope(
   const scope = buildReportDataScope(user, 'u');
   const baseParams: any[] = [...scope.params];
   const conditions = [scope.whereSql];
-  if (departmentId) {
-    baseParams.push(departmentId);
-    conditions.push(`u.department_id = $${baseParams.length}`);
-  }
-  if (teamId) {
-    baseParams.push(teamId);
-    conditions.push(`u.team_id = $${baseParams.length}`);
-  }
+  // Các dropdown luôn hiển thị toàn bộ lựa chọn trong phạm vi quyền.
+  // Điều kiện department/team chỉ áp dụng cho truy vấn kết quả, không áp dụng
+  // cho danh sách option để có thể đổi trực tiếp sang lựa chọn khác.
+  void departmentId;
+  void teamId;
   const [departments, teams] = await Promise.all([
     query<{ id: string; name: string }>(
       `SELECT DISTINCT d.id, d.name
