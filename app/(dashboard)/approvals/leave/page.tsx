@@ -19,6 +19,9 @@ export default async function ApprovalsLeavePage() {
   }
 
   const pendingRequests = await getPendingLeaveRequestsForApprover(user);
+  const needsActionCount = pendingRequests.length;
+  const firstLevelCount = pendingRequests.filter((request) => request.status === 'PENDING').length;
+  const finalLevelCount = pendingRequests.filter((request) => request.status === 'APPROVED_BY_LEAD').length;
 
   return (
     <div className="space-y-6">
@@ -30,11 +33,11 @@ export default async function ApprovalsLeavePage() {
               Hàng đợi duyệt đơn nghỉ phép
             </h1>
             <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
-              {pendingRequests.length} đơn chờ
+              {needsActionCount} đơn cần xử lý
             </span>
           </div>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Danh sách các đơn nghỉ phép thuộc thẩm quyền đang chờ bạn tiếp nhận phê duyệt hoặc từ chối.
+            Các đơn chưa được xử lý sẽ được ưu tiên hiển thị tại đây. Bạn chỉ nhìn thấy những đơn đang đến đúng bước duyệt của mình.
           </p>
         </div>
 
@@ -48,12 +51,32 @@ export default async function ApprovalsLeavePage() {
         </div>
       </div>
 
+      {needsActionCount > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3" aria-live="polite">
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+            <p className="text-xs font-bold uppercase tracking-wide text-amber-800">Cần xử lý ngay</p>
+            <p className="mt-1 text-2xl font-black text-amber-950">{needsActionCount}</p>
+            <p className="text-xs font-medium text-amber-800">đơn đang chờ bạn xem</p>
+          </div>
+          <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
+            <p className="text-xs font-bold uppercase tracking-wide text-blue-800">Chờ duyệt cấp 1</p>
+            <p className="mt-1 text-2xl font-black text-blue-950">{firstLevelCount}</p>
+            <p className="text-xs font-medium text-blue-800">đơn chưa được Trưởng phòng duyệt</p>
+          </div>
+          <div className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3">
+            <p className="text-xs font-bold uppercase tracking-wide text-violet-800">Chờ duyệt cấp 2</p>
+            <p className="mt-1 text-2xl font-black text-violet-950">{finalLevelCount}</p>
+            <p className="text-xs font-medium text-violet-800">đơn đang chờ Giám đốc duyệt</p>
+          </div>
+        </div>
+      )}
+
       {pendingRequests.length === 0 ? (
         <div className="bg-white p-12 text-center rounded-2xl border border-slate-200/90 shadow-xs space-y-3">
           <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-[#005a3c] border border-emerald-200 mx-auto flex items-center justify-center">
             <CheckSquare className="w-7 h-7" />
           </div>
-          <h3 className="text-base font-bold text-slate-800">Không có đơn nào chờ xử lý</h3>
+              <h3 className="text-base font-bold text-slate-800">Không có đơn chưa duyệt</h3>
           <p className="text-xs sm:text-sm text-slate-500 max-w-sm mx-auto">
             Tuyệt vời! Bạn đã hoàn tất tất cả các yêu cầu phê duyệt đơn nghỉ phép thuộc thẩm quyền của mình.
           </p>
@@ -63,7 +86,9 @@ export default async function ApprovalsLeavePage() {
           {pendingRequests.map((req) => (
             <div
               key={req.id}
-              className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-6 hover:shadow-md transition-all space-y-4"
+              className={`bg-white rounded-2xl border shadow-xs p-6 hover:shadow-md transition-all space-y-4 ${
+                req.status === 'PENDING' ? 'border-amber-300 ring-1 ring-amber-100' : 'border-violet-300 ring-1 ring-violet-100'
+              }`}
             >
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 pb-4">
                 <div className="flex items-center gap-3">
@@ -80,6 +105,11 @@ export default async function ApprovalsLeavePage() {
                 </div>
 
                 <div className="flex items-center gap-2.5">
+                  <span className={`px-2.5 py-1 rounded-lg text-[11px] font-black uppercase tracking-wide ${
+                    req.status === 'PENDING' ? 'bg-amber-100 text-amber-900' : 'bg-violet-100 text-violet-900'
+                  }`}>
+                    {req.status === 'PENDING' ? 'Chưa duyệt cấp 1' : 'Chưa duyệt cấp 2'}
+                  </span>
                   <LeaveStatusBadge status={req.status} />
                   <Link
                     href={`/leave/${req.id}`}

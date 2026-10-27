@@ -3,17 +3,22 @@
 import { SafeUser } from '@/lib/types/user';
 import LogoutButton from '@/components/logout-button';
 import Link from 'next/link';
-import { Menu, Plus, Calendar, Clock, UserCheck } from 'lucide-react';
+import { Menu, Plus, Calendar, Clock, UserCheck, Bell } from 'lucide-react';
 import { canSubmitPersonalRequests } from '@/lib/auth/roles';
 import BrandLogo from '@/components/brand/brand-logo';
 
 interface AppHeaderProps {
   user: SafeUser;
+  approvalCounts: {
+    leave: number;
+    outOffice: number;
+  };
   onOpenSidebar: () => void;
 }
 
-export default function AppHeader({ user, onOpenSidebar }: AppHeaderProps) {
+export default function AppHeader({ user, approvalCounts, onOpenSidebar }: AppHeaderProps) {
   const canSubmit = canSubmitPersonalRequests(user.role);
+  const totalApprovals = approvalCounts.leave + approvalCounts.outOffice;
 
   const roleBadgeColors: Record<string, string> = {
     DIRECTOR: 'bg-teal-50 text-teal-800 border-teal-200',
@@ -56,6 +61,19 @@ export default function AppHeader({ user, onOpenSidebar }: AppHeaderProps) {
 
       {/* Right side actions: Quick New Request + User profile chip + Logout */}
       <div className="flex items-center gap-2.5 sm:gap-4">
+        {totalApprovals > 0 && (
+          <Link
+            href={approvalCounts.leave > 0 ? '/approvals/leave' : '/approvals/out-office'}
+            className="hidden md:inline-flex items-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-black text-amber-900 shadow-sm transition hover:bg-amber-100"
+            title="Xem các đơn đang chờ xử lý"
+          >
+            <Bell className="h-3.5 w-3.5 text-amber-600" />
+            <span>Cần duyệt</span>
+            <span className="rounded-full bg-amber-500 px-1.5 py-0.5 text-[10px] leading-none text-white">
+              {totalApprovals > 99 ? '99+' : totalApprovals}
+            </span>
+          </Link>
+        )}
         {canSubmit && (
           <div className="hidden sm:flex items-center gap-2">
             <Link

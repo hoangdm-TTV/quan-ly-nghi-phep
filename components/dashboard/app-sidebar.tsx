@@ -28,6 +28,10 @@ import BrandLogo from '@/components/brand/brand-logo';
 
 interface AppSidebarProps {
   user: SafeUser;
+  approvalCounts: {
+    leave: number;
+    outOffice: number;
+  };
   isOpen: boolean;
   onClose: () => void;
 }
@@ -46,6 +50,7 @@ interface NavChild {
   href: string;
   icon: typeof LayoutDashboard;
   show: boolean;
+  badge?: number;
 }
 
 interface NavGroup {
@@ -69,7 +74,7 @@ function isPathActive(pathname: string, href: string, exact = false, currentPara
   return Array.from(new URLSearchParams(query).entries()).every(([key, value]) => currentParams?.get(key) === value);
 }
 
-export default function AppSidebar({ user, isOpen, onClose }: AppSidebarProps) {
+export default function AppSidebar({ user, approvalCounts, isOpen, onClose }: AppSidebarProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const canSubmit = canSubmitPersonalRequests(user.role);
@@ -111,6 +116,7 @@ export default function AppSidebar({ user, isOpen, onClose }: AppSidebarProps) {
           href: '/approvals/leave',
           icon: CheckSquare,
           show: canApprove,
+          badge: approvalCounts.leave,
         },
       ],
     },
@@ -138,6 +144,7 @@ export default function AppSidebar({ user, isOpen, onClose }: AppSidebarProps) {
           href: '/approvals/out-office',
           icon: CheckCheck,
           show: canApprove,
+          badge: approvalCounts.outOffice,
         },
       ],
     },
@@ -316,7 +323,12 @@ export default function AppSidebar({ user, isOpen, onClose }: AppSidebarProps) {
                           }`}
                         >
                           <ChildIcon className={`w-4 h-4 shrink-0 ${isActive ? 'text-[#005a3c]' : 'text-slate-400'}`} />
-                          <span>{child.name}</span>
+                          <span className="flex-1">{child.name}</span>
+                          {child.badge !== undefined && child.badge > 0 && (
+                            <span className="min-w-5 rounded-full bg-amber-500 px-1.5 py-0.5 text-center text-[10px] font-black leading-none text-white shadow-sm" aria-label={`${child.badge} đơn cần xử lý`}>
+                              {child.badge > 99 ? '99+' : child.badge}
+                            </span>
+                          )}
                         </Link>
                       );
                     })}

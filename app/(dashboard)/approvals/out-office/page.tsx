@@ -19,6 +19,8 @@ export default async function ApprovalsOutOfficePage() {
   }
 
   const pendingRequests = await getPendingOutOfficeRequestsForApprover(user);
+  const needsActionCount = pendingRequests.filter((request) => request.status === 'PENDING').length;
+  const waitingReturnCount = pendingRequests.filter((request) => request.status === 'APPROVED').length;
 
   return (
     <div className="space-y-6">
@@ -30,11 +32,11 @@ export default async function ApprovalsOutOfficePage() {
               Hàng đợi duyệt đơn ra ngoài
             </h1>
             <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
-              {pendingRequests.length} đơn chờ
+              {needsActionCount} đơn chưa duyệt
             </span>
           </div>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Duyệt đơn trước khi nhân viên ra ngoài cổng và xác nhận ký sổ hoàn tất khi nhân viên quay lại.
+            Các đơn chưa duyệt được đánh dấu nổi bật để bạn xử lý trước; các đơn đã duyệt sẽ nằm ở nhóm chờ xác nhận nhân viên đã về.
           </p>
         </div>
 
@@ -48,12 +50,32 @@ export default async function ApprovalsOutOfficePage() {
         </div>
       </div>
 
+      {pendingRequests.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3" aria-live="polite">
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+            <p className="text-xs font-bold uppercase tracking-wide text-amber-800">Chưa duyệt</p>
+            <p className="mt-1 text-2xl font-black text-amber-950">{needsActionCount}</p>
+            <p className="text-xs font-medium text-amber-800">đơn cần xử lý trước khi đi</p>
+          </div>
+          <div className="rounded-xl border border-teal-200 bg-teal-50 px-4 py-3">
+            <p className="text-xs font-bold uppercase tracking-wide text-teal-800">Đang ra ngoài</p>
+            <p className="mt-1 text-2xl font-black text-teal-950">{waitingReturnCount}</p>
+            <p className="text-xs font-medium text-teal-800">đơn chờ ký xác nhận khi về</p>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-700">Tổng hàng đợi</p>
+            <p className="mt-1 text-2xl font-black text-slate-950">{pendingRequests.length}</p>
+            <p className="text-xs font-medium text-slate-600">đơn thuộc thẩm quyền của bạn</p>
+          </div>
+        </div>
+      )}
+
       {pendingRequests.length === 0 ? (
         <div className="bg-white p-12 text-center rounded-2xl border border-slate-200/90 shadow-xs space-y-3">
           <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-[#005a3c] border border-emerald-200 mx-auto flex items-center justify-center">
             <Clock className="w-7 h-7" />
           </div>
-          <h3 className="text-base font-bold text-slate-800">Không có đơn nào chờ xử lý</h3>
+          <h3 className="text-base font-bold text-slate-800">Không có đơn chưa duyệt</h3>
           <p className="text-xs sm:text-sm text-slate-500 max-w-sm mx-auto">
             Hiện tại không có nhân viên nào xin ra ngoài hoặc chờ ký sổ xác nhận về.
           </p>
@@ -63,7 +85,9 @@ export default async function ApprovalsOutOfficePage() {
           {pendingRequests.map((req) => (
             <div
               key={req.id}
-              className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-6 hover:shadow-md transition-all space-y-4"
+              className={`bg-white rounded-2xl border shadow-xs p-6 hover:shadow-md transition-all space-y-4 ${
+                req.status === 'PENDING' ? 'border-amber-300 ring-1 ring-amber-100' : 'border-teal-300 ring-1 ring-teal-100'
+              }`}
             >
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 pb-4">
                 <div className="flex items-center gap-3">
@@ -80,6 +104,11 @@ export default async function ApprovalsOutOfficePage() {
                 </div>
 
                 <div className="flex items-center gap-2.5">
+                  <span className={`px-2.5 py-1 rounded-lg text-[11px] font-black uppercase tracking-wide ${
+                    req.status === 'PENDING' ? 'bg-amber-100 text-amber-900' : 'bg-teal-100 text-teal-900'
+                  }`}>
+                    {req.status === 'PENDING' ? 'Chưa duyệt' : 'Chờ xác nhận về'}
+                  </span>
                   <OutOfficeStatusBadge status={req.status} />
                   <Link
                     href={`/out-office/${req.id}`}

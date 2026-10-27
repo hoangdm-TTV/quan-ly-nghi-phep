@@ -7,10 +7,14 @@ import AppHeader from './app-header';
 
 interface DashboardShellProps {
   user: SafeUser;
+  approvalCounts: {
+    leave: number;
+    outOffice: number;
+  };
   children: React.ReactNode;
 }
 
-export default function DashboardShell({ user, children }: DashboardShellProps) {
+export default function DashboardShell({ user, approvalCounts, children }: DashboardShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
@@ -18,6 +22,7 @@ export default function DashboardShell({ user, children }: DashboardShellProps) 
       {/* Sidebar navigation */}
       <AppSidebar
         user={user}
+        approvalCounts={approvalCounts}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />
@@ -26,6 +31,7 @@ export default function DashboardShell({ user, children }: DashboardShellProps) 
       <div className="flex-1 flex flex-col min-w-0 lg:pl-72">
         <AppHeader
           user={user}
+          approvalCounts={approvalCounts}
           onOpenSidebar={() => setSidebarOpen(true)}
         />
 
