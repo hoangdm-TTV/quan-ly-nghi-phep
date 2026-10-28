@@ -1,8 +1,8 @@
-import { requireAuth } from '@/lib/auth/permissions';
-import DashboardShell from '@/components/dashboard/dashboard-shell';
-import { canApproveWorkflowRequests } from '@/lib/auth/roles';
-import { getPendingLeaveRequestsForApprover } from '@/lib/leave/queries';
-import { getPendingOutOfficeRequestsForApprover } from '@/lib/out-office/queries';
+import { requireAuth } from "@/lib/auth/permissions";
+import DashboardShell from "@/components/dashboard/dashboard-shell";
+import { canApproveWorkflowRequests } from "@/lib/auth/roles";
+import { getPendingLeaveApprovalCount } from "@/lib/leave/queries";
+import { getPendingOutOfficeApprovalCount } from "@/lib/out-office/queries";
 
 export default async function DashboardLayout({
   children,
@@ -10,19 +10,21 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const user = await requireAuth();
-  const [pendingLeaveRequests, pendingOutOfficeRequests] = canApproveWorkflowRequests(user.role)
+  const [pendingLeaveCount, pendingOutOfficeCount] = canApproveWorkflowRequests(
+    user.role,
+  )
     ? await Promise.all([
-        getPendingLeaveRequestsForApprover(user),
-        getPendingOutOfficeRequestsForApprover(user),
+        getPendingLeaveApprovalCount(user),
+        getPendingOutOfficeApprovalCount(user),
       ])
-    : [[], []];
+    : [0, 0];
 
   return (
     <DashboardShell
       user={user}
       approvalCounts={{
-        leave: pendingLeaveRequests.length,
-        outOffice: pendingOutOfficeRequests.length,
+        leave: pendingLeaveCount,
+        outOffice: pendingOutOfficeCount,
       }}
     >
       {children}

@@ -205,6 +205,23 @@ export async function getPendingOutOfficeRequestsForApprover(
   return res.rows;
 }
 
+/** Đếm nhanh hàng đợi ra ngoài để hiển thị badge, không tải toàn bộ chi tiết đơn. */
+export async function getPendingOutOfficeApprovalCount(approver: SafeUser): Promise<number> {
+  if (approver.role !== 'MANAGER' && approver.role !== 'DIRECTOR') return 0;
+  const params: string[] = [approver.id];
+  let scopeClause = 'TRUE';
+  if (approver.role === 'MANAGER') {
+    if (!approver.department_id) return 0;
+    params.push(approver.department_id);
+    scopeClause = `u.department_id = $2 AND u.role IN ('STAFF', 'TEAM_LEAD', 'ACCOUNTANT')`;
+  }
+  const result = await query<{ count: number }>(
+    `SELECT COUNT(*)::int AS count FROM out_office_requests oo JOIN users u ON oo.employee_id = u.id WHERE oo.employee_id != $1 AND ${scopeClause} AND oo.status IN ('PENDING', 'APPROVED')`,
+    params
+  );
+  return Number(result.rows[0]?.count || 0);
+}
+
 export interface ScopedOutOfficeFilter {
   status?: string;
   employeeId?: string;

@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import { cache } from 'react';
 import { getSessionIdFromCookie, getSession } from './session';
 import { getSafeUserById } from '@/lib/db/queries/users';
 import { SafeUser, UserRole } from '@/lib/types/user';
@@ -7,7 +8,7 @@ import { SafeUser, UserRole } from '@/lib/types/user';
  * Lấy thông tin người dùng hiện tại từ session cookie
  * Trả về null nếu chưa đăng nhập, session hết hạn hoặc tài khoản bị khóa
  */
-export async function getCurrentUser(): Promise<SafeUser | null> {
+export const getCurrentUser = cache(async function getCurrentUser(): Promise<SafeUser | null> {
   const sessionId = getSessionIdFromCookie();
   if (!sessionId) return null;
 
@@ -20,7 +21,7 @@ export async function getCurrentUser(): Promise<SafeUser | null> {
   }
 
   return user;
-}
+});
 
 /**
  * Bắt buộc người dùng phải đăng nhập để truy cập

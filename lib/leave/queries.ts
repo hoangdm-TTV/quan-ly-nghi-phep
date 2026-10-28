@@ -250,6 +250,25 @@ export async function getPendingLeaveRequestsForApprover(
   return res.rows;
 }
 
+/** Đếm nhanh hàng đợi nghỉ phép để hiển thị badge, không tải toàn bộ chi tiết đơn. */
+export async function getPendingLeaveApprovalCount(approver: SafeUser): Promise<number> {
+  if (approver.role !== 'MANAGER' && approver.role !== 'DIRECTOR') return 0;
+  const params: any[] = [approver.id];
+  let whereClause: string;
+  if (approver.role === 'DIRECTOR') {
+    whereClause = `(lr.status = 'APPROVED_BY_LEAD' OR (lr.status = 'PENDING' AND u.role = 'MANAGER') OR (lr.status = 'PENDING' AND u.role IN ('STAFF', 'TEAM_LEAD', 'ACCOUNTANT') AND (u.department_id IS NULL OR NOT EXISTS (SELECT 1 FROM users active_manager WHERE active_manager.department_id = u.department_id AND active_manager.role = 'MANAGER' AND active_manager.is_active = true))))`;
+  } else {
+    if (!approver.department_id) return 0;
+    params.push(approver.department_id);
+    whereClause = `lr.status = 'PENDING' AND u.department_id = $2 AND u.role IN ('STAFF', 'TEAM_LEAD', 'ACCOUNTANT')`;
+  }
+  const result = await query<{ count: number }>(
+    `SELECT COUNT(*)::int AS count FROM leave_requests lr JOIN users u ON lr.employee_id = u.id WHERE lr.employee_id != $1 AND ${whereClause}`,
+    params
+  );
+  return Number(result.rows[0]?.count || 0);
+}
+
 export interface ScopedLeaveFilter {
   status?: string;
   employeeId?: string;

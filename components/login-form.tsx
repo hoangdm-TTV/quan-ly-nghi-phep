@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useFormState, useFormStatus } from 'react-dom';
-import { loginAction, ActionState } from '@/lib/auth/actions';
-import { Mail, Lock, Loader2, ArrowRight, AlertCircle } from 'lucide-react';
+import { useFormState, useFormStatus } from "react-dom";
+import { loginAction, ActionState } from "@/lib/auth/actions";
+import { Mail, Lock, Loader2, ArrowRight, AlertCircle } from "lucide-react";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -58,7 +58,7 @@ export default function LoginForm() {
             type="email"
             autoComplete="email"
             required
-            placeholder="ten.nv@trithucviet.vn"
+            placeholder="ten@trithucvietbn.com"
             className="block w-full pl-12 pr-4 py-3.5 sm:py-3 border border-slate-300 rounded-2xl sm:rounded-xl text-base sm:text-sm font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#005a3c] focus:border-[#005a3c]"
           />
         </div>
