@@ -60,6 +60,26 @@ Trạng thái: `PENDING` → `APPROVED_BY_LEAD` → `WAITING_FOR_DOC` → `COMPL
 
 > Để bật tính năng, chạy migration `migrations/03_leave_documents.sql` sau migrations `01` và `02` trên PostgreSQL trước khi deploy phiên bản này.
 
+## Thông báo đơn mới tới người duyệt
+
+Ứng dụng gửi Web Push khi nhân viên tạo đơn nghỉ phép hoặc đơn ra ngoài. Người duyệt cần bấm **Bật thông báo** trên từng trình duyệt/thiết bị và cho phép quyền thông báo. Khi dashboard đang mở, một thông báo mới phát tiếng “ting”; khi ứng dụng đóng, trình duyệt/hệ điều hành hiển thị push notification và áp dụng âm báo theo cài đặt của thiết bị.
+
+Trước khi bật tính năng:
+
+1. Chạy migration `migrations/003_push_notifications.sql` trên PostgreSQL.
+2. Tạo cặp VAPID key bằng `npx web-push generate-vapid-keys`.
+3. Cấu hình các biến môi trường trên server và khởi động lại ứng dụng:
+
+```env
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=<public key>
+VAPID_PRIVATE_KEY=<private key>
+VAPID_SUBJECT=mailto:admin@your-company.example
+```
+
+4. Mở ứng dụng qua HTTPS (localhost được trình duyệt xem là môi trường phát triển an toàn), đăng nhập bằng tài khoản người duyệt và bật thông báo trên từng thiết bị. `VAPID_SUBJECT` vẫn phải là `mailto:` hoặc URL `https:`; không đặt thành `http://localhost`. Trên iPhone/iPad, cần thêm ứng dụng vào Màn hình chính để nhận Web Push.
+
+Không commit `VAPID_PRIVATE_KEY`. Nếu chưa cấu hình VAPID hoặc chưa chạy migration, gửi đơn vẫn hoạt động nhưng push chưa được gửi.
+
 ## 5. Quy trình đơn xin ra ngoài
 
 `PENDING` → `APPROVED` hoặc `REJECTED`. (`COMPLETED` dành cho bước đối soát sau này.)

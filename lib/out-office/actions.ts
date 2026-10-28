@@ -8,6 +8,7 @@ import { requireAuth } from '@/lib/auth/permissions';
 import { getSafeUserById } from '@/lib/db/queries/users';
 import { calculateEstimatedHours } from './calculator';
 import { evaluateOutOfficeApproval, evaluateOutOfficeRejection, OutOfficeStatus } from './workflow';
+import { notifyOutOfficeApprovers } from '@/lib/notifications/push';
 
 const createOutOfficeSchema = z.object({
   requestDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Ngày không hợp lệ (YYYY-MM-DD)'),
@@ -68,6 +69,7 @@ export async function createOutOfficeRequestAction(
 
   // 2. Kiểm tra trùng + ghi đơn trong cùng transaction để chống race condition
   const client = await pool.connect();
+  let requestId: string | undefined;
   try {
     await client.query('BEGIN');
     const overlapCheck = await client.query(
@@ -86,12 +88,13 @@ export async function createOutOfficeRequestAction(
       return { error: 'Bạn đã có một đơn ra ngoài khác trong cùng khoảng thời gian này.' };
     }
 
-    await client.query(
+    const insertResult = await client.query<{ id: string }>(
       `INSERT INTO out_office_requests
         (employee_id, request_date, start_time, end_time, estimated_hours, reason_type, reason, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, 'PENDING')`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'PENDING') RETURNING id`,
       [currentUser.id, requestDate, startTime, endTime, estimatedHours, reasonType, reason.trim()]
     );
+    requestId = insertResult.rows[0]?.id;
     await client.query('COMMIT');
   } catch (error) {
     try { await client.query('ROLLBACK'); } catch {}
@@ -101,6 +104,11 @@ export async function createOutOfficeRequestAction(
     client.release();
   }
 
+  if (requestId) {
+    await notifyOutOfficeApprovers(requestId).catch((error) => {
+      console.error('[Out Office Push Notification Error]', error);
+    });
+  }
   revalidatePath('/out-office');
   redirect('/out-office');
 }

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Menu, Plus, Calendar, Clock, UserCheck, Bell } from 'lucide-react';
 import { canSubmitPersonalRequests } from '@/lib/auth/roles';
 import BrandLogo from '@/components/brand/brand-logo';
+import PushNotificationSetup from '@/components/notifications/push-notification-setup';
 
 interface AppHeaderProps {
   user: SafeUser;
@@ -61,6 +62,7 @@ export default function AppHeader({ user, approvalCounts, onOpenSidebar }: AppHe
 
       {/* Right side actions: Quick New Request + User profile chip + Logout */}
       <div className="flex items-center gap-2.5 sm:gap-4">
+        <PushNotificationSetup />
         {totalApprovals > 0 && (
           <Link
             href={approvalCounts.leave > 0 ? '/approvals/leave' : '/approvals/out-office'}

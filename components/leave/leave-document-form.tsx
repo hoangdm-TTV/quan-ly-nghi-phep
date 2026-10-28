@@ -48,7 +48,7 @@ function UploadButton({ compressing }: { compressing: boolean }) {
     <button
       type="submit"
       disabled={busy}
-      className="inline-flex items-center rounded-lg bg-teal-700 px-4 py-2 text-xs font-semibold text-white hover:bg-teal-800 disabled:opacity-50"
+      className="inline-flex items-center rounded-lg bg-[#005a3c] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#044e3f] disabled:cursor-not-allowed disabled:opacity-50"
     >
       {compressing ? (
         <>
@@ -70,7 +70,7 @@ function UploadButton({ compressing }: { compressing: boolean }) {
   );
 }
 
-export default function LeaveDocumentForm({ requestId }: { requestId: string }) {
+export default function LeaveDocumentForm({ requestId, compact = false }: { requestId: string; compact?: boolean }) {
   const initialState: LeaveActionState = {};
   const [state, formAction] = useFormState(uploadLeaveDocumentAction, initialState);
   const [compressing, setCompressing] = useState(false);
@@ -109,22 +109,22 @@ export default function LeaveDocumentForm({ requestId }: { requestId: string }) 
       action={formAction}
       onSubmit={handleSubmit}
       encType="multipart/form-data"
-      className="space-y-3 rounded-xl border border-teal-200 bg-white p-5"
+      className={compact ? 'space-y-4' : 'space-y-3 rounded-xl border border-teal-200 bg-white p-5'}
     >
       <input type="hidden" name="requestId" value={requestId} />
       <div>
-        <label htmlFor="signed-leave-document" className="mb-1 block text-xs font-semibold text-slate-800">
+        <label htmlFor={`signed-leave-document-${requestId}`} className="mb-1 block text-xs font-semibold text-slate-800">
           Ảnh hoặc PDF giấy xin nghỉ đã ký
         </label>
         <input
           ref={fileInputRef}
-          id="signed-leave-document"
+          id={`signed-leave-document-${requestId}`}
           name="documentFile"
           type="file"
           accept="application/pdf,image/png,image/jpeg,.pdf,.png,.jpg,.jpeg"
           required
           onChange={(event) => setSelectedFileName(event.target.files?.[0]?.name || '')}
-          className="block w-full text-xs text-slate-700 file:mr-3 file:rounded-md file:border-0 file:bg-teal-50 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-teal-700"
+          className="block w-full text-xs text-slate-700 file:mr-3 file:rounded-md file:border-0 file:bg-emerald-50 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-[#005a3c]"
         />
         <p className="mt-1 flex items-center gap-1 text-[11px] text-slate-500">
           <Sparkles className="h-3 w-3 text-teal-600" />

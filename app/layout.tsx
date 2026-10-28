@@ -30,6 +30,15 @@ export const metadata: Metadata = {
     locale: "vi_VN",
     type: "website",
   },
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "Tri Thức Việt",
+    statusBarStyle: "default",
+  },
+  icons: {
+    apple: "/logo.png",
+  },
 };
 
 export const viewport: Viewport = {

@@ -6,6 +6,7 @@ import { getFilterOptionsInScope, getUsersInScope } from '@/lib/db/queries/users
 import { redirect } from 'next/navigation';
 import LeaveStatusBadge from '@/components/leave/leave-status-badge';
 import ScopeFilterForm from '@/components/requests/scope-filter-form';
+import LeaveDocumentDialog from '@/components/leave/leave-document-dialog';
 import Link from 'next/link';
 import { Plus, FileText, ArrowRight, Calendar, Filter } from 'lucide-react';
 
@@ -257,14 +258,19 @@ export default async function LeaveListPage({
                     <td className="px-5 py-4 whitespace-nowrap">
                       <LeaveStatusBadge status={r.status} />
                     </td>
-                    <td className="px-5 py-4 text-right whitespace-nowrap">
-                      <Link
-                        href={`/leave/${r.id}`}
-                        className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-bold text-[#005a3c] bg-emerald-50 hover:bg-[#005a3c] hover:text-white transition-all"
-                      >
-                        Chi tiết
-                        <ArrowRight className="w-3.5 h-3.5 ml-1" />
-                      </Link>
+                    <td className="px-5 py-4 whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-2">
+                        {r.status === 'WAITING_FOR_DOC' && r.employee_id === user.id && (
+                          <LeaveDocumentDialog requestId={r.id} />
+                        )}
+                        <Link
+                          href={`/leave/${r.id}`}
+                          className="inline-flex items-center rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-[#005a3c] transition-colors hover:border-emerald-300 hover:bg-emerald-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2"
+                        >
+                          Chi tiết
+                          <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 ))}

@@ -9,6 +9,7 @@ import { requireAuth } from '@/lib/auth/permissions';
 import { getSafeUserById, hasActiveManagerForDepartment } from '@/lib/db/queries/users';
 import { calculateWorkingDaysWithHolidays } from './calculator';
 import { evaluateLeaveApproval, evaluateLeaveRejection, LeaveStatus } from './workflow';
+import { notifyLeaveApprovers } from '@/lib/notifications/push';
 
 const createLeaveSchema = z.object({
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Ngày bắt đầu không hợp lệ (YYYY-MM-DD)'),
@@ -181,6 +182,7 @@ export async function createLeaveRequestAction(
 
   // 4. Kiểm tra trùng + ghi đơn trong cùng transaction để chống race condition
   const client = await pool.connect();
+  let requestId: string | undefined;
   try {
     await client.query('BEGIN');
     const overlapCheck = await client.query(
@@ -200,11 +202,12 @@ export async function createLeaveRequestAction(
       };
     }
 
-    await client.query(
+    const insertResult = await client.query<{ id: string }>(
       `INSERT INTO leave_requests (employee_id, start_date, end_date, duration_days, reason, status)
-       VALUES ($1, $2, $3, $4, $5, 'PENDING')`,
+       VALUES ($1, $2, $3, $4, $5, 'PENDING') RETURNING id`,
       [currentUser.id, startDate, endDate, durationDays, reason.trim()]
     );
+    requestId = insertResult.rows[0]?.id;
     await client.query('COMMIT');
   } catch (error) {
     try { await client.query('ROLLBACK'); } catch {}
@@ -214,6 +217,11 @@ export async function createLeaveRequestAction(
     client.release();
   }
 
+  if (requestId) {
+    await notifyLeaveApprovers(requestId).catch((error) => {
+      console.error('[Leave Push Notification Error]', error);
+    });
+  }
   revalidatePath('/leave');
   redirect('/leave');
 }
@@ -234,6 +242,7 @@ export async function approveLeaveRequestAction(
   }
 
   const client = await pool.connect();
+  let nextStatus: LeaveStatus | undefined;
 
   try {
     await client.query('BEGIN');
@@ -277,6 +286,7 @@ export async function approveLeaveRequestAction(
       await client.query('ROLLBACK');
       return { error: evaluation.reason || 'Bạn không có thẩm quyền phê duyệt đơn này.' };
     }
+    nextStatus = evaluation.nextStatus;
 
     // 3. Cập nhật trạng thái đơn nghỉ phép
     await client.query(
@@ -302,6 +312,11 @@ export async function approveLeaveRequestAction(
     client.release();
   }
 
+  if (nextStatus === 'APPROVED_BY_LEAD') {
+    await notifyLeaveApprovers(requestId).catch((error) => {
+      console.error('[Leave Push Notification Error]', error);
+    });
+  }
   revalidatePath('/approvals/leave');
   revalidatePath(`/leave/${requestId}`);
   return { success: true };
