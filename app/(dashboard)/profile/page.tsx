@@ -1,6 +1,7 @@
 import { requireAuth } from '@/lib/auth/permissions';
 import { redirect } from 'next/navigation';
-import { User, Mail, Shield, Building, Users, KeyRound, CheckCircle2 } from 'lucide-react';
+import { Shield, Building, CheckCircle2, LockKeyhole } from 'lucide-react';
+import PasswordForm from '@/components/profile/password-form';
 
 export const metadata = {
   title: 'Hồ sơ tài khoản | Tri Thức Việt',
@@ -74,6 +75,18 @@ export default async function ProfilePage() {
                 </span>
               </div>
             </div>
+          </div>
+
+          {/* Bảo mật tài khoản */}
+          <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-6 space-y-4">
+            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3">
+              <LockKeyhole className="w-4 h-4 text-[#005a3c]" />
+              Bảo mật tài khoản
+            </h3>
+            <p className="text-xs leading-relaxed text-slate-500">
+              Đổi mật khẩu định kỳ để bảo vệ tài khoản và dữ liệu đơn nghỉ phép của bạn.
+            </p>
+            <PasswordForm />
           </div>
 
           {/* Phạm vi phân quyền */}
