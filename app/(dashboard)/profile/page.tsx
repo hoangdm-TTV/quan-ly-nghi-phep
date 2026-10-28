@@ -2,6 +2,8 @@ import { requireAuth } from '@/lib/auth/permissions';
 import { redirect } from 'next/navigation';
 import { Shield, Building, CheckCircle2, LockKeyhole } from 'lucide-react';
 import PasswordForm from '@/components/profile/password-form';
+import AvatarUploadForm from '@/components/profile/avatar-upload-form';
+import UserAvatar from '@/components/profile/user-avatar';
 
 export const metadata = {
   title: 'Hồ sơ tài khoản | Tri Thức Việt',
@@ -23,9 +25,10 @@ export default async function ProfilePage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Cột trái: Thẻ tóm tắt thông tin */}
         <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-6 flex flex-col items-center text-center space-y-4">
-          <div className="w-20 h-20 rounded-2xl bg-emerald-100 text-[#005a3c] flex items-center justify-center font-black text-2xl border-4 border-emerald-50 shadow-xs">
-            {user.full_name.slice(0, 2).toUpperCase()}
-          </div>
+          <UserAvatar
+            name={user.full_name}
+            className="h-20 w-20 rounded-2xl border-4 border-emerald-50 bg-emerald-100 text-2xl text-[#005a3c] shadow-xs"
+          />
           <div className="space-y-1">
             <h3 className="text-base font-bold text-slate-900">{user.full_name}</h3>
             <p className="text-xs text-slate-500 font-medium">{user.email}</p>
@@ -35,6 +38,8 @@ export default async function ProfilePage() {
               {user.position || 'Chưa cập nhật chức vụ'}
             </span>
           </div>
+
+          <AvatarUploadForm />
 
           <div className="w-full pt-4 border-t border-slate-100 text-left text-xs space-y-2.5">
             <div className="flex items-center justify-between text-slate-500">

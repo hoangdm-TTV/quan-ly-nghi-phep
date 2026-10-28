@@ -24,6 +24,7 @@ import {
   FolderOpen,
 } from 'lucide-react';
 import BrandLogo from '@/components/brand/brand-logo';
+import UserAvatar from '@/components/profile/user-avatar';
 
 interface AppSidebarProps {
   user: SafeUser;
@@ -226,9 +227,10 @@ export default function AppSidebar({ user, approvalCounts, isOpen, onClose }: Ap
         {/* User Card - Clear, readable, comfortable */}
         <div className="p-3.5 mx-3.5 my-3 bg-gradient-to-br from-slate-50 to-slate-100/70 rounded-xl border border-slate-200/90 shadow-2xs">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-emerald-100 text-[#005a3c] border border-emerald-200 flex items-center justify-center font-bold text-sm shrink-0 shadow-xs">
-              {user.full_name.slice(0, 2).toUpperCase()}
-            </div>
+            <UserAvatar
+              name={user.full_name}
+              className="h-10 w-10 rounded-full border border-emerald-200 bg-emerald-100 text-sm text-[#005a3c] shadow-xs"
+            />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-slate-900 truncate">{user.full_name}</p>
               <div className="flex items-center gap-1.5 mt-1 flex-wrap">

@@ -169,7 +169,7 @@ export default async function LeaveDetailPage({
                 <span className="font-semibold text-slate-900">{request.employee_name}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-slate-500">Vai trò:</span>
+                <span className="text-slate-500">Chức vụ:</span>
                 <span className="font-medium text-slate-700">{request.employee_role}</span>
               </div>
               <div className="flex items-center justify-between">

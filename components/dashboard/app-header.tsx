@@ -7,6 +7,7 @@ import { Menu, Plus, Calendar, Clock, UserCheck, Bell } from 'lucide-react';
 import { canSubmitPersonalRequests } from '@/lib/auth/roles';
 import BrandLogo from '@/components/brand/brand-logo';
 import PushNotificationSetup from '@/components/notifications/push-notification-setup';
+import UserAvatar from '@/components/profile/user-avatar';
 
 interface AppHeaderProps {
   user: SafeUser;
@@ -102,9 +103,10 @@ export default function AppHeader({ user, approvalCounts, onOpenSidebar }: AppHe
             className="flex items-center gap-2.5 p-1.5 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-200 transition-all"
             title="Xem hồ sơ tài khoản"
           >
-            <div className="w-8 h-8 rounded-full bg-emerald-100 text-[#005a3c] border border-emerald-200 font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs">
-              {user.full_name.slice(0, 2).toUpperCase()}
-            </div>
+            <UserAvatar
+              name={user.full_name}
+              className="h-8 w-8 rounded-full border border-emerald-200 bg-emerald-100 text-xs text-[#005a3c] shadow-2xs"
+            />
             <div className="text-left hidden xl:block">
               <p className="text-xs font-semibold text-slate-900 leading-tight">
                 {user.full_name}
