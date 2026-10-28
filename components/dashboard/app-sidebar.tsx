@@ -19,7 +19,6 @@ import {
   CheckCheck,
   UserCheck,
   FileText,
-  X,
   ChevronDown,
   CalendarCheck,
   FolderOpen,
@@ -222,13 +221,6 @@ export default function AppSidebar({ user, approvalCounts, isOpen, onClose }: Ap
             href="/"
           />
 
-          <button
-            onClick={onClose}
-            className="p-2 text-slate-400 hover:text-slate-700 lg:hidden rounded-lg hover:bg-slate-100 transition-colors"
-            aria-label="Đóng menu"
-          >
-            <X className="w-5 h-5" />
-          </button>
         </div>
 
         {/* User Card - Clear, readable, comfortable */}
