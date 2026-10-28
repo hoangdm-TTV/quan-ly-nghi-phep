@@ -7,6 +7,7 @@ import { SafeUser } from '@/lib/types/user';
 import {
   canAccessRequestModules,
   canApproveWorkflowRequests,
+  canApproveOutOfficeRequests,
   canSubmitPersonalRequests,
   canViewRequestScope,
   canManageHolidays,
@@ -79,6 +80,7 @@ export default function AppSidebar({ user, approvalCounts, isOpen, onClose }: Ap
   const searchParams = useSearchParams();
   const canSubmit = canSubmitPersonalRequests(user.role);
   const canApprove = canApproveWorkflowRequests(user.role);
+  const canApproveOutOffice = canApproveOutOfficeRequests(user.role);
   const canTrackScope = canViewRequestScope(user.role);
   const canUseRequests = canAccessRequestModules(user.role);
   const canManageHolidaysForRole = canManageHolidays(user.role);
@@ -143,7 +145,7 @@ export default function AppSidebar({ user, approvalCounts, isOpen, onClose }: Ap
           name: 'Duyệt đơn ra ngoài',
           href: '/approvals/out-office',
           icon: CheckCheck,
-          show: canApprove,
+          show: canApproveOutOffice,
           badge: approvalCounts.outOffice,
         },
       ],

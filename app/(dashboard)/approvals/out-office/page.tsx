@@ -1,5 +1,5 @@
 import { requireAuth } from '@/lib/auth/permissions';
-import { canApproveWorkflowRequests, canSubmitPersonalRequests } from '@/lib/auth/roles';
+import { canApproveOutOfficeRequests, canSubmitPersonalRequests } from '@/lib/auth/roles';
 import { redirect } from 'next/navigation';
 import { getPendingOutOfficeRequestsForApprover } from '@/lib/out-office/queries';
 import OutOfficeStatusBadge from '@/components/out-office/out-office-status-badge';
@@ -14,7 +14,7 @@ export const metadata = {
 export default async function ApprovalsOutOfficePage() {
   const user = await requireAuth();
 
-  if (!canApproveWorkflowRequests(user.role)) {
+  if (!canApproveOutOfficeRequests(user.role)) {
     redirect(canSubmitPersonalRequests(user.role) ? '/out-office' : '/');
   }
 
@@ -164,8 +164,8 @@ export default async function ApprovalsOutOfficePage() {
               <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <span className="text-xs text-slate-500 font-medium">
                   {req.status === 'PENDING'
-                    ? 'Bước 1: Trưởng phòng / Giám đốc duyệt trước khi đi'
-                    : 'Bước 2: Xác nhận hoàn tất khi nhân viên đã về'}
+                    ? 'Duyệt đơn trước khi nhân viên ra ngoài'
+                    : 'Xác nhận hoàn tất khi nhân viên đã về'}
                 </span>
                 <OutOfficeApprovalActions requestId={req.id} currentStatus={req.status} />
               </div>

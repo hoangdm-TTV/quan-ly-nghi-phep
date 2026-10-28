@@ -137,28 +137,29 @@ export async function notifyLeaveApprovers(requestId: string): Promise<void> {
 }
 
 export async function notifyOutOfficeApprovers(requestId: string): Promise<void> {
-  const requestResult = await query<{ employee_id: string; department_id: string | null }>(
-    `SELECT oo.employee_id, u.department_id
+  const requestResult = await query<{ employee_id: string; role: string; department_id: string | null; team_id: string | null }>(
+    `SELECT oo.employee_id, u.role, u.department_id, u.team_id
        FROM out_office_requests oo JOIN users u ON u.id = oo.employee_id WHERE oo.id = $1`,
     [requestId],
   );
   const request = requestResult.rows[0];
   if (!request) return;
 
+  const roleRouting: Record<string, string> = {
+    STAFF: `role = 'TEAM_LEAD' AND team_id = $3::uuid AND $3::uuid IS NOT NULL`,
+    TEAM_LEAD: `role = 'MANAGER' AND department_id = $2::uuid AND $2::uuid IS NOT NULL`,
+    ACCOUNTANT: `role = 'MANAGER' AND department_id = $2::uuid AND $2::uuid IS NOT NULL`,
+    MANAGER: `role = 'DIRECTOR'`,
+  };
+  const routing = roleRouting[request.role];
+  if (!routing) return;
   const approvers = await query<{ id: string }>(
-    `SELECT id FROM users
-      WHERE is_active = TRUE AND id <> $1 AND (
-        role = 'DIRECTOR' OR
-        (role = 'MANAGER' AND department_id = $2::uuid
-          AND $2::uuid IS NOT NULL AND $3::uuid IS NOT NULL
-          AND EXISTS (SELECT 1 FROM users applicant WHERE applicant.id = $3::uuid
-            AND applicant.role IN ('STAFF', 'TEAM_LEAD', 'ACCOUNTANT')))
-      )`,
-    [request.employee_id, request.department_id, request.employee_id],
+    `SELECT id FROM users WHERE is_active = TRUE AND id <> $1 AND ${routing}`,
+    [request.employee_id, request.department_id, request.team_id],
   );
   const dispatch = await sendPushToUsers(approvers.rows.map(({ id }) => id), {
     title: 'Có đơn ra ngoài cần duyệt',
-    body: 'Một nhân viên vừa gửi đơn xin ra ngoài mới.',
+    body: 'Có đơn xin ra ngoài mới cần bạn duyệt.',
     url: `/out-office/${requestId}`,
   });
   console.info('[Out Office Push Dispatch]', {

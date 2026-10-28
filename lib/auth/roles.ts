@@ -15,6 +15,11 @@ export function canApproveWorkflowRequests(role: UserRole): boolean {
   return role === 'MANAGER' || role === 'DIRECTOR';
 }
 
+/** Team Lead, Manager và Director có thể duyệt đơn ra ngoài theo cấp trực tiếp. */
+export function canApproveOutOfficeRequests(role: UserRole): boolean {
+  return role === 'TEAM_LEAD' || role === 'MANAGER' || role === 'DIRECTOR';
+}
+
 /** Director và Accountant xem toàn công ty; Manager xem theo phòng ban riêng. */
 export function canViewAllRequests(role: UserRole): boolean {
   return role === 'DIRECTOR' || role === 'ACCOUNTANT';

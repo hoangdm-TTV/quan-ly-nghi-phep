@@ -52,7 +52,7 @@ export default async function OutOfficeDetailPage({
   const isReadOnly = currentUser.role === 'ACCOUNTANT';
   const approvalEval = isReadOnly
     ? { allowed: false }
-    : evaluateOutOfficeApproval(currentUser, applicant, request.status);
+    : evaluateOutOfficeApproval(currentUser, applicant, request.status, request.approver_id);
   const canApproveNow = approvalEval.allowed;
 
   return (
@@ -114,7 +114,7 @@ export default async function OutOfficeDetailPage({
               Đơn đã được duyệt cho phép ra ngoài
             </div>
             <p className="text-xs text-blue-700">
-              Nhân viên có thể ra ngoài theo khung giờ đã đăng ký. Khi quay lại, Trưởng phòng hoặc Giám đốc xác nhận hoàn tất đơn.
+              Nhân viên có thể ra ngoài theo khung giờ đã đăng ký. Người duyệt đơn sẽ xác nhận hoàn tất khi nhân viên quay lại.
             </p>
           </div>
         )}
@@ -212,7 +212,7 @@ export default async function OutOfficeDetailPage({
 
         {history.length === 0 ? (
           <p className="text-xs text-slate-500 italic py-2">
-            Đơn đang chờ Trưởng phòng hoặc Giám đốc tiếp nhận xử lý.
+            Đơn đang chờ cấp duyệt trực tiếp tiếp nhận xử lý.
           </p>
         ) : (
           <div className="space-y-3">

@@ -148,22 +148,27 @@ export async function getOutOfficeApprovalHistory(requestId: string): Promise<Ou
 }
 
 /**
- * Lấy hàng đợi đơn ra ngoài cho Manager theo phòng ban hoặc Director toàn công ty
+ * Lấy hàng đợi đơn ra ngoài theo cấp duyệt trực tiếp.
  */
 export async function getPendingOutOfficeRequestsForApprover(
   approver: SafeUser
 ): Promise<OutOfficeDetail[]> {
-  if (approver.role !== 'MANAGER' && approver.role !== 'DIRECTOR') {
+  if (!['TEAM_LEAD', 'MANAGER', 'DIRECTOR'].includes(approver.role)) {
     return [];
   }
 
   const params: string[] = [approver.id];
-  let scopeClause = 'TRUE';
-  if (approver.role === 'MANAGER') {
+  let pendingScope: string;
+  if (approver.role === 'TEAM_LEAD') {
+    if (!approver.team_id) return [];
+    params.push(approver.team_id);
+    pendingScope = `u.role = 'STAFF' AND u.team_id = $2::uuid`;
+  } else if (approver.role === 'MANAGER') {
     if (!approver.department_id) return [];
     params.push(approver.department_id);
-    // Trưởng phòng xử lý đơn của nhân viên cùng phòng ban.
-    scopeClause = `u.department_id = $2 AND u.role IN ('STAFF', 'TEAM_LEAD', 'ACCOUNTANT')`;
+    pendingScope = `u.department_id = $2::uuid AND u.role IN ('TEAM_LEAD', 'ACCOUNTANT')`;
+  } else {
+    pendingScope = `u.role = 'MANAGER'`;
   }
 
   const sql = `
@@ -193,8 +198,8 @@ export async function getPendingOutOfficeRequestsForApprover(
     LEFT JOIN teams t ON u.team_id = t.id
     LEFT JOIN users app ON oo.approver_id = app.id
     WHERE oo.employee_id != $1
-      AND ${scopeClause}
-      AND oo.status IN ('PENDING', 'APPROVED')
+      AND ((oo.status = 'PENDING' AND ${pendingScope})
+        OR (oo.status = 'APPROVED' AND oo.approver_id = $1))
     ORDER BY 
       CASE WHEN oo.status = 'PENDING' THEN 1 ELSE 2 END,
       oo.request_date ASC,
@@ -207,16 +212,22 @@ export async function getPendingOutOfficeRequestsForApprover(
 
 /** Đếm nhanh hàng đợi ra ngoài để hiển thị badge, không tải toàn bộ chi tiết đơn. */
 export async function getPendingOutOfficeApprovalCount(approver: SafeUser): Promise<number> {
-  if (approver.role !== 'MANAGER' && approver.role !== 'DIRECTOR') return 0;
+  if (!['TEAM_LEAD', 'MANAGER', 'DIRECTOR'].includes(approver.role)) return 0;
   const params: string[] = [approver.id];
-  let scopeClause = 'TRUE';
-  if (approver.role === 'MANAGER') {
+  let pendingScope: string;
+  if (approver.role === 'TEAM_LEAD') {
+    if (!approver.team_id) return 0;
+    params.push(approver.team_id);
+    pendingScope = `u.role = 'STAFF' AND u.team_id = $2::uuid`;
+  } else if (approver.role === 'MANAGER') {
     if (!approver.department_id) return 0;
     params.push(approver.department_id);
-    scopeClause = `u.department_id = $2 AND u.role IN ('STAFF', 'TEAM_LEAD', 'ACCOUNTANT')`;
+    pendingScope = `u.department_id = $2::uuid AND u.role IN ('TEAM_LEAD', 'ACCOUNTANT')`;
+  } else {
+    pendingScope = `u.role = 'MANAGER'`;
   }
   const result = await query<{ count: number }>(
-    `SELECT COUNT(*)::int AS count FROM out_office_requests oo JOIN users u ON oo.employee_id = u.id WHERE oo.employee_id != $1 AND ${scopeClause} AND oo.status IN ('PENDING', 'APPROVED')`,
+    `SELECT COUNT(*)::int AS count FROM out_office_requests oo JOIN users u ON oo.employee_id = u.id WHERE oo.employee_id != $1 AND ((oo.status = 'PENDING' AND ${pendingScope}) OR (oo.status = 'APPROVED' AND oo.approver_id = $1))`,
     params
   );
   return Number(result.rows[0]?.count || 0);

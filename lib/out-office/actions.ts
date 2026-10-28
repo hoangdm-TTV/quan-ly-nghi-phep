@@ -135,7 +135,7 @@ export async function approveOutOfficeRequestAction(
 
     // Khóa hàng FOR UPDATE
     const selectRes = await client.query(
-      `SELECT id, employee_id, status 
+      `SELECT id, employee_id, status, approver_id
        FROM out_office_requests 
        WHERE id = $1 
        FOR UPDATE`,
@@ -155,7 +155,7 @@ export async function approveOutOfficeRequestAction(
       return { error: 'Không tìm thấy thông tin nhân viên tạo đơn.' };
     }
 
-    const evaluation = evaluateOutOfficeApproval(currentUser, applicant, request.status as OutOfficeStatus);
+    const evaluation = evaluateOutOfficeApproval(currentUser, applicant, request.status as OutOfficeStatus, request.approver_id);
 
     if (!evaluation.allowed || !evaluation.nextStatus || !evaluation.action) {
       await client.query('ROLLBACK');
@@ -214,7 +214,7 @@ export async function rejectOutOfficeRequestAction(
     await client.query('BEGIN');
 
     const selectRes = await client.query(
-      `SELECT id, employee_id, status 
+      `SELECT id, employee_id, status, approver_id
        FROM out_office_requests 
        WHERE id = $1 
        FOR UPDATE`,
@@ -234,7 +234,7 @@ export async function rejectOutOfficeRequestAction(
       return { error: 'Không tìm thấy thông tin nhân viên tạo đơn.' };
     }
 
-    const evaluation = evaluateOutOfficeRejection(currentUser, applicant, request.status as OutOfficeStatus);
+    const evaluation = evaluateOutOfficeRejection(currentUser, applicant, request.status as OutOfficeStatus, request.approver_id);
 
     if (!evaluation.allowed) {
       await client.query('ROLLBACK');

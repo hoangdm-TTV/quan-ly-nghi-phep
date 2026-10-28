@@ -83,8 +83,8 @@ export default function OutOfficeForm() {
 
         <div className="p-4 bg-amber-50/80 border border-amber-200/90 rounded-xl text-xs sm:text-sm text-amber-950 space-y-1">
           <p className="font-bold text-amber-900">Quy trình ra ngoài công ty (Gate Pass):</p>
-          <p>1. <strong>Trước khi đi:</strong> Gửi đơn để Trưởng phòng hoặc Giám đốc xem xét duyệt.</p>
-          <p>2. <strong>Sau khi về:</strong> Trưởng phòng hoặc Giám đốc ký sổ điện tử xác nhận hoàn tất.</p>
+          <p>1. <strong>Trước khi đi:</strong> Gửi đơn để cấp quản lý trực tiếp duyệt một lần.</p>
+          <p>2. <strong>Sau khi về:</strong> Người đã duyệt ký sổ điện tử xác nhận hoàn tất.</p>
         </div>
 
         <div>

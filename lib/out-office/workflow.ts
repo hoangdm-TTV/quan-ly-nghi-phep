@@ -10,34 +10,45 @@ export interface OutOfficeEvaluation {
   action?: 'APPROVED_LEAD' | 'APPROVED_DIRECTOR' | 'REJECTED';
 }
 
-function canManageOutOffice(approver: SafeUser, applicant: SafeUser): boolean {
-  if (approver.role === 'DIRECTOR') return true;
-  return (
-    approver.role === 'MANAGER' &&
-    Boolean(approver.department_id) &&
-    approver.department_id === applicant.department_id &&
-    (applicant.role === 'STAFF' || applicant.role === 'TEAM_LEAD' || applicant.role === 'ACCOUNTANT')
-  );
+function isAssignedOutOfficeApprover(approver: SafeUser, applicant: SafeUser): boolean {
+  if (applicant.role === 'STAFF') {
+    return approver.role === 'TEAM_LEAD'
+      && Boolean(applicant.team_id)
+      && approver.team_id === applicant.team_id;
+  }
+  if (applicant.role === 'TEAM_LEAD' || applicant.role === 'ACCOUNTANT') {
+    return approver.role === 'MANAGER'
+      && Boolean(applicant.department_id)
+      && approver.department_id === applicant.department_id;
+  }
+  return applicant.role === 'MANAGER' && approver.role === 'DIRECTOR';
 }
 
-/** Trưởng phòng cùng phòng ban xử lý; Giám đốc có quyền toàn công ty. */
+/** Mỗi đơn ra ngoài chỉ cần một người duyệt theo cấp trực tiếp của người tạo. */
 export function evaluateOutOfficeApproval(
   approver: SafeUser,
   applicant: SafeUser,
-  currentStatus: OutOfficeStatus
+  currentStatus: OutOfficeStatus,
+  existingApproverId?: string | null,
 ): OutOfficeEvaluation {
   if (approver.id === applicant.id) {
     return { allowed: false, reason: 'Bạn không được phép tự phê duyệt đơn ra ngoài của chính mình.' };
   }
-  if (!canManageOutOffice(approver, applicant)) {
-    return { allowed: false, reason: 'Đơn ra ngoài chỉ do Trưởng phòng cùng phòng ban hoặc Giám đốc xử lý.' };
-  }
-
-  const action = approver.role === 'DIRECTOR' ? 'APPROVED_DIRECTOR' : 'APPROVED_LEAD';
   if (currentStatus === 'PENDING') {
-    return { allowed: true, nextStatus: 'APPROVED', action };
+    if (!isAssignedOutOfficeApprover(approver, applicant)) {
+      return { allowed: false, reason: 'Đơn này không thuộc cấp duyệt trực tiếp của bạn.' };
+    }
+    return {
+      allowed: true,
+      nextStatus: 'APPROVED',
+      action: approver.role === 'DIRECTOR' ? 'APPROVED_DIRECTOR' : 'APPROVED_LEAD',
+    };
   }
   if (currentStatus === 'APPROVED') {
+    if (existingApproverId !== approver.id) {
+      return { allowed: false, reason: 'Chỉ người đã duyệt đơn mới được xác nhận khi nhân viên quay về.' };
+    }
+    const action = approver.role === 'DIRECTOR' ? 'APPROVED_DIRECTOR' : 'APPROVED_LEAD';
     return { allowed: true, nextStatus: 'COMPLETED', action };
   }
   return {
@@ -50,13 +61,17 @@ export function evaluateOutOfficeApproval(
 export function evaluateOutOfficeRejection(
   approver: SafeUser,
   applicant: SafeUser,
-  currentStatus: OutOfficeStatus
+  currentStatus: OutOfficeStatus,
+  existingApproverId?: string | null,
 ): { allowed: boolean; reason?: string } {
   if (approver.id === applicant.id) {
     return { allowed: false, reason: 'Bạn không thể từ chối đơn của chính mình.' };
   }
-  if (!canManageOutOffice(approver, applicant)) {
-    return { allowed: false, reason: 'Đơn ra ngoài chỉ do Trưởng phòng cùng phòng ban hoặc Giám đốc xử lý.' };
+  if (currentStatus === 'PENDING' && !isAssignedOutOfficeApprover(approver, applicant)) {
+    return { allowed: false, reason: 'Đơn này không thuộc cấp duyệt trực tiếp của bạn.' };
+  }
+  if (currentStatus === 'APPROVED' && existingApproverId !== approver.id) {
+    return { allowed: false, reason: 'Chỉ người đã duyệt đơn mới được xử lý đơn này.' };
   }
   if (currentStatus !== 'PENDING' && currentStatus !== 'APPROVED') {
     return { allowed: false, reason: `Không thể từ chối đơn đang ở trạng thái "${currentStatus}".` };

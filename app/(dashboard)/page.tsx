@@ -12,6 +12,7 @@ import {
 import { getUserDataScopeLabel } from '@/lib/auth/data-scope';
 import { getPendingLeaveRequestsForApprover } from '@/lib/leave/queries';
 import { getPendingOutOfficeRequestsForApprover } from '@/lib/out-office/queries';
+import { canApproveOutOfficeRequests } from '@/lib/auth/roles';
 import Link from 'next/link';
 import {
   ArrowRight,
@@ -515,6 +516,7 @@ export default async function DashboardPage({
   const isDirector = user.role === 'DIRECTOR';
   const isManager = user.role === 'MANAGER';
   const isApprover = isManager || isDirector;
+  const isOutOfficeApprover = canApproveOutOfficeRequests(user.role);
   const canSubmit = user.role === 'STAFF' || user.role === 'TEAM_LEAD' || isManager;
   const hasPersonalDashboard = canSubmit;
   const needsReport = isManager || isDirector || isAccountant;
@@ -524,7 +526,7 @@ export default async function DashboardPage({
     hasPersonalDashboard ? getDashboardStats(user) : Promise.resolve(emptyStats),
     hasPersonalDashboard ? getRecentActivities(user) : Promise.resolve([] as RecentActivityItem[]),
     isApprover ? getPendingLeaveRequestsForApprover(user) : Promise.resolve([]),
-    isApprover ? getPendingOutOfficeRequestsForApprover(user) : Promise.resolve([]),
+    isOutOfficeApprover ? getPendingOutOfficeRequestsForApprover(user) : Promise.resolve([]),
     needsReport ? getScopeReport(user, reportFrom, reportTo) : Promise.resolve(emptyReport),
     isManager ? getScopeActivityFeed(user, reportFrom, reportTo) : Promise.resolve([] as ScopeActivityItem[]),
   ]);
@@ -602,7 +604,7 @@ export default async function DashboardPage({
       )}
 
       {/* Approvals Queue if approver */}
-      {isApprover && <ApprovalQueue leaveRequests={pendingLeaves} outOfficeRequests={pendingOutOffices} />}
+      {(isApprover || isOutOfficeApprover) && <ApprovalQueue leaveRequests={pendingLeaves} outOfficeRequests={pendingOutOffices} />}
 
       {/* Reports if manager/director/accountant */}
       {needsReport && (
