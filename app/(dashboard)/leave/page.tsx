@@ -7,6 +7,7 @@ import { redirect } from 'next/navigation';
 import LeaveStatusBadge from '@/components/leave/leave-status-badge';
 import ScopeFilterForm from '@/components/requests/scope-filter-form';
 import LeaveDocumentDialog from '@/components/leave/leave-document-dialog';
+import ClickableRequestRow from '@/components/requests/clickable-request-row';
 import Link from 'next/link';
 import { Plus, FileText, ArrowRight, Calendar, Filter } from 'lucide-react';
 
@@ -230,7 +231,7 @@ export default async function LeaveListPage({
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
                 {requests.map((r) => (
-                  <tr key={r.id} className="hover:bg-slate-50/80 transition-colors">
+                  <ClickableRequestRow key={r.id} href={`/leave/${r.id}`} label={`Mở chi tiết đơn nghỉ phép của ${r.employee_name || user.full_name}`} className="hover:bg-slate-50/80 transition-colors">
                     {activeTab === 'scope' && (
                       <td className="px-5 py-4 font-bold text-slate-900 whitespace-nowrap">
                         {r.employee_name}
@@ -272,7 +273,7 @@ export default async function LeaveListPage({
                         </Link>
                       </div>
                     </td>
-                  </tr>
+                  </ClickableRequestRow>
                 ))}
               </tbody>
             </table>

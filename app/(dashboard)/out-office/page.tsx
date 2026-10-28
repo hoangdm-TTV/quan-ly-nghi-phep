@@ -5,6 +5,7 @@ import { getUserDataScopeLabel } from '@/lib/auth/data-scope';
 import { getFilterOptionsInScope, getUsersInScope } from '@/lib/db/queries/users';
 import { redirect } from 'next/navigation';
 import OutOfficeStatusBadge from '@/components/out-office/out-office-status-badge';
+import ClickableRequestRow from '@/components/requests/clickable-request-row';
 import ScopeFilterForm from '@/components/requests/scope-filter-form';
 import Link from 'next/link';
 import { Plus, Clock, ArrowRight, Calendar, Briefcase } from 'lucide-react';
@@ -228,7 +229,7 @@ export default async function OutOfficeListPage({
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
                 {requests.map((r) => (
-                  <tr key={r.id} className="hover:bg-slate-50/80 transition-colors">
+                  <ClickableRequestRow key={r.id} href={`/out-office/${r.id}`} label={`Mở chi tiết đơn ra ngoài của ${r.employee_name || user.full_name}`} className="hover:bg-slate-50/80 transition-colors">
                     {activeTab === 'scope' && (
                       <td className="px-5 py-4 font-bold text-slate-900 whitespace-nowrap">
                         {r.employee_name}
@@ -270,7 +271,7 @@ export default async function OutOfficeListPage({
                         <ArrowRight className="w-3.5 h-3.5 ml-1" />
                       </Link>
                     </td>
-                  </tr>
+                  </ClickableRequestRow>
                 ))}
               </tbody>
             </table>
