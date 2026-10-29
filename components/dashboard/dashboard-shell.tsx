@@ -1,9 +1,10 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { SafeUser } from '@/lib/types/user';
-import AppSidebar from './app-sidebar';
-import AppHeader from './app-header';
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { SafeUser } from "@/lib/types/user";
+import AppSidebar from "./app-sidebar";
+import AppHeader from "./app-header";
 
 interface DashboardShellProps {
   user: SafeUser;
@@ -14,8 +15,37 @@ interface DashboardShellProps {
   children: React.ReactNode;
 }
 
-export default function DashboardShell({ user, approvalCounts, children }: DashboardShellProps) {
+export default function DashboardShell({
+  user,
+  approvalCounts,
+  children,
+}: DashboardShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const router = useRouter();
+  const lastRefreshAt = useRef(Date.now());
+
+  useEffect(() => {
+    const refreshIfStale = () => {
+      if (document.visibilityState !== "visible") return;
+      if (Date.now() - lastRefreshAt.current < 10_000) return;
+      lastRefreshAt.current = Date.now();
+      router.refresh();
+    };
+
+    const interval = window.setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+      lastRefreshAt.current = Date.now();
+      router.refresh();
+    }, 10_000);
+    document.addEventListener("visibilitychange", refreshIfStale);
+    window.addEventListener("focus", refreshIfStale);
+
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", refreshIfStale);
+      window.removeEventListener("focus", refreshIfStale);
+    };
+  }, [router]);
 
   return (
     <div className="min-h-screen bg-[#f1f5f9] flex antialiased">
