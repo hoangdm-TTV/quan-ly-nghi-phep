@@ -21,7 +21,10 @@ export default function PushNotificationSetup() {
   const audioContext = useRef<AudioContext | null>(null);
 
   useEffect(() => {
-    const isSupported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+    const isSupported = window.isSecureContext
+      && 'serviceWorker' in navigator
+      && 'PushManager' in window
+      && 'Notification' in window;
     setSupported(isSupported);
     if (!isSupported) return;
 
@@ -73,7 +76,8 @@ export default function PushNotificationSetup() {
         throw new Error(keyData.error || 'Không lấy được cấu hình thông báo đẩy.');
       }
 
-      const registration = await navigator.serviceWorker.register('/service-worker.js');
+      await navigator.serviceWorker.register('/service-worker.js');
+      const registration = await navigator.serviceWorker.ready;
       let subscription = await registration.pushManager.getSubscription();
       const expectedKey = new Uint8Array(encodeApplicationServerKey(keyData.publicKey));
       if (subscription) {
@@ -119,7 +123,13 @@ export default function PushNotificationSetup() {
     }
   }
 
-  if (!supported) return null;
+  if (!supported) {
+    return (
+      <p className="text-xs text-amber-700" role="status">
+        Trình duyệt hoặc địa chỉ hiện tại chưa hỗ trợ thông báo đẩy. Hãy dùng Chrome, Edge, Firefox hoặc Safari phiên bản mới trên HTTPS; iPhone/iPad cần thêm ứng dụng vào Màn hình chính.
+      </p>
+    );
+  }
 
   return (
     <div className="relative">

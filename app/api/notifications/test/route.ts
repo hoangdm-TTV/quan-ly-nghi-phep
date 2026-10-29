@@ -12,6 +12,12 @@ export async function POST() {
       body: 'Thông báo đẩy đã hoạt động trên thiết bị này.',
       url: '/',
     });
+    if (!result.configured) {
+      return NextResponse.json(
+        { error: 'Server chưa cấu hình đủ NEXT_PUBLIC_VAPID_PUBLIC_KEY và VAPID_PRIVATE_KEY.' },
+        { status: 503 },
+      );
+    }
     if (!result.sent) {
       if (!result.subscriptions) {
         return NextResponse.json(

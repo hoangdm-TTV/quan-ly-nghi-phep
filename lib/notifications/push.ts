@@ -7,6 +7,7 @@ type PushPayload = { title: string; body: string; url: string };
 export type PushDispatchResult = {
   sent: number;
   subscriptions: number;
+  configured: boolean;
   failureStatus?: number;
   failureCode?: string;
 };
@@ -56,7 +57,8 @@ export async function removePushSubscription(userId: string, endpoint: string): 
 }
 
 export async function sendPushToUsers(userIds: string[], payload: PushPayload): Promise<PushDispatchResult> {
-  if (!userIds.length || !configureWebPush()) return { sent: 0, subscriptions: 0 };
+  if (!userIds.length) return { sent: 0, subscriptions: 0, configured: false };
+  if (!configureWebPush()) return { sent: 0, subscriptions: 0, configured: false };
 
   const subscriptions = await query<{ id: string; subscription: webpush.PushSubscription }>(
     `SELECT id, subscription FROM push_subscriptions WHERE user_id = ANY($1::uuid[])`,
@@ -85,6 +87,7 @@ export async function sendPushToUsers(userIds: string[], payload: PushPayload): 
   return {
     sent: delivered,
     subscriptions: subscriptions.rows.length,
+    configured: true,
     failureStatus,
     failureCode,
   };
