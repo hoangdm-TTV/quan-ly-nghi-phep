@@ -42,7 +42,8 @@ export interface OutOfficeApprovalRecord {
  */
 export async function getVisibleOutOfficeRequests(
   user: SafeUser,
-  statusFilter?: string
+  statusFilter?: string,
+  pagination?: { limit: number; offset: number },
 ): Promise<OutOfficeDetail[]> {
   if (!canSubmitPersonalRequests(user.role)) return [];
   let sql = `
@@ -82,6 +83,10 @@ export async function getVisibleOutOfficeRequests(
   }
 
   sql += ` ORDER BY oo.created_at DESC`;
+  if (pagination) {
+    params.push(Math.min(100, pagination.limit) + 1, Math.max(0, pagination.offset));
+    sql += ` LIMIT $${params.length - 1} OFFSET $${params.length}`;
+  }
 
   const res = await query<OutOfficeDetail>(sql, params);
   return res.rows;
@@ -151,13 +156,14 @@ export async function getOutOfficeApprovalHistory(requestId: string): Promise<Ou
  * Lấy hàng đợi đơn ra ngoài theo cấp duyệt trực tiếp.
  */
 export async function getPendingOutOfficeRequestsForApprover(
-  approver: SafeUser
+  approver: SafeUser,
+  pagination?: { limit: number; offset: number },
 ): Promise<OutOfficeDetail[]> {
   if (!['TEAM_LEAD', 'MANAGER', 'DIRECTOR'].includes(approver.role)) {
     return [];
   }
 
-  const params: string[] = [approver.id];
+  const params: any[] = [approver.id];
   let pendingScope: string;
   if (approver.role === 'TEAM_LEAD') {
     if (!approver.team_id) return [];
@@ -204,7 +210,10 @@ export async function getPendingOutOfficeRequestsForApprover(
       CASE WHEN oo.status = 'PENDING' THEN 1 ELSE 2 END,
       oo.request_date ASC,
       oo.start_time ASC
+      ${pagination ? `LIMIT $${params.length + 1} OFFSET $${params.length + 2}` : ''}
   `;
+
+  if (pagination) params.push(Math.min(100, pagination.limit) + 1, Math.max(0, pagination.offset));
 
   const res = await query<OutOfficeDetail>(sql, params);
   return res.rows;
@@ -233,6 +242,28 @@ export async function getPendingOutOfficeApprovalCount(approver: SafeUser): Prom
   return Number(result.rows[0]?.count || 0);
 }
 
+export async function getPendingOutOfficeApprovalSummary(approver: SafeUser): Promise<{ total: number; pending: number; approved: number }> {
+  if (!['TEAM_LEAD','MANAGER','DIRECTOR'].includes(approver.role)) return { total: 0, pending: 0, approved: 0 };
+  const params: string[] = [approver.id];
+  let scope: string;
+  if (approver.role === 'TEAM_LEAD') {
+    if (!approver.team_id) return { total: 0, pending: 0, approved: 0 };
+    params.push(approver.team_id); scope = `u.role='STAFF' AND u.team_id=$2::uuid`;
+  } else if (approver.role === 'MANAGER') {
+    if (!approver.department_id) return { total: 0, pending: 0, approved: 0 };
+    params.push(approver.department_id); scope = `u.department_id=$2::uuid AND u.role IN ('TEAM_LEAD','ACCOUNTANT')`;
+  } else scope = `u.role='MANAGER'`;
+  const result = await query<{ total: number; pending: number; approved: number }>(
+    `SELECT COUNT(*)::int AS total, COUNT(*) FILTER (WHERE oo.status='PENDING')::int AS pending,
+            COUNT(*) FILTER (WHERE oo.status='APPROVED')::int AS approved
+       FROM out_office_requests oo JOIN users u ON u.id=oo.employee_id
+      WHERE oo.employee_id <> $1 AND ((oo.status='PENDING' AND ${scope}) OR (oo.status='APPROVED' AND oo.approver_id=$1))`,
+    params,
+  );
+  const row = result.rows[0];
+  return { total: Number(row?.total || 0), pending: Number(row?.pending || 0), approved: Number(row?.approved || 0) };
+}
+
 export interface ScopedOutOfficeFilter {
   status?: string;
   employeeId?: string;
@@ -248,7 +279,8 @@ export interface ScopedOutOfficeFilter {
  */
 export async function getScopedOutOfficeRequests(
   user: SafeUser,
-  filter: ScopedOutOfficeFilter = {}
+  filter: ScopedOutOfficeFilter = {},
+  pagination?: { limit: number; offset: number },
 ): Promise<OutOfficeDetail[]> {
   const scope = buildReportDataScope(user, 'u');
   const params: any[] = [...scope.params];
@@ -307,7 +339,10 @@ export async function getScopedOutOfficeRequests(
     LEFT JOIN users app ON oo.approver_id = app.id
     WHERE ${conditions.join(' AND ')}
     ORDER BY oo.request_date DESC, oo.created_at DESC
+    ${pagination ? `LIMIT $${params.length + 1} OFFSET $${params.length + 2}` : ''}
   `;
+
+  if (pagination) params.push(Math.min(100, pagination.limit) + 1, Math.max(0, pagination.offset));
 
   const res = await query<OutOfficeDetail>(sql, params);
   return res.rows;

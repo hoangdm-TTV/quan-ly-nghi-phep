@@ -174,3 +174,27 @@ export async function notifyOutOfficeApprovers(requestId: string): Promise<void>
     failureCode: dispatch.failureCode,
   });
 }
+
+export async function notifyLeaveRequester(requestId: string, status: 'WAITING_FOR_DOC' | 'APPROVED_BY_LEAD' | 'REJECTED') {
+  const result = await query<{ employee_id: string }>('SELECT employee_id FROM leave_requests WHERE id = $1', [requestId]);
+  const employeeId = result.rows[0]?.employee_id;
+  if (!employeeId) return;
+  const messages = {
+    WAITING_FOR_DOC: ['Đơn nghỉ phép đã được duyệt', 'Nộp giấy đã ký để hoàn tất đơn.'],
+    APPROVED_BY_LEAD: ['Đơn nghỉ phép đã qua cấp 1', 'Đơn đang chờ Giám đốc duyệt cấp cuối.'],
+    REJECTED: ['Đơn nghỉ phép bị từ chối', 'Mở chi tiết đơn để xem lý do từ chối.'],
+  } as const;
+  await sendPushToUsers([employeeId], { title: messages[status][0], body: messages[status][1], url: `/leave/${requestId}` });
+}
+
+export async function notifyOutOfficeRequester(requestId: string, status: 'APPROVED' | 'COMPLETED' | 'REJECTED') {
+  const result = await query<{ employee_id: string }>('SELECT employee_id FROM out_office_requests WHERE id = $1', [requestId]);
+  const employeeId = result.rows[0]?.employee_id;
+  if (!employeeId) return;
+  const messages = {
+    APPROVED: ['Đơn ra ngoài đã được duyệt', 'Đơn của bạn đã được duyệt.'],
+    COMPLETED: ['Đơn ra ngoài đã hoàn tất', 'Người duyệt đã xác nhận bạn quay về.'],
+    REJECTED: ['Đơn ra ngoài bị từ chối', 'Mở chi tiết đơn để xem lý do từ chối.'],
+  } as const;
+  await sendPushToUsers([employeeId], { title: messages[status][0], body: messages[status][1], url: `/out-office/${requestId}` });
+}

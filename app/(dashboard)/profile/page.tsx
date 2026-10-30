@@ -26,6 +26,7 @@ export default async function ProfilePage() {
         {/* Cột trái: Thẻ tóm tắt thông tin */}
         <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-6 flex flex-col items-center text-center space-y-4">
           <UserAvatar
+            userId={user.id}
             name={user.full_name}
             className="h-20 w-20 rounded-2xl border-4 border-emerald-50 bg-emerald-100 text-2xl text-[#005a3c] shadow-xs"
           />

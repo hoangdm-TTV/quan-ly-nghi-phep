@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { pool } from '@/lib/db/pool';
 import { requireAuth } from '@/lib/auth/permissions';
+import { canManageHolidays } from '@/lib/auth/roles';
 
 const holidaySchema = z.object({
   name: z.string().trim().min(2, 'Tên ngày lễ phải có ít nhất 2 ký tự').max(255, 'Tên quá dài'),
@@ -29,7 +30,7 @@ export async function createHolidayAction(
   formData: FormData
 ): Promise<HolidayActionState> {
   const currentUser = await requireAuth();
-  if (currentUser.role !== 'DIRECTOR') {
+  if (!canManageHolidays(currentUser.role)) {
     return { error: 'Bạn không có quyền quản lý ngày lễ.' };
   }
 
@@ -69,7 +70,7 @@ export async function updateHolidayAction(
   formData: FormData
 ): Promise<HolidayActionState> {
   const currentUser = await requireAuth();
-  if (currentUser.role !== 'DIRECTOR') {
+  if (!canManageHolidays(currentUser.role)) {
     return { error: 'Bạn không có quyền quản lý ngày lễ.' };
   }
 
@@ -116,7 +117,7 @@ export async function deleteHolidayAction(
   formData: FormData
 ): Promise<HolidayActionState> {
   const currentUser = await requireAuth();
-  if (currentUser.role !== 'DIRECTOR') {
+  if (!canManageHolidays(currentUser.role)) {
     return { error: 'Bạn không có quyền quản lý ngày lễ.' };
   }
 

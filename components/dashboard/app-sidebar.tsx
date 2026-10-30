@@ -12,6 +12,7 @@ import {
   canViewRequestScope,
   canManageHolidays,
 } from '@/lib/auth/roles';
+import { canManageHr } from '@/lib/auth/admin-account';
 import {
   LayoutDashboard,
   CalendarDays,
@@ -23,6 +24,7 @@ import {
   ChevronDown,
   CalendarCheck,
   FolderOpen,
+  UsersRound,
 } from 'lucide-react';
 import BrandLogo from '@/components/brand/brand-logo';
 import UserAvatar from '@/components/profile/user-avatar';
@@ -160,10 +162,18 @@ export default function AppSidebar({ user, approvalCounts, isOpen, onClose }: Ap
     },
     {
       kind: 'leaf',
+      name: 'Quản trị nhân sự',
+      href: '/admin/hr',
+      icon: UsersRound,
+      show: canManageHr(user),
+      exact: false,
+    },
+    {
+      kind: 'leaf',
       name: 'Hồ sơ tài khoản',
       href: '/profile',
       icon: UserCheck,
-      show: canUseRequests && user.role !== 'ACCOUNTANT',
+      show: user.role !== 'ACCOUNTANT',
       exact: true,
     },
   ];
@@ -230,6 +240,7 @@ export default function AppSidebar({ user, approvalCounts, isOpen, onClose }: Ap
         <div className="p-3.5 mx-3.5 my-3 bg-gradient-to-br from-slate-50 to-slate-100/70 rounded-xl border border-slate-200/90 shadow-2xs">
           <div className="flex items-center gap-3">
             <UserAvatar
+              userId={user.id}
               name={user.full_name}
               className="h-10 w-10 rounded-full border border-emerald-200 bg-emerald-100 text-sm text-[#005a3c] shadow-xs"
             />

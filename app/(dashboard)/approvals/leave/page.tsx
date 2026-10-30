@@ -1,7 +1,7 @@
 import { requireAuth } from '@/lib/auth/permissions';
 import { canApproveWorkflowRequests, canSubmitPersonalRequests } from '@/lib/auth/roles';
 import { redirect } from 'next/navigation';
-import { getPendingLeaveRequestsForApprover } from '@/lib/leave/queries';
+import { getPendingLeaveRequestsForApprover, getPendingLeaveApprovalSummary } from '@/lib/leave/queries';
 import LeaveStatusBadge from '@/components/leave/leave-status-badge';
 import ApprovalActions from '@/components/leave/approval-actions';
 import Link from 'next/link';
@@ -11,17 +11,24 @@ export const metadata = {
   title: 'Duyệt đơn nghỉ phép | Tri Thức Việt',
 };
 
-export default async function ApprovalsLeavePage() {
+export default async function ApprovalsLeavePage({ searchParams }: { searchParams?: { page?: string } }) {
   const user = await requireAuth();
 
   if (!canApproveWorkflowRequests(user.role)) {
     redirect(canSubmitPersonalRequests(user.role) ? '/leave' : '/');
   }
 
-  const pendingRequests = await getPendingLeaveRequestsForApprover(user);
-  const needsActionCount = pendingRequests.length;
-  const firstLevelCount = pendingRequests.filter((request) => request.status === 'PENDING').length;
-  const finalLevelCount = pendingRequests.filter((request) => request.status === 'APPROVED_BY_LEAD').length;
+  const pageSize = 25;
+  const pageNumber = Math.max(1, Math.min(100000, Number(searchParams?.page) || 1));
+  const [fetchedRequests, summary] = await Promise.all([
+    getPendingLeaveRequestsForApprover(user, { limit: pageSize, offset: (pageNumber - 1) * pageSize }),
+    getPendingLeaveApprovalSummary(user),
+  ]);
+  const hasNextPage = fetchedRequests.length > pageSize;
+  const pendingRequests = fetchedRequests.slice(0, pageSize);
+  const needsActionCount = summary.total;
+  const firstLevelCount = summary.firstLevel;
+  const finalLevelCount = summary.finalLevel;
 
   return (
     <div className="space-y-6">
@@ -170,6 +177,10 @@ export default async function ApprovalsLeavePage() {
           ))}
         </div>
       )}
+      <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs">
+        <span className="text-slate-600">Trang {pageNumber} · {needsActionCount} đơn thuộc hàng đợi</span>
+        <div className="flex gap-2">{pageNumber > 1 && <Link href={`/approvals/leave?page=${pageNumber - 1}`} className="rounded-lg border px-3 py-1.5 font-semibold text-slate-700">Trước</Link>}{hasNextPage && <Link href={`/approvals/leave?page=${pageNumber + 1}`} className="rounded-lg border px-3 py-1.5 font-semibold text-slate-700">Tiếp</Link>}</div>
+      </div>
     </div>
   );
 }

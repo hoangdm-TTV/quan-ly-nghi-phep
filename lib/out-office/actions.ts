@@ -8,7 +8,7 @@ import { requireAuth } from '@/lib/auth/permissions';
 import { getSafeUserById } from '@/lib/db/queries/users';
 import { calculateEstimatedHours } from './calculator';
 import { evaluateOutOfficeApproval, evaluateOutOfficeRejection, OutOfficeStatus } from './workflow';
-import { notifyOutOfficeApprovers } from '@/lib/notifications/push';
+import { notifyOutOfficeApprovers, notifyOutOfficeRequester } from '@/lib/notifications/push';
 
 const createOutOfficeSchema = z.object({
   requestDate: z.string().refine(isRealDate, 'Ngày không hợp lệ (YYYY-MM-DD)'),
@@ -27,6 +27,7 @@ const rejectionInputSchema = z.object({
   requestId: z.string().uuid('Mã đơn không hợp lệ.'),
   rejectionReason: z.string().trim().min(5, 'Lý do từ chối cần ít nhất 5 ký tự.').max(1000, 'Lý do từ chối không được vượt quá 1000 ký tự.'),
 });
+const editOutOfficeSchema = createOutOfficeSchema.extend({ requestId: z.string().uuid('Mã đơn không hợp lệ.') });
 
 function isRealDate(value: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
@@ -146,6 +147,7 @@ export async function approveOutOfficeRequestAction(
   const comment = input.data.comment || null;
 
   const client = await pool.connect();
+  let completedStatus: OutOfficeStatus | undefined;
 
   try {
     await client.query('BEGIN');
@@ -178,6 +180,7 @@ export async function approveOutOfficeRequestAction(
       await client.query('ROLLBACK');
       return { error: evaluation.reason || 'Bạn không có thẩm quyền xử lý đơn này.' };
     }
+    completedStatus = evaluation.nextStatus;
 
     await client.query(
       `UPDATE out_office_requests 
@@ -203,6 +206,7 @@ export async function approveOutOfficeRequestAction(
 
   revalidatePath('/approvals/out-office');
   revalidatePath(`/out-office/${requestId}`);
+  await notifyOutOfficeRequester(requestId, completedStatus === 'COMPLETED' ? 'COMPLETED' : 'APPROVED').catch((error) => console.error('[Out Office Requester Push Error]', error));
   return { success: true };
 }
 
@@ -278,5 +282,114 @@ export async function rejectOutOfficeRequestAction(
 
   revalidatePath('/approvals/out-office');
   revalidatePath(`/out-office/${requestId}`);
+  await notifyOutOfficeRequester(requestId, 'REJECTED').catch((error) => console.error('[Out Office Requester Push Error]', error));
+  return { success: true };
+}
+
+export async function updatePendingOutOfficeRequestAction(
+  _prevState: OutOfficeActionState | null,
+  formData: FormData
+): Promise<OutOfficeActionState> {
+  const user = await requireAuth();
+  const parsed = editOutOfficeSchema.safeParse({
+    requestId: formData.get('requestId'),
+    requestDate: formData.get('requestDate'),
+    startTime: formData.get('startTime'),
+    endTime: formData.get('endTime'),
+    reasonType: formData.get('reasonType'),
+    reason: formData.get('reason'),
+  });
+  if (!parsed.success) return { error: parsed.error.errors[0]?.message || 'Thông tin đơn không hợp lệ.' };
+  const { requestId, requestDate, startTime, endTime, reasonType, reason } = parsed.data;
+  let hours: number;
+  try { hours = calculateEstimatedHours(startTime, endTime); }
+  catch { return { error: 'Khoảng giờ không hợp lệ.' }; }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [user.id]);
+    const selected = await client.query(
+      `SELECT id, employee_id, status, request_date::text AS request_date,
+              TO_CHAR(start_time, 'HH24:MI') AS start_time, TO_CHAR(end_time, 'HH24:MI') AS end_time,
+              estimated_hours::float AS estimated_hours, reason_type, reason
+         FROM out_office_requests WHERE id = $1 FOR UPDATE`, [requestId]);
+    const current = selected.rows[0];
+    if (!current || current.employee_id !== user.id || current.status !== 'PENDING') {
+      await client.query('ROLLBACK');
+      return { error: 'Chỉ có thể sửa đơn đang chờ duyệt của chính bạn.' };
+    }
+    const overlap = await client.query(
+      `SELECT 1 FROM out_office_requests WHERE employee_id = $1 AND id <> $2
+         AND request_date = $3 AND status NOT IN ('REJECTED','CANCELLED')
+         AND start_time < $4 AND end_time > $5 LIMIT 1`,
+      [user.id, requestId, requestDate, endTime, startTime],
+    );
+    if (overlap.rowCount) {
+      await client.query('ROLLBACK');
+      return { error: 'Khung giờ mới bị trùng với một đơn ra ngoài khác.' };
+    }
+    await client.query(
+      `UPDATE out_office_requests SET request_date = $1, start_time = $2, end_time = $3,
+              estimated_hours = $4, reason_type = $5, reason = $6, updated_at = NOW() WHERE id = $7`,
+      [requestDate, startTime, endTime, hours, reasonType, reason, requestId],
+    );
+    await client.query(
+      `INSERT INTO request_change_history (request_type, request_id, actor_id, action, before_data, after_data)
+       VALUES ('OUT_OFFICE', $1, $2, 'UPDATED', $3::jsonb, $4::jsonb)`,
+      [requestId, user.id, JSON.stringify(current), JSON.stringify({ request_date: requestDate, start_time: startTime, end_time: endTime, estimated_hours: hours, reason_type: reasonType, reason })],
+    );
+    await client.query('COMMIT');
+  } catch (error) {
+    try { await client.query('ROLLBACK'); } catch {}
+    console.error('[Update Out Office Request Error]', error);
+    return { error: 'Không thể cập nhật đơn ra ngoài lúc này.' };
+  } finally { client.release(); }
+  revalidatePath('/out-office');
+  revalidatePath(`/out-office/${requestId}`);
+  revalidatePath('/approvals/out-office');
+  revalidatePath('/');
+  await notifyOutOfficeApprovers(requestId).catch((error) => console.error('[Out Office Updated Request Push Error]', error));
+  return { success: true };
+}
+
+export async function cancelPendingOutOfficeRequestAction(
+  _prevState: OutOfficeActionState | null,
+  formData: FormData
+): Promise<OutOfficeActionState> {
+  const user = await requireAuth();
+  const parsedId = z.string().uuid().safeParse(formData.get('requestId'));
+  if (!parsedId.success) return { error: 'Mã đơn không hợp lệ.' };
+  const requestId = parsedId.data;
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [user.id]);
+    const selected = await client.query(
+      `SELECT id, employee_id, status, request_date::text AS request_date,
+              TO_CHAR(start_time, 'HH24:MI') AS start_time, TO_CHAR(end_time, 'HH24:MI') AS end_time,
+              estimated_hours::float AS estimated_hours, reason_type, reason
+         FROM out_office_requests WHERE id = $1 FOR UPDATE`, [requestId]);
+    const current = selected.rows[0];
+    if (!current || current.employee_id !== user.id || current.status !== 'PENDING') {
+      await client.query('ROLLBACK');
+      return { error: 'Chỉ có thể hủy đơn đang chờ duyệt của chính bạn.' };
+    }
+    await client.query("UPDATE out_office_requests SET status = 'CANCELLED', updated_at = NOW() WHERE id = $1", [requestId]);
+    await client.query(
+      `INSERT INTO request_change_history (request_type, request_id, actor_id, action, before_data, after_data)
+       VALUES ('OUT_OFFICE', $1, $2, 'CANCELLED', $3::jsonb, '{"status":"CANCELLED"}'::jsonb)`,
+      [requestId, user.id, JSON.stringify(current)],
+    );
+    await client.query('COMMIT');
+  } catch (error) {
+    try { await client.query('ROLLBACK'); } catch {}
+    console.error('[Cancel Out Office Request Error]', error);
+    return { error: 'Không thể hủy đơn ra ngoài lúc này.' };
+  } finally { client.release(); }
+  revalidatePath('/out-office');
+  revalidatePath(`/out-office/${requestId}`);
+  revalidatePath('/approvals/out-office');
+  revalidatePath('/');
   return { success: true };
 }

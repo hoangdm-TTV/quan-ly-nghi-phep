@@ -2,10 +2,24 @@
 
 import { useEffect, useState } from 'react';
 
+let avatarBlobRequest: { userId: string; promise: Promise<Blob | null> } | null = null;
+
+function loadAvatarBlob(userId: string): Promise<Blob | null> {
+  if (!avatarBlobRequest || avatarBlobRequest.userId !== userId) {
+    const promise = fetch('/api/profile/avatar', { cache: 'no-store' })
+      .then((response) => response.ok ? response.blob() : null)
+      .catch(() => null);
+    avatarBlobRequest = { userId, promise };
+  }
+  return avatarBlobRequest.promise;
+}
+
 export default function UserAvatar({
+  userId,
   name,
   className = '',
 }: {
+  userId: string;
   name: string;
   className?: string;
 }) {
@@ -14,6 +28,7 @@ export default function UserAvatar({
 
   useEffect(() => {
     const refreshAvatar = () => {
+      avatarBlobRequest = null;
       setImageSrc(null);
       setVersion(Date.now());
     };
@@ -26,8 +41,7 @@ export default function UserAvatar({
     let objectUrl: string | null = null;
     setImageSrc(null);
 
-    fetch(`/api/profile/avatar?v=${version}`, { cache: 'no-store' })
-      .then((response) => response.ok ? response.blob() : null)
+    loadAvatarBlob(userId)
       .then((blob) => {
         if (!active || !blob) return;
         objectUrl = URL.createObjectURL(blob);
@@ -39,7 +53,7 @@ export default function UserAvatar({
       active = false;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [version]);
+  }, [userId, version]);
 
   return (
     <span className={`relative inline-flex shrink-0 items-center justify-center overflow-hidden ${className}`}>

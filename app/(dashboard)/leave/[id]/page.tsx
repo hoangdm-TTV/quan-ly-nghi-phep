@@ -6,6 +6,9 @@ import { getSafeUserById, hasActiveManagerForDepartment } from '@/lib/db/queries
 import LeaveStatusBadge from '@/components/leave/leave-status-badge';
 import LeaveDocumentForm from '@/components/leave/leave-document-form';
 import ApprovalActions from '@/components/leave/approval-actions';
+import PendingLeaveEditor from '@/components/leave/pending-request-editor';
+import RequestChangeHistory from '@/components/requests/request-change-history';
+import { getRequestChangeHistory } from '@/lib/admin/queries';
 import Link from 'next/link';
 import {
   Calendar,
@@ -51,6 +54,7 @@ export default async function LeaveDetailPage({
 
   const documentMetadata = await getLeaveDocumentMetadataById(request.id);
   const history = await getLeaveApprovalHistory(request.id);
+  const changeHistory = await getRequestChangeHistory('LEAVE', request.id);
 
   // Kế toán chỉ xem (chỉ đọc), không duyệt.
   const isReadOnly = currentUser.role === 'ACCOUNTANT';
@@ -226,6 +230,9 @@ export default async function LeaveDetailPage({
           </div>
         </div>
       </div>
+
+      {isOwner && request.status === 'PENDING' && <PendingLeaveEditor request={{ id: request.id, start_date: request.start_date, end_date: request.end_date, reason: request.reason }} />}
+      <RequestChangeHistory entries={changeHistory} />
 
       {/* Lịch sử phê duyệt */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">

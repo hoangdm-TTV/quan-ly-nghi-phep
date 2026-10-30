@@ -5,6 +5,7 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   TEAM_LEAD: 'Trưởng nhóm',
   MANAGER: 'Trưởng phòng',
   ACCOUNTANT: 'Kế toán',
+  ADMIN: 'Quản trị hệ thống',
   DIRECTOR: 'Giám đốc',
 };
 
@@ -13,6 +14,7 @@ export const ROLE_BADGE_COLORS: Record<UserRole, string> = {
   MANAGER: 'bg-blue-100 text-blue-800 border-blue-200',
   TEAM_LEAD: 'bg-cyan-100 text-cyan-800 border-cyan-200',
   ACCOUNTANT: 'bg-amber-100 text-amber-800 border-amber-200',
+  ADMIN: 'bg-violet-100 text-violet-800 border-violet-200',
   STAFF: 'bg-emerald-100 text-emerald-800 border-emerald-200',
 };
 

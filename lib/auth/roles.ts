@@ -1,8 +1,8 @@
 import { UserRole } from '@/lib/types/user';
 
-/** Các role đều được vào module đơn theo phạm vi được cấp. */
+/** Vai trò ADMIN chỉ dùng khu vực quản trị; các vai trò nghiệp vụ vào module đơn. */
 export function canAccessRequestModules(role: UserRole): boolean {
-  return true;
+  return role !== 'ADMIN';
 }
 
 /** Staff, Team Lead, Manager và Accountant có danh sách đơn cá nhân và được tạo đơn. */
@@ -29,7 +29,7 @@ export function canViewRequestScope(role: UserRole): boolean {
   return role === 'TEAM_LEAD' || role === 'MANAGER' || canViewAllRequests(role);
 }
 
-/** Chỉ Giám đốc được quản lý ngày lễ. */
+/** Chỉ ADMIN được quản lý ngày lễ. */
 export function canManageHolidays(role: UserRole): boolean {
-  return role === 'DIRECTOR';
+  return role === 'ADMIN';
 }
