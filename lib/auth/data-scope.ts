@@ -32,15 +32,16 @@ export function buildUserDataScope(user: SafeUser, alias = 'u'): UserDataScope {
   return { whereSql: `${alias}.id = $1`, params: [user.id] };
 }
 
-/** Dùng cho các truy vấn mở rộng scope; ACCOUNTANT và DIRECTOR được xem toàn công ty. */
+/** Dùng cho các truy vấn mở rộng scope; ADMIN, ACCOUNTANT và DIRECTOR được xem toàn công ty. */
 export function buildReportDataScope(user: SafeUser, alias = 'u'): UserDataScope {
-  if (user.role === 'DIRECTOR' || user.role === 'ACCOUNTANT') {
+  if (user.role === 'ADMIN' || user.role === 'DIRECTOR' || user.role === 'ACCOUNTANT') {
     return { whereSql: 'TRUE', params: [] };
   }
   return buildUserDataScope(user, alias);
 }
 
 export function getUserDataScopeLabel(user: SafeUser): string {
+  if (user.role === 'ADMIN') return 'Toàn công ty (quản trị nhân sự)';
   if (user.role === 'DIRECTOR') return 'Toàn công ty';
   if (user.role === 'ACCOUNTANT') return 'Toàn công ty (chỉ đọc)';
   if (user.role === 'MANAGER' && user.department_id) return `Phòng ban: ${user.department_name || 'Chưa đặt tên'}`;

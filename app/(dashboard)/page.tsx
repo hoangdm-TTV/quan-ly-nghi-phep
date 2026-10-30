@@ -1,19 +1,27 @@
-import { requireAuth } from '@/lib/auth/permissions';
+import { requireAuth } from "@/lib/auth/permissions";
 import {
   getDashboardStats,
   getRecentActivities,
   getScopeReport,
+  getHrAdvancedReport,
   getScopeActivityFeed,
   type DashboardStats,
   type ScopeReport,
   type ScopeActivityItem,
   type RecentActivityItem,
-} from '@/lib/dashboard/queries';
-import { getUserDataScopeLabel } from '@/lib/auth/data-scope';
-import { getPendingLeaveRequestsForApprover } from '@/lib/leave/queries';
-import { getPendingOutOfficeRequestsForApprover } from '@/lib/out-office/queries';
-import { canApproveOutOfficeRequests, canSubmitPersonalRequests } from '@/lib/auth/roles';
-import Link from 'next/link';
+  type HrAdvancedReport,
+} from "@/lib/dashboard/queries";
+import { getUserDataScopeLabel } from "@/lib/auth/data-scope";
+import { getPendingLeaveRequestsForApprover } from "@/lib/leave/queries";
+import { getPendingOutOfficeRequestsForApprover } from "@/lib/out-office/queries";
+import {
+  canApproveOutOfficeRequests,
+  canSubmitPersonalRequests,
+} from "@/lib/auth/roles";
+import { getAbsenceCalendar } from "@/lib/dashboard/calendar";
+import AbsenceCalendar from "@/components/dashboard/absence-calendar";
+import AdvancedReportSection from "@/components/dashboard/advanced-report-section";
+import Link from "next/link";
 import {
   ArrowRight,
   Clock,
@@ -26,7 +34,7 @@ import {
   TrendingUp,
   Building2,
   CalendarCheck2,
-} from 'lucide-react';
+} from "lucide-react";
 
 function validDateFilter(value?: string): string | undefined {
   if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return undefined;
@@ -67,32 +75,79 @@ const emptyReport: ScopeReport = {
   },
 };
 
+const emptyAdvancedReport: HrAdvancedReport = {
+  monthlyLeave: [],
+  topLeaveEmployees: [],
+  averageApprovalHours: 0,
+  pendingByLevel: [],
+  employeesWithoutEntitlement: 0,
+  lateOutOfficeReturns: 0,
+};
+
 const statusLabels: Record<string, { label: string; class: string }> = {
-  PENDING: { label: 'Chờ duyệt', class: 'bg-amber-50 text-amber-800 border-amber-200' },
-  APPROVED_BY_LEAD: { label: 'Chờ Giám đốc', class: 'bg-blue-50 text-blue-800 border-blue-200' },
-  WAITING_FOR_DOC: { label: 'Chờ nộp giấy', class: 'bg-violet-50 text-violet-800 border-violet-200' },
-  APPROVED: { label: 'Đã duyệt', class: 'bg-emerald-50 text-[#005a3c] border-emerald-200' },
-  COMPLETED: { label: 'Hoàn tất', class: 'bg-emerald-50 text-[#005a3c] border-emerald-200' },
-  REJECTED: { label: 'Từ chối', class: 'bg-rose-50 text-rose-800 border-rose-200' },
-  CANCELLED: { label: 'Đã hủy', class: 'bg-slate-50 text-slate-700 border-slate-200' },
+  PENDING: {
+    label: "Chờ duyệt",
+    class: "bg-amber-50 text-amber-800 border-amber-200",
+  },
+  APPROVED_BY_LEAD: {
+    label: "Chờ Giám đốc",
+    class: "bg-blue-50 text-blue-800 border-blue-200",
+  },
+  WAITING_FOR_DOC: {
+    label: "Chờ nộp giấy",
+    class: "bg-violet-50 text-violet-800 border-violet-200",
+  },
+  APPROVED: {
+    label: "Đã duyệt",
+    class: "bg-emerald-50 text-[#005a3c] border-emerald-200",
+  },
+  COMPLETED: {
+    label: "Hoàn tất",
+    class: "bg-emerald-50 text-[#005a3c] border-emerald-200",
+  },
+  REJECTED: {
+    label: "Từ chối",
+    class: "bg-rose-50 text-rose-800 border-rose-200",
+  },
+  CANCELLED: {
+    label: "Đã hủy",
+    class: "bg-slate-50 text-slate-700 border-slate-200",
+  },
 };
 
 function StatusBadge({ status }: { status: string }) {
-  const cfg = statusLabels[status] || { label: status, class: 'bg-slate-50 text-slate-700 border-slate-200' };
+  const cfg = statusLabels[status] || {
+    label: status,
+    class: "bg-slate-50 text-slate-700 border-slate-200",
+  };
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${cfg.class}`}>
+    <span
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${cfg.class}`}
+    >
       <span className="w-1.5 h-1.5 rounded-full mr-1.5 bg-current opacity-70"></span>
       {cfg.label}
     </span>
   );
 }
 
-function SectionHeading({ title, detail, action }: { title: string; detail?: string; action?: React.ReactNode }) {
+function SectionHeading({
+  title,
+  detail,
+  action,
+}: {
+  title: string;
+  detail?: string;
+  action?: React.ReactNode;
+}) {
   return (
     <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between pb-2 border-b border-slate-200/90">
       <div>
-        <h2 className="text-base sm:text-lg font-bold text-slate-900">{title}</h2>
-        {detail && <p className="text-xs sm:text-sm text-slate-500">{detail}</p>}
+        <h2 className="text-base sm:text-lg font-bold text-slate-900">
+          {title}
+        </h2>
+        {detail && (
+          <p className="text-xs sm:text-sm text-slate-500">{detail}</p>
+        )}
       </div>
       {action}
     </div>
@@ -139,6 +194,12 @@ function ReportSection({
             >
               Lọc
             </button>
+            <Link
+              href="/"
+              className="px-3 py-1.5 rounded-lg border border-rose-200 bg-rose-50 text-rose-700 text-xs font-bold hover:bg-rose-100 transition-colors"
+            >
+              Xóa bộ lọc
+            </Link>
           </form>
         }
       />
@@ -146,30 +207,60 @@ function ReportSection({
       {/* Metric Cards Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <div className="bg-gradient-to-br from-emerald-50/80 to-emerald-100/40 p-4 rounded-xl border border-emerald-200/80">
-          <p className="text-xs font-bold text-[#005a3c] uppercase tracking-wider">Tổng đơn nghỉ phép</p>
-          <p className="mt-1.5 text-2xl sm:text-3xl font-black text-slate-900">{totals.leaveTotal}</p>
+          <p className="text-xs font-bold text-[#005a3c] uppercase tracking-wider">
+            Tổng đơn nghỉ phép
+          </p>
+          <p className="mt-1.5 text-2xl sm:text-3xl font-black text-slate-900">
+            {totals.leaveTotal}
+          </p>
           <p className="mt-1 text-xs text-slate-600">
-            <span className="font-semibold text-amber-700">{totals.leavePending} chờ</span> · {totals.leaveApproved} duyệt · {totals.leaveCancelled} hủy
+            <span className="font-semibold text-amber-700">
+              {totals.leavePending} chờ
+            </span>{" "}
+            · {totals.leaveApproved} duyệt ·{" "}
+            <span className="font-semibold text-rose-700">
+              {totals.leaveRejected} từ chối
+            </span>{" "}
+            · {totals.leaveCancelled} hủy
           </p>
         </div>
 
         <div className="bg-gradient-to-br from-teal-50/80 to-teal-100/40 p-4 rounded-xl border border-teal-200/80">
-          <p className="text-xs font-bold text-teal-800 uppercase tracking-wider">Tổng ngày nghỉ</p>
-          <p className="mt-1.5 text-2xl sm:text-3xl font-black text-slate-900">{Number(totals.leaveDays.toFixed(1))}</p>
+          <p className="text-xs font-bold text-teal-800 uppercase tracking-wider">
+            Tổng ngày nghỉ
+          </p>
+          <p className="mt-1.5 text-2xl sm:text-3xl font-black text-slate-900">
+            {Number(totals.leaveDays.toFixed(1))}
+          </p>
           <p className="mt-1 text-xs text-slate-600">Ngày làm việc</p>
         </div>
 
         <div className="bg-gradient-to-br from-blue-50/80 to-blue-100/40 p-4 rounded-xl border border-blue-200/80">
-          <p className="text-xs font-bold text-blue-800 uppercase tracking-wider">Tổng đơn ra ngoài</p>
-          <p className="mt-1.5 text-2xl sm:text-3xl font-black text-slate-900">{totals.outOfficeTotal}</p>
+          <p className="text-xs font-bold text-blue-800 uppercase tracking-wider">
+            Tổng đơn ra ngoài
+          </p>
+          <p className="mt-1.5 text-2xl sm:text-3xl font-black text-slate-900">
+            {totals.outOfficeTotal}
+          </p>
           <p className="mt-1 text-xs text-slate-600">
-            <span className="font-semibold text-amber-700">{totals.outOfficePending} chờ</span> · {totals.outOfficeCompleted} hoàn tất · {totals.outOfficeCancelled} hủy
+            <span className="font-semibold text-amber-700">
+              {totals.outOfficePending} chờ
+            </span>{" "}
+            · {totals.outOfficeCompleted} hoàn tất ·{" "}
+            <span className="font-semibold text-rose-700">
+              {totals.outOfficeRejected} từ chối
+            </span>{" "}
+            · {totals.outOfficeCancelled} hủy
           </p>
         </div>
 
         <div className="bg-gradient-to-br from-cyan-50/80 to-cyan-100/40 p-4 rounded-xl border border-cyan-200/80">
-          <p className="text-xs font-bold text-cyan-800 uppercase tracking-wider">Tổng giờ ra ngoài</p>
-          <p className="mt-1.5 text-2xl sm:text-3xl font-black text-slate-900">{Number(totals.outOfficeHours.toFixed(1))}h</p>
+          <p className="text-xs font-bold text-cyan-800 uppercase tracking-wider">
+            Tổng giờ ra ngoài
+          </p>
+          <p className="mt-1.5 text-2xl sm:text-3xl font-black text-slate-900">
+            {Number(totals.outOfficeHours.toFixed(1))}h
+          </p>
           <p className="mt-1 text-xs text-slate-600">Giờ thực tế</p>
         </div>
       </div>
@@ -193,16 +284,31 @@ function ReportSection({
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {report.departments.map((dep) => (
-                  <tr key={dep.departmentName} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-3 px-4 font-semibold text-slate-800">{dep.departmentName}</td>
-                    <td className="py-3 px-3 text-right font-medium text-slate-700">
-                      {dep.leaveTotal} <span className="text-xs text-slate-400">({dep.leavePending} chờ)</span>
+                  <tr
+                    key={dep.departmentName}
+                    className="hover:bg-slate-50/80 transition-colors"
+                  >
+                    <td className="py-3 px-4 font-semibold text-slate-800">
+                      {dep.departmentName}
                     </td>
-                    <td className="py-3 px-3 text-right font-medium text-slate-700">{Number(dep.leaveDays.toFixed(1))}</td>
                     <td className="py-3 px-3 text-right font-medium text-slate-700">
-                      {dep.outOfficeTotal} <span className="text-xs text-slate-400">({dep.outOfficePending} chờ)</span>
+                      {dep.leaveTotal}{" "}
+                      <span className="text-xs text-slate-400">
+                        ({dep.leavePending} chờ)
+                      </span>
                     </td>
-                    <td className="py-3 px-4 text-right font-medium text-slate-700">{Number(dep.outOfficeHours.toFixed(2))}h</td>
+                    <td className="py-3 px-3 text-right font-medium text-slate-700">
+                      {Number(dep.leaveDays.toFixed(1))}
+                    </td>
+                    <td className="py-3 px-3 text-right font-medium text-slate-700">
+                      {dep.outOfficeTotal}{" "}
+                      <span className="text-xs text-slate-400">
+                        ({dep.outOfficePending} chờ)
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-right font-medium text-slate-700">
+                      {Number(dep.outOfficeHours.toFixed(2))}h
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -214,7 +320,13 @@ function ReportSection({
   );
 }
 
-function PersonalSummary({ stats, isManager }: { stats: DashboardStats; isManager: boolean }) {
+function PersonalSummary({
+  stats,
+  isManager,
+}: {
+  stats: DashboardStats;
+  isManager: boolean;
+}) {
   return (
     <section className="space-y-4">
       <SectionHeading
@@ -222,7 +334,10 @@ function PersonalSummary({ stats, isManager }: { stats: DashboardStats; isManage
         detail="Theo dõi nhanh tình trạng nghỉ phép và ra ngoài cá nhân"
         action={
           <div className="flex items-center gap-3 text-xs sm:text-sm font-semibold">
-            <Link href="/leave?tab=mine" className="text-[#005a3c] hover:underline">
+            <Link
+              href="/leave?tab=mine"
+              className="text-[#005a3c] hover:underline"
+            >
               Xem đơn nghỉ phép →
             </Link>
           </div>
@@ -244,7 +359,9 @@ function PersonalSummary({ stats, isManager }: { stats: DashboardStats; isManage
                 <h3 className="text-base font-bold text-slate-900 group-hover:text-[#005a3c] transition-colors">
                   Đơn nghỉ phép
                 </h3>
-                <p className="text-xs text-slate-500">Số đơn đã tạo trong năm</p>
+                <p className="text-xs text-slate-500">
+                  Số đơn đã tạo trong năm
+                </p>
               </div>
             </div>
             <span className="text-3xl font-black text-slate-900 tabular-nums">
@@ -279,7 +396,9 @@ function PersonalSummary({ stats, isManager }: { stats: DashboardStats; isManage
                 <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-700 transition-colors">
                   Đơn ra ngoài
                 </h3>
-                <p className="text-xs text-slate-500">Số lượt xin ra ngoài cổng</p>
+                <p className="text-xs text-slate-500">
+                  Số lượt xin ra ngoài cổng
+                </p>
               </div>
             </div>
             <span className="text-3xl font-black text-slate-900 tabular-nums">
@@ -308,8 +427,20 @@ function ApprovalQueue({
   leaveRequests,
   outOfficeRequests,
 }: {
-  leaveRequests: Array<{ id: string; employee_name: string; start_date: string; end_date: string; duration_days: number }>;
-  outOfficeRequests: Array<{ id: string; employee_name: string; request_date: string; start_time: string; end_time: string }>;
+  leaveRequests: Array<{
+    id: string;
+    employee_name: string;
+    start_date: string;
+    end_date: string;
+    duration_days: number;
+  }>;
+  outOfficeRequests: Array<{
+    id: string;
+    employee_name: string;
+    request_date: string;
+    start_time: string;
+    end_time: string;
+  }>;
 }) {
   const total = leaveRequests.length + outOfficeRequests.length;
   if (total === 0) return null;
@@ -359,9 +490,12 @@ function ApprovalQueue({
             className="p-3 bg-white rounded-xl border border-amber-200/70 hover:border-amber-400 hover:shadow-xs transition-all flex items-center justify-between"
           >
             <div>
-              <p className="text-xs font-bold text-slate-900">{r.employee_name}</p>
+              <p className="text-xs font-bold text-slate-900">
+                {r.employee_name}
+              </p>
               <p className="text-[11px] text-slate-500 mt-0.5">
-                Nghỉ phép: {r.start_date} → {r.end_date} ({r.duration_days} ngày)
+                Nghỉ phép: {r.start_date} → {r.end_date} ({r.duration_days}{" "}
+                ngày)
               </p>
             </div>
             <span className="text-xs font-semibold text-[#005a3c] flex items-center gap-1">
@@ -376,7 +510,9 @@ function ApprovalQueue({
             className="p-3 bg-white rounded-xl border border-amber-200/70 hover:border-amber-400 hover:shadow-xs transition-all flex items-center justify-between"
           >
             <div>
-              <p className="text-xs font-bold text-slate-900">{r.employee_name}</p>
+              <p className="text-xs font-bold text-slate-900">
+                {r.employee_name}
+              </p>
               <p className="text-[11px] text-slate-500 mt-0.5">
                 Ra ngoài: {r.request_date} ({r.start_time} - {r.end_time})
               </p>
@@ -391,7 +527,11 @@ function ApprovalQueue({
   );
 }
 
-function PersonalActivity({ activities }: { activities: RecentActivityItem[] }) {
+function PersonalActivity({
+  activities,
+}: {
+  activities: RecentActivityItem[];
+}) {
   return (
     <section className="bg-white rounded-2xl p-5 sm:p-6 shadow-xs border border-slate-200/90 space-y-4">
       <SectionHeading
@@ -399,11 +539,17 @@ function PersonalActivity({ activities }: { activities: RecentActivityItem[] }) 
         detail="Các đơn nghỉ phép & ra ngoài mới nhất"
         action={
           <div className="flex items-center gap-3 text-xs font-semibold">
-            <Link href="/leave?tab=mine" className="text-slate-600 hover:text-[#005a3c]">
+            <Link
+              href="/leave?tab=mine"
+              className="text-slate-600 hover:text-[#005a3c]"
+            >
               Xem tất cả đơn nghỉ
             </Link>
             <span className="text-slate-300">·</span>
-            <Link href="/out-office?tab=mine" className="text-slate-600 hover:text-[#005a3c]">
+            <Link
+              href="/out-office?tab=mine"
+              className="text-slate-600 hover:text-[#005a3c]"
+            >
               Xem đơn ra ngoài
             </Link>
           </div>
@@ -413,8 +559,12 @@ function PersonalActivity({ activities }: { activities: RecentActivityItem[] }) 
       {activities.length === 0 ? (
         <div className="py-8 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200">
           <CalendarCheck2 className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-          <p className="text-sm font-semibold text-slate-700">Chưa có đơn nào gần đây</p>
-          <p className="text-xs text-slate-400 mt-1">Các đơn bạn tạo sẽ xuất hiện và cập nhật trạng thái tại đây</p>
+          <p className="text-sm font-semibold text-slate-700">
+            Chưa có đơn nào gần đây
+          </p>
+          <p className="text-xs text-slate-400 mt-1">
+            Các đơn bạn tạo sẽ xuất hiện và cập nhật trạng thái tại đây
+          </p>
         </div>
       ) : (
         <div className="divide-y divide-slate-100">
@@ -426,20 +576,24 @@ function PersonalActivity({ activities }: { activities: RecentActivityItem[] }) 
               <div className="flex items-center gap-3">
                 <div
                   className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                    item.type === 'LEAVE'
-                      ? 'bg-emerald-100/70 text-[#005a3c]'
-                      : 'bg-blue-100/70 text-blue-700'
+                    item.type === "LEAVE"
+                      ? "bg-emerald-100/70 text-[#005a3c]"
+                      : "bg-blue-100/70 text-blue-700"
                   }`}
                 >
-                  {item.type === 'LEAVE' ? (
+                  {item.type === "LEAVE" ? (
                     <CalendarDays className="w-4 h-4" />
                   ) : (
                     <Clock className="w-4 h-4" />
                   )}
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-slate-900">{item.title}</p>
-                  <p className="text-xs text-slate-500 mt-0.5">{item.dateInfo}</p>
+                  <p className="text-sm font-bold text-slate-900">
+                    {item.title}
+                  </p>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {item.dateInfo}
+                  </p>
                 </div>
               </div>
 
@@ -515,36 +669,61 @@ export default async function DashboardPage({
     reportTo = undefined;
   }
 
-  const isAccountant = user.role === 'ACCOUNTANT';
-  const isAdmin = user.role === 'ADMIN';
-  const isDirector = user.role === 'DIRECTOR';
-  const isManager = user.role === 'MANAGER';
+  const isAccountant = user.role === "ACCOUNTANT";
+  const isAdmin = user.role === "ADMIN";
+  const isDirector = user.role === "DIRECTOR";
+  const isManager = user.role === "MANAGER";
+  const isTeamLead = user.role === "TEAM_LEAD";
   const isApprover = isManager || isDirector;
   const isOutOfficeApprover = canApproveOutOfficeRequests(user.role);
   const canSubmit = canSubmitPersonalRequests(user.role);
   const hasPersonalDashboard = canSubmit;
-  const needsReport = isManager || isDirector || isAccountant;
+  const needsReport =
+    isAdmin || isTeamLead || isManager || isDirector || isAccountant;
   const scopeLabel = getUserDataScopeLabel(user);
 
-  const [stats, recentActivities, pendingLeaves, pendingOutOffices, scopeReport, scopeActivity] = await Promise.all([
-    hasPersonalDashboard ? getDashboardStats(user) : Promise.resolve(emptyStats),
-    hasPersonalDashboard ? getRecentActivities(user) : Promise.resolve([] as RecentActivityItem[]),
+  const [
+    stats,
+    recentActivities,
+    pendingLeaves,
+    pendingOutOffices,
+    scopeReport,
+    advancedReport,
+    scopeActivity,
+    absenceItems,
+  ] = await Promise.all([
+    hasPersonalDashboard
+      ? getDashboardStats(user)
+      : Promise.resolve(emptyStats),
+    hasPersonalDashboard
+      ? getRecentActivities(user)
+      : Promise.resolve([] as RecentActivityItem[]),
     isApprover ? getPendingLeaveRequestsForApprover(user) : Promise.resolve([]),
-    isOutOfficeApprover ? getPendingOutOfficeRequestsForApprover(user) : Promise.resolve([]),
-    needsReport ? getScopeReport(user, reportFrom, reportTo) : Promise.resolve(emptyReport),
-    isManager ? getScopeActivityFeed(user, reportFrom, reportTo) : Promise.resolve([] as ScopeActivityItem[]),
+    isOutOfficeApprover
+      ? getPendingOutOfficeRequestsForApprover(user)
+      : Promise.resolve([]),
+    needsReport
+      ? getScopeReport(user, reportFrom, reportTo)
+      : Promise.resolve(emptyReport),
+    needsReport
+      ? getHrAdvancedReport(user, reportFrom, reportTo)
+      : Promise.resolve(emptyAdvancedReport),
+    isManager
+      ? getScopeActivityFeed(user, reportFrom, reportTo)
+      : Promise.resolve([] as ScopeActivityItem[]),
+    getAbsenceCalendar(user, reportFrom, reportTo),
   ]);
 
   const totalPending = pendingLeaves.length + pendingOutOffices.length;
   const roleDescription = isAccountant
-    ? 'Theo dõi dữ liệu toàn công ty · Chế độ chỉ đọc đối soát'
+    ? "Theo dõi dữ liệu toàn công ty · Chế độ chỉ đọc đối soát"
     : isAdmin
-    ? 'Quản trị tài khoản và hồ sơ nhân sự'
-    : isDirector
-    ? 'Hệ thống phê duyệt & Giám sát vận hành toàn công ty'
-    : isManager
-    ? `Quản lý phê duyệt & Đơn phòng ban ${user.department_name || ''}`
-    : 'Cổng thông tin gửi đơn nghỉ phép & đơn ra ngoài cá nhân';
+      ? "Quản trị tài khoản và hồ sơ nhân sự"
+      : isDirector
+        ? "Hệ thống phê duyệt & Giám sát vận hành toàn công ty"
+        : isManager
+          ? `Quản lý phê duyệt & Đơn phòng ban ${user.department_name || ""}`
+          : "Cổng thông tin gửi đơn nghỉ phép & đơn ra ngoài cá nhân";
 
   return (
     <div className="space-y-6 sm:space-y-8">
@@ -554,7 +733,7 @@ export default async function DashboardPage({
           <div>
             <div className="flex items-center gap-2 flex-wrap mb-2">
               <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-white/20 text-white backdrop-blur-xs">
-                {user.position || 'Chưa cập nhật chức vụ'}
+                {user.position || "Chưa cập nhật chức vụ"}
               </span>
               {user.department_name && (
                 <span className="text-xs text-emerald-100 font-medium">
@@ -601,16 +780,31 @@ export default async function DashboardPage({
           <div>
             <p className="font-bold">Chế độ đối soát số liệu Kế toán</p>
             <p className="mt-0.5 text-xs text-amber-700">
-              Báo cáo bên dưới hiển thị số liệu tổng hợp toàn công ty. Để xem chi tiết từng đơn, hãy mở mục{' '}
-              <Link href="/leave?tab=scope" className="font-semibold underline">Nghỉ phép</Link> hoặc{' '}
-              <Link href="/out-office?tab=scope" className="font-semibold underline">Ra ngoài</Link>.
+              Báo cáo bên dưới hiển thị số liệu tổng hợp toàn công ty. Để xem
+              chi tiết từng đơn, hãy mở mục{" "}
+              <Link href="/leave?tab=scope" className="font-semibold underline">
+                Nghỉ phép
+              </Link>{" "}
+              hoặc{" "}
+              <Link
+                href="/out-office?tab=scope"
+                className="font-semibold underline"
+              >
+                Ra ngoài
+              </Link>
+              .
             </p>
           </div>
         </div>
       )}
 
       {/* Approvals Queue if approver */}
-      {(isApprover || isOutOfficeApprover) && <ApprovalQueue leaveRequests={pendingLeaves} outOfficeRequests={pendingOutOffices} />}
+      {(isApprover || isOutOfficeApprover) && (
+        <ApprovalQueue
+          leaveRequests={pendingLeaves}
+          outOfficeRequests={pendingOutOffices}
+        />
+      )}
 
       {/* Reports if manager/director/accountant */}
       {needsReport && (
@@ -619,18 +813,26 @@ export default async function DashboardPage({
           scopeLabel={scopeLabel}
           reportFrom={reportFrom}
           reportTo={reportTo}
-          showDepartmentBreakdown={isDirector || isAccountant}
+          showDepartmentBreakdown={isAdmin || isDirector || isAccountant}
         />
       )}
 
+      {needsReport && <AdvancedReportSection report={advancedReport} />}
+
+      <AbsenceCalendar items={absenceItems} />
+
       {/* Personal KPI stats */}
-      {hasPersonalDashboard && <PersonalSummary stats={stats} isManager={isManager} />}
+      {hasPersonalDashboard && (
+        <PersonalSummary stats={stats} isManager={isManager} />
+      )}
 
       {/* Manager activity */}
       {isManager && <ManagerActivity activities={scopeActivity} />}
 
       {/* Recent activities */}
-      {hasPersonalDashboard && <PersonalActivity activities={recentActivities} />}
+      {hasPersonalDashboard && (
+        <PersonalActivity activities={recentActivities} />
+      )}
     </div>
   );
 }

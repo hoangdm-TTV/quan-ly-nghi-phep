@@ -16,7 +16,7 @@ export const getCurrentUser = cache(async function getCurrentUser(): Promise<Saf
   if (!session) return null;
 
   const user = await getSafeUserById(session.user_id);
-  if (!user || !user.is_active) {
+  if (!user || !user.is_active || user.employment_status !== 'ACTIVE') {
     return null;
   }
 

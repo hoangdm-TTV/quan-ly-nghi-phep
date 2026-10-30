@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { timingSafeEqual } from 'crypto';
 import { pool } from '@/lib/db/pool';
 import { sendPushToUsers } from '@/lib/notifications/push';
+import { createInAppNotifications } from '@/lib/notifications/in-app';
 
 export const runtime = 'nodejs';
 
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest) {
       `SELECT lr.id AS request_id, lr.status, array_agg(DISTINCT recipient.id) AS recipients
          FROM leave_requests lr
          JOIN users applicant ON applicant.id = lr.employee_id
-         JOIN users recipient ON recipient.is_active = TRUE AND recipient.id <> applicant.id
+         JOIN users recipient ON recipient.is_active = TRUE AND recipient.employment_status = 'ACTIVE' AND recipient.id <> applicant.id
           AND (
             (lr.status = 'APPROVED_BY_LEAD' AND recipient.role = 'DIRECTOR')
             OR (lr.status = 'PENDING' AND (
@@ -49,10 +50,13 @@ export async function GET(request: NextRequest) {
       `SELECT oo.id AS request_id, array_agg(DISTINCT recipient.id) AS recipients
          FROM out_office_requests oo
          JOIN users applicant ON applicant.id = oo.employee_id
-         JOIN users recipient ON recipient.is_active = TRUE AND recipient.id <> applicant.id
+         JOIN users recipient ON recipient.is_active = TRUE AND recipient.employment_status = 'ACTIVE' AND recipient.id <> applicant.id
           AND (
             (applicant.role = 'STAFF' AND recipient.role = 'TEAM_LEAD' AND recipient.team_id = applicant.team_id AND applicant.team_id IS NOT NULL)
+            OR (applicant.role = 'STAFF' AND recipient.role = 'MANAGER' AND recipient.department_id = applicant.department_id AND applicant.department_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM users tl WHERE tl.role = 'TEAM_LEAD' AND tl.is_active = TRUE AND tl.employment_status = 'ACTIVE' AND tl.team_id = applicant.team_id))
+            OR (applicant.role = 'STAFF' AND recipient.role = 'DIRECTOR' AND NOT EXISTS (SELECT 1 FROM users tl WHERE tl.role = 'TEAM_LEAD' AND tl.is_active = TRUE AND tl.employment_status = 'ACTIVE' AND tl.team_id = applicant.team_id) AND NOT EXISTS (SELECT 1 FROM users m WHERE m.role = 'MANAGER' AND m.is_active = TRUE AND m.employment_status = 'ACTIVE' AND m.department_id = applicant.department_id))
             OR (applicant.role IN ('TEAM_LEAD','ACCOUNTANT') AND recipient.role = 'MANAGER' AND recipient.department_id = applicant.department_id AND applicant.department_id IS NOT NULL)
+            OR (applicant.role IN ('TEAM_LEAD','ACCOUNTANT') AND recipient.role = 'DIRECTOR' AND NOT EXISTS (SELECT 1 FROM users m WHERE m.role = 'MANAGER' AND m.is_active = TRUE AND m.employment_status = 'ACTIVE' AND m.department_id = applicant.department_id))
             OR (applicant.role = 'MANAGER' AND recipient.role = 'DIRECTOR')
           )
         WHERE oo.status = 'PENDING' AND oo.updated_at < NOW() - INTERVAL '24 hours'
@@ -66,11 +70,15 @@ export async function GET(request: NextRequest) {
       `INSERT INTO reminder_dispatches (request_type, request_id, reminder_date) VALUES ('LEAVE', $1, $2::date)
        ON CONFLICT DO NOTHING RETURNING id`, [item.request_id, date]);
     if (!reservation.rowCount) continue;
-    await sendPushToUsers(item.recipients, {
+    const notification = {
       title: 'Đơn nghỉ phép đang chờ xử lý',
       body: item.status === 'APPROVED_BY_LEAD' ? 'Đơn đã chờ Giám đốc duyệt hơn 24 giờ.' : 'Đơn nghỉ phép đang chờ duyệt hơn 24 giờ.',
       url: `/leave/${item.request_id}`,
-    });
+    };
+    await Promise.all([
+      sendPushToUsers(item.recipients, notification),
+      createInAppNotifications(item.recipients, { ...notification, type: 'REMINDER' }),
+    ]);
     dispatched += 1;
   }
   for (const item of outOfficeRows.rows) {
@@ -78,11 +86,15 @@ export async function GET(request: NextRequest) {
       `INSERT INTO reminder_dispatches (request_type, request_id, reminder_date) VALUES ('OUT_OFFICE', $1, $2::date)
        ON CONFLICT DO NOTHING RETURNING id`, [item.request_id, date]);
     if (!reservation.rowCount) continue;
-    await sendPushToUsers(item.recipients, {
+    const notification = {
       title: 'Đơn ra ngoài đang chờ xử lý',
       body: 'Đơn xin ra ngoài đang chờ duyệt hơn 24 giờ.',
       url: `/out-office/${item.request_id}`,
-    });
+    };
+    await Promise.all([
+      sendPushToUsers(item.recipients, notification),
+      createInAppNotifications(item.recipients, { ...notification, type: 'REMINDER' }),
+    ]);
     dispatched += 1;
   }
   return NextResponse.json({ success: true, date, remindersDispatched: dispatched });

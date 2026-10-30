@@ -2,6 +2,7 @@ import 'server-only';
 import { createECDH } from 'crypto';
 import webpush from 'web-push';
 import { query } from '@/lib/db/pool';
+import { createInAppNotifications } from '@/lib/notifications/in-app';
 
 type PushPayload = { title: string; body: string; url: string };
 export type PushDispatchResult = {
@@ -109,7 +110,7 @@ export async function notifyLeaveApprovers(requestId: string): Promise<void> {
       )
     : await query<{ id: string }>(
         `SELECT id FROM users
-          WHERE is_active = TRUE AND id <> $1 AND (
+          WHERE is_active = TRUE AND employment_status = 'ACTIVE' AND id <> $1 AND (
             (role = 'DIRECTOR' AND (
               $2 = 'MANAGER' OR $3::uuid IS NULL OR NOT EXISTS (
                 SELECT 1 FROM users manager
@@ -122,13 +123,18 @@ export async function notifyLeaveApprovers(requestId: string): Promise<void> {
           )`,
         [request.employee_id, request.role, request.department_id],
       );
-  const dispatch = await sendPushToUsers(approvers.rows.map(({ id }) => id), {
+  const recipientIds = approvers.rows.map(({ id }) => id);
+  const notification = {
     title: request.status === 'APPROVED_BY_LEAD' ? 'Đơn nghỉ phép cần Giám đốc duyệt' : 'Có đơn nghỉ phép cần duyệt',
     body: request.status === 'APPROVED_BY_LEAD'
       ? 'Một đơn nghỉ phép đã qua cấp Trưởng phòng và đang chờ duyệt cấp cuối.'
       : 'Một nhân viên vừa gửi đơn nghỉ phép mới.',
     url: `/leave/${requestId}`,
-  });
+  };
+  const [dispatch] = await Promise.all([
+    sendPushToUsers(recipientIds, notification),
+    createInAppNotifications(recipientIds, { ...notification, type: 'LEAVE_APPROVAL' }).catch((error) => console.error('[In-App Notification Error]', error)),
+  ]);
   console.info('[Leave Push Dispatch]', {
     requestId,
     recipients: approvers.rows.length,
@@ -149,22 +155,39 @@ export async function notifyOutOfficeApprovers(requestId: string): Promise<void>
   if (!request) return;
 
   const roleRouting: Record<string, string> = {
-    STAFF: `role = 'TEAM_LEAD' AND team_id = $3::uuid AND $3::uuid IS NOT NULL`,
-    TEAM_LEAD: `role = 'MANAGER' AND department_id = $2::uuid AND $2::uuid IS NOT NULL`,
-    ACCOUNTANT: `role = 'MANAGER' AND department_id = $2::uuid AND $2::uuid IS NOT NULL`,
+    STAFF: `(
+      (role = 'TEAM_LEAD' AND team_id = $3::uuid AND $3::uuid IS NOT NULL)
+      OR (role = 'MANAGER' AND department_id = $2::uuid AND $2::uuid IS NOT NULL AND NOT EXISTS (SELECT 1 FROM users tl WHERE tl.role = 'TEAM_LEAD' AND tl.is_active = TRUE AND tl.employment_status = 'ACTIVE' AND tl.team_id = $3::uuid))
+      OR (role = 'DIRECTOR' AND NOT EXISTS (SELECT 1 FROM users tl WHERE tl.role = 'TEAM_LEAD' AND tl.is_active = TRUE AND tl.employment_status = 'ACTIVE' AND tl.team_id = $3::uuid) AND NOT EXISTS (SELECT 1 FROM users m WHERE m.role = 'MANAGER' AND m.is_active = TRUE AND m.employment_status = 'ACTIVE' AND m.department_id = $2::uuid))
+    )`,
+    TEAM_LEAD: `((role = 'MANAGER' AND department_id = $2::uuid AND $2::uuid IS NOT NULL) OR (role = 'DIRECTOR' AND NOT EXISTS (SELECT 1 FROM users m WHERE m.role = 'MANAGER' AND m.is_active = TRUE AND m.employment_status = 'ACTIVE' AND m.department_id = $2::uuid)))`,
+    ACCOUNTANT: `((role = 'MANAGER' AND department_id = $2::uuid AND $2::uuid IS NOT NULL) OR (role = 'DIRECTOR' AND NOT EXISTS (SELECT 1 FROM users m WHERE m.role = 'MANAGER' AND m.is_active = TRUE AND m.employment_status = 'ACTIVE' AND m.department_id = $2::uuid)))`,
     MANAGER: `role = 'DIRECTOR'`,
   };
   const routing = roleRouting[request.role];
   if (!routing) return;
   const approvers = await query<{ id: string }>(
-    `SELECT id FROM users WHERE is_active = TRUE AND id <> $1 AND ${routing}`,
+    `SELECT id FROM users WHERE is_active = TRUE AND employment_status = 'ACTIVE' AND id <> $1 AND ${routing}`,
     [request.employee_id, request.department_id, request.team_id],
   );
-  const dispatch = await sendPushToUsers(approvers.rows.map(({ id }) => id), {
+  if (!approvers.rows.length) {
+    console.warn('[Out Office Notification] Không tìm thấy người duyệt trực tiếp', {
+      requestId,
+      applicantRole: request.role,
+      departmentId: request.department_id,
+      teamId: request.team_id,
+    });
+  }
+  const recipientIds = approvers.rows.map(({ id }) => id);
+  const notification = {
     title: 'Có đơn ra ngoài cần duyệt',
     body: 'Có đơn xin ra ngoài mới cần bạn duyệt.',
     url: `/out-office/${requestId}`,
-  });
+  };
+  const [dispatch] = await Promise.all([
+    sendPushToUsers(recipientIds, notification),
+    createInAppNotifications(recipientIds, { ...notification, type: 'OUT_OFFICE_APPROVAL' }).catch((error) => console.error('[In-App Notification Error]', error)),
+  ]);
   console.info('[Out Office Push Dispatch]', {
     requestId,
     recipients: approvers.rows.length,
@@ -184,7 +207,11 @@ export async function notifyLeaveRequester(requestId: string, status: 'WAITING_F
     APPROVED_BY_LEAD: ['Đơn nghỉ phép đã qua cấp 1', 'Đơn đang chờ Giám đốc duyệt cấp cuối.'],
     REJECTED: ['Đơn nghỉ phép bị từ chối', 'Mở chi tiết đơn để xem lý do từ chối.'],
   } as const;
-  await sendPushToUsers([employeeId], { title: messages[status][0], body: messages[status][1], url: `/leave/${requestId}` });
+  const notification = { title: messages[status][0], body: messages[status][1], url: `/leave/${requestId}` };
+  await Promise.all([
+    sendPushToUsers([employeeId], notification),
+    createInAppNotifications([employeeId], { ...notification, type: 'LEAVE_STATUS' }).catch((error) => console.error('[In-App Notification Error]', error)),
+  ]);
 }
 
 export async function notifyOutOfficeRequester(requestId: string, status: 'APPROVED' | 'COMPLETED' | 'REJECTED') {
@@ -196,5 +223,9 @@ export async function notifyOutOfficeRequester(requestId: string, status: 'APPRO
     COMPLETED: ['Đơn ra ngoài đã hoàn tất', 'Người duyệt đã xác nhận bạn quay về.'],
     REJECTED: ['Đơn ra ngoài bị từ chối', 'Mở chi tiết đơn để xem lý do từ chối.'],
   } as const;
-  await sendPushToUsers([employeeId], { title: messages[status][0], body: messages[status][1], url: `/out-office/${requestId}` });
+  const notification = { title: messages[status][0], body: messages[status][1], url: `/out-office/${requestId}` };
+  await Promise.all([
+    sendPushToUsers([employeeId], notification),
+    createInAppNotifications([employeeId], { ...notification, type: 'OUT_OFFICE_STATUS' }).catch((error) => console.error('[In-App Notification Error]', error)),
+  ]);
 }

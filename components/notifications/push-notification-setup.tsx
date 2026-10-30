@@ -24,6 +24,12 @@ export default function PushNotificationSetup() {
   const audioContext = useRef<AudioContext | null>(null);
 
   useEffect(() => {
+    if (!message) return;
+    const timeoutId = window.setTimeout(() => setMessage(""), 5000);
+    return () => window.clearTimeout(timeoutId);
+  }, [message]);
+
+  useEffect(() => {
     const isSupported =
       window.isSecureContext &&
       "serviceWorker" in navigator &&

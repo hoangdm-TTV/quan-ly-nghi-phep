@@ -14,6 +14,7 @@ export interface HrUserRow {
   manager_id: string | null;
   manager_name: string | null;
   is_active: boolean;
+  employment_status: 'ACTIVE' | 'SUSPENDED' | 'TERMINATED';
 }
 
 export interface HrDepartment { id: string; name: string }
@@ -51,8 +52,9 @@ export async function getHrAdminData(filters: { q?: string; departmentId?: strin
   }
   if (filters.departmentId && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(filters.departmentId)) { values.push(filters.departmentId); conditions.push(`u.department_id = $${values.length}::uuid`); }
   if (filters.teamId && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(filters.teamId)) { values.push(filters.teamId); conditions.push(`u.team_id = $${values.length}::uuid`); }
-  if (filters.status === 'active') conditions.push('u.is_active = TRUE');
-  if (filters.status === 'inactive') conditions.push('u.is_active = FALSE');
+  if (filters.status === 'active') conditions.push("u.employment_status = 'ACTIVE'");
+  if (filters.status === 'suspended') conditions.push("u.employment_status = 'SUSPENDED'");
+  if (filters.status === 'terminated') conditions.push("u.employment_status = 'TERMINATED'");
   const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
   const count = await query<{ total: number }>(`SELECT COUNT(*)::int AS total FROM users u ${where}`, values);
   const pageValues = [...values, pageSize + 1, (page - 1) * pageSize];
@@ -60,13 +62,13 @@ export async function getHrAdminData(filters: { q?: string; departmentId?: strin
     query<HrUserRow>(
       `SELECT u.id, u.employee_code, u.full_name, u.email, u.role, u.position,
               u.department_id, d.name AS department_name, u.team_id, t.name AS team_name,
-              u.manager_id, m.full_name AS manager_name, u.is_active
+              u.manager_id, m.full_name AS manager_name, u.is_active, u.employment_status
          FROM users u
          LEFT JOIN departments d ON d.id = u.department_id
          LEFT JOIN teams t ON t.id = u.team_id
          LEFT JOIN users m ON m.id = u.manager_id
         ${where}
-        ORDER BY u.is_active DESC, u.full_name ASC
+        ORDER BY CASE u.employment_status WHEN 'ACTIVE' THEN 0 WHEN 'SUSPENDED' THEN 1 ELSE 2 END, u.full_name ASC
         LIMIT $${pageValues.length - 1} OFFSET $${pageValues.length}`,
       pageValues,
     ),

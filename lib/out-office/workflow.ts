@@ -10,16 +10,33 @@ export interface OutOfficeEvaluation {
   action?: 'APPROVED_LEAD' | 'APPROVED_DIRECTOR' | 'REJECTED';
 }
 
-function isAssignedOutOfficeApprover(approver: SafeUser, applicant: SafeUser): boolean {
+export type OutOfficeRoutingAvailability = { hasTeamLead: boolean; hasManager: boolean };
+
+function isAssignedOutOfficeApprover(
+  approver: SafeUser,
+  applicant: SafeUser,
+  routing: OutOfficeRoutingAvailability,
+): boolean {
   if (applicant.role === 'STAFF') {
-    return approver.role === 'TEAM_LEAD'
-      && Boolean(applicant.team_id)
-      && approver.team_id === applicant.team_id;
+    if (routing.hasTeamLead) {
+      return approver.role === 'TEAM_LEAD'
+        && Boolean(applicant.team_id)
+        && approver.team_id === applicant.team_id;
+    }
+    if (routing.hasManager) {
+      return approver.role === 'MANAGER'
+        && Boolean(applicant.department_id)
+        && approver.department_id === applicant.department_id;
+    }
+    return approver.role === 'DIRECTOR';
   }
   if (applicant.role === 'TEAM_LEAD' || applicant.role === 'ACCOUNTANT') {
-    return approver.role === 'MANAGER'
-      && Boolean(applicant.department_id)
-      && approver.department_id === applicant.department_id;
+    if (routing.hasManager) {
+      return approver.role === 'MANAGER'
+        && Boolean(applicant.department_id)
+        && approver.department_id === applicant.department_id;
+    }
+    return approver.role === 'DIRECTOR';
   }
   return applicant.role === 'MANAGER' && approver.role === 'DIRECTOR';
 }
@@ -30,12 +47,13 @@ export function evaluateOutOfficeApproval(
   applicant: SafeUser,
   currentStatus: OutOfficeStatus,
   existingApproverId?: string | null,
+  routing: OutOfficeRoutingAvailability = { hasTeamLead: true, hasManager: true },
 ): OutOfficeEvaluation {
   if (approver.id === applicant.id) {
     return { allowed: false, reason: 'Bạn không được phép tự phê duyệt đơn ra ngoài của chính mình.' };
   }
   if (currentStatus === 'PENDING') {
-    if (!isAssignedOutOfficeApprover(approver, applicant)) {
+    if (!isAssignedOutOfficeApprover(approver, applicant, routing)) {
       return { allowed: false, reason: 'Đơn này không thuộc cấp duyệt trực tiếp của bạn.' };
     }
     return {
@@ -63,11 +81,12 @@ export function evaluateOutOfficeRejection(
   applicant: SafeUser,
   currentStatus: OutOfficeStatus,
   existingApproverId?: string | null,
+  routing: OutOfficeRoutingAvailability = { hasTeamLead: true, hasManager: true },
 ): { allowed: boolean; reason?: string } {
   if (approver.id === applicant.id) {
     return { allowed: false, reason: 'Bạn không thể từ chối đơn của chính mình.' };
   }
-  if (currentStatus === 'PENDING' && !isAssignedOutOfficeApprover(approver, applicant)) {
+  if (currentStatus === 'PENDING' && !isAssignedOutOfficeApprover(approver, applicant, routing)) {
     return { allowed: false, reason: 'Đơn này không thuộc cấp duyệt trực tiếp của bạn.' };
   }
   if (currentStatus === 'APPROVED' && existingApproverId !== approver.id) {
