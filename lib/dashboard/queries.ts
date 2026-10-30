@@ -10,12 +10,14 @@ export interface ScopeReportDepartment {
   leavePending: number;
   leaveApproved: number;
   leaveRejected: number;
+  leaveCancelled: number;
   leaveDays: number;
   outOfficeTotal: number;
   outOfficePending: number;
   outOfficeApproved: number;
   outOfficeCompleted: number;
   outOfficeRejected: number;
+  outOfficeCancelled: number;
   outOfficeHours: number;
 }
 
@@ -148,6 +150,7 @@ export async function getScopeReport(
       COUNT(*) FILTER (WHERE lr.status IN ('PENDING', 'APPROVED_BY_LEAD'))::int AS pending,
       COUNT(*) FILTER (WHERE lr.status IN ('WAITING_FOR_DOC', 'COMPLETED'))::int AS approved,
       COUNT(*) FILTER (WHERE lr.status = 'REJECTED')::int AS rejected,
+      COUNT(*) FILTER (WHERE lr.status = 'CANCELLED')::int AS cancelled,
       COALESCE(SUM(lr.duration_days) FILTER (WHERE lr.status IN ('WAITING_FOR_DOC', 'COMPLETED')), 0)::float AS days
     FROM leave_requests lr
     JOIN users u ON u.id = lr.employee_id
@@ -163,6 +166,7 @@ export async function getScopeReport(
       COUNT(*) FILTER (WHERE oo.status = 'APPROVED')::int AS approved,
       COUNT(*) FILTER (WHERE oo.status = 'COMPLETED')::int AS completed,
       COUNT(*) FILTER (WHERE oo.status = 'REJECTED')::int AS rejected,
+      COUNT(*) FILTER (WHERE oo.status = 'CANCELLED')::int AS cancelled,
       COALESCE(SUM(oo.estimated_hours) FILTER (WHERE oo.status IN ('APPROVED', 'COMPLETED')), 0)::float AS hours
     FROM out_office_requests oo
     JOIN users u ON u.id = oo.employee_id
@@ -184,12 +188,14 @@ export async function getScopeReport(
       leavePending: row.pending,
       leaveApproved: row.approved,
       leaveRejected: row.rejected,
+      leaveCancelled: row.cancelled,
       leaveDays: row.days,
       outOfficeTotal: 0,
       outOfficePending: 0,
       outOfficeApproved: 0,
       outOfficeCompleted: 0,
       outOfficeRejected: 0,
+      outOfficeCancelled: 0,
       outOfficeHours: 0,
     });
   }
@@ -201,12 +207,14 @@ export async function getScopeReport(
       leavePending: 0,
       leaveApproved: 0,
       leaveRejected: 0,
+      leaveCancelled: 0,
       leaveDays: 0,
       outOfficeTotal: 0,
       outOfficePending: 0,
       outOfficeApproved: 0,
       outOfficeCompleted: 0,
       outOfficeRejected: 0,
+      outOfficeCancelled: 0,
       outOfficeHours: 0,
     };
     department.outOfficeTotal = row.total;
@@ -214,6 +222,7 @@ export async function getScopeReport(
     department.outOfficeApproved = row.approved;
     department.outOfficeCompleted = row.completed;
     department.outOfficeRejected = row.rejected;
+    department.outOfficeCancelled = row.cancelled;
     department.outOfficeHours = row.hours;
     byDepartment.set(row.department_name, department);
   }
@@ -231,12 +240,14 @@ export async function getScopeReport(
     leavePending: 0,
     leaveApproved: 0,
     leaveRejected: 0,
+    leaveCancelled: 0,
     leaveDays: 0,
     outOfficeTotal: 0,
     outOfficePending: 0,
     outOfficeApproved: 0,
     outOfficeCompleted: 0,
     outOfficeRejected: 0,
+    outOfficeCancelled: 0,
     outOfficeHours: 0,
   });
 

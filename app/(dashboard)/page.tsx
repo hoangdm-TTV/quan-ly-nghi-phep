@@ -55,12 +55,14 @@ const emptyReport: ScopeReport = {
     leavePending: 0,
     leaveApproved: 0,
     leaveRejected: 0,
+    leaveCancelled: 0,
     leaveDays: 0,
     outOfficeTotal: 0,
     outOfficePending: 0,
     outOfficeApproved: 0,
     outOfficeCompleted: 0,
     outOfficeRejected: 0,
+    outOfficeCancelled: 0,
     outOfficeHours: 0,
   },
 };
@@ -72,6 +74,7 @@ const statusLabels: Record<string, { label: string; class: string }> = {
   APPROVED: { label: 'Đã duyệt', class: 'bg-emerald-50 text-[#005a3c] border-emerald-200' },
   COMPLETED: { label: 'Hoàn tất', class: 'bg-emerald-50 text-[#005a3c] border-emerald-200' },
   REJECTED: { label: 'Từ chối', class: 'bg-rose-50 text-rose-800 border-rose-200' },
+  CANCELLED: { label: 'Đã hủy', class: 'bg-slate-50 text-slate-700 border-slate-200' },
 };
 
 function StatusBadge({ status }: { status: string }) {
@@ -146,7 +149,7 @@ function ReportSection({
           <p className="text-xs font-bold text-[#005a3c] uppercase tracking-wider">Tổng đơn nghỉ phép</p>
           <p className="mt-1.5 text-2xl sm:text-3xl font-black text-slate-900">{totals.leaveTotal}</p>
           <p className="mt-1 text-xs text-slate-600">
-            <span className="font-semibold text-amber-700">{totals.leavePending} chờ</span> · {totals.leaveApproved} duyệt
+            <span className="font-semibold text-amber-700">{totals.leavePending} chờ</span> · {totals.leaveApproved} duyệt · {totals.leaveCancelled} hủy
           </p>
         </div>
 
@@ -160,7 +163,7 @@ function ReportSection({
           <p className="text-xs font-bold text-blue-800 uppercase tracking-wider">Tổng đơn ra ngoài</p>
           <p className="mt-1.5 text-2xl sm:text-3xl font-black text-slate-900">{totals.outOfficeTotal}</p>
           <p className="mt-1 text-xs text-slate-600">
-            <span className="font-semibold text-amber-700">{totals.outOfficePending} chờ</span> · {totals.outOfficeCompleted} hoàn tất
+            <span className="font-semibold text-amber-700">{totals.outOfficePending} chờ</span> · {totals.outOfficeCompleted} hoàn tất · {totals.outOfficeCancelled} hủy
           </p>
         </div>
 
@@ -513,6 +516,7 @@ export default async function DashboardPage({
   }
 
   const isAccountant = user.role === 'ACCOUNTANT';
+  const isAdmin = user.role === 'ADMIN';
   const isDirector = user.role === 'DIRECTOR';
   const isManager = user.role === 'MANAGER';
   const isApprover = isManager || isDirector;
@@ -534,6 +538,8 @@ export default async function DashboardPage({
   const totalPending = pendingLeaves.length + pendingOutOffices.length;
   const roleDescription = isAccountant
     ? 'Theo dõi dữ liệu toàn công ty · Chế độ chỉ đọc đối soát'
+    : isAdmin
+    ? 'Quản trị tài khoản và hồ sơ nhân sự'
     : isDirector
     ? 'Hệ thống phê duyệt & Giám sát vận hành toàn công ty'
     : isManager

@@ -43,7 +43,8 @@ export interface ApprovalHistoryRecord {
  */
 export async function getVisibleLeaveRequests(
   user: SafeUser,
-  statusFilter?: string
+  statusFilter?: string,
+  pagination?: { limit: number; offset: number },
 ): Promise<LeaveRequestDetail[]> {
   if (!canSubmitPersonalRequests(user.role)) return [];
   let sql = `
@@ -84,6 +85,10 @@ export async function getVisibleLeaveRequests(
   }
 
   sql += ` ORDER BY lr.created_at DESC`;
+  if (pagination) {
+    params.push(Math.min(100, pagination.limit) + 1, Math.max(0, pagination.offset));
+    sql += ` LIMIT $${params.length - 1} OFFSET $${params.length}`;
+  }
 
   const res = await query<LeaveRequestDetail>(sql, params);
   return res.rows;
@@ -171,7 +176,8 @@ export async function getLeaveDocumentMetadataById(id: string): Promise<LeaveDoc
  * Lấy danh sách các đơn nghỉ phép đang chờ người dùng hiện tại phê duyệt
  */
 export async function getPendingLeaveRequestsForApprover(
-  approver: SafeUser
+  approver: SafeUser,
+  pagination?: { limit: number; offset: number },
 ): Promise<LeaveRequestDetail[]> {
   // Chỉ Manager và Director được duyệt nghỉ phép.
   if (approver.role !== 'MANAGER' && approver.role !== 'DIRECTOR') {
@@ -244,7 +250,10 @@ export async function getPendingLeaveRequestsForApprover(
     WHERE lr.employee_id != $1
       AND ${whereClause}
     ORDER BY lr.created_at ASC
+    ${pagination ? `LIMIT $${params.length + 1} OFFSET $${params.length + 2}` : ''}
   `;
+
+  if (pagination) params.push(Math.min(100, pagination.limit) + 1, Math.max(0, pagination.offset));
 
   const res = await query<LeaveRequestDetail>(sql, params);
   return res.rows;
@@ -269,6 +278,28 @@ export async function getPendingLeaveApprovalCount(approver: SafeUser): Promise<
   return Number(result.rows[0]?.count || 0);
 }
 
+export async function getPendingLeaveApprovalSummary(approver: SafeUser): Promise<{ total: number; firstLevel: number; finalLevel: number }> {
+  if (approver.role !== 'MANAGER' && approver.role !== 'DIRECTOR') return { total: 0, firstLevel: 0, finalLevel: 0 };
+  const params: any[] = [approver.id];
+  let scope: string;
+  if (approver.role === 'DIRECTOR') {
+    scope = `(lr.status = 'APPROVED_BY_LEAD' OR (lr.status = 'PENDING' AND u.role = 'MANAGER') OR (lr.status = 'PENDING' AND u.role IN ('STAFF','TEAM_LEAD','ACCOUNTANT') AND (u.department_id IS NULL OR NOT EXISTS (SELECT 1 FROM users m WHERE m.department_id=u.department_id AND m.role='MANAGER' AND m.is_active=TRUE))))`;
+  } else {
+    if (!approver.department_id) return { total: 0, firstLevel: 0, finalLevel: 0 };
+    params.push(approver.department_id);
+    scope = `lr.status = 'PENDING' AND u.department_id = $2 AND u.role IN ('STAFF','TEAM_LEAD','ACCOUNTANT')`;
+  }
+  const result = await query<{ total: number; first_level: number; final_level: number }>(
+    `SELECT COUNT(*)::int AS total, COUNT(*) FILTER (WHERE lr.status='PENDING')::int AS first_level,
+            COUNT(*) FILTER (WHERE lr.status='APPROVED_BY_LEAD')::int AS final_level
+       FROM leave_requests lr JOIN users u ON u.id=lr.employee_id
+      WHERE lr.employee_id <> $1 AND ${scope}`,
+    params,
+  );
+  const row = result.rows[0];
+  return { total: Number(row?.total || 0), firstLevel: Number(row?.first_level || 0), finalLevel: Number(row?.final_level || 0) };
+}
+
 export interface ScopedLeaveFilter {
   status?: string;
   employeeId?: string;
@@ -284,7 +315,8 @@ export interface ScopedLeaveFilter {
  */
 export async function getScopedLeaveRequests(
   user: SafeUser,
-  filter: ScopedLeaveFilter = {}
+  filter: ScopedLeaveFilter = {},
+  pagination?: { limit: number; offset: number },
 ): Promise<LeaveRequestDetail[]> {
   const scope = buildReportDataScope(user, 'u');
   const params: any[] = [...scope.params];
@@ -344,7 +376,10 @@ export async function getScopedLeaveRequests(
     LEFT JOIN users app ON lr.approver_id = app.id
     WHERE ${conditions.join(' AND ')}
     ORDER BY lr.start_date DESC, lr.created_at DESC
+    ${pagination ? `LIMIT $${params.length + 1} OFFSET $${params.length + 2}` : ''}
   `;
+
+  if (pagination) params.push(Math.min(100, pagination.limit) + 1, Math.max(0, pagination.offset));
 
   const res = await query<LeaveRequestDetail>(sql, params);
   return res.rows;

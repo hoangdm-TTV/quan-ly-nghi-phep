@@ -1,7 +1,7 @@
 import { requireAuth } from '@/lib/auth/permissions';
 import { canApproveOutOfficeRequests, canSubmitPersonalRequests } from '@/lib/auth/roles';
 import { redirect } from 'next/navigation';
-import { getPendingOutOfficeRequestsForApprover } from '@/lib/out-office/queries';
+import { getPendingOutOfficeRequestsForApprover, getPendingOutOfficeApprovalSummary } from '@/lib/out-office/queries';
 import OutOfficeStatusBadge from '@/components/out-office/out-office-status-badge';
 import OutOfficeApprovalActions from '@/components/out-office/approval-actions';
 import Link from 'next/link';
@@ -11,16 +11,23 @@ export const metadata = {
   title: 'Duyệt đơn ra ngoài | Tri Thức Việt',
 };
 
-export default async function ApprovalsOutOfficePage() {
+export default async function ApprovalsOutOfficePage({ searchParams }: { searchParams?: { page?: string } }) {
   const user = await requireAuth();
 
   if (!canApproveOutOfficeRequests(user.role)) {
     redirect(canSubmitPersonalRequests(user.role) ? '/out-office' : '/');
   }
 
-  const pendingRequests = await getPendingOutOfficeRequestsForApprover(user);
-  const needsActionCount = pendingRequests.filter((request) => request.status === 'PENDING').length;
-  const waitingReturnCount = pendingRequests.filter((request) => request.status === 'APPROVED').length;
+  const pageSize = 25;
+  const pageNumber = Math.max(1, Math.min(100000, Number(searchParams?.page) || 1));
+  const [fetchedRequests, summary] = await Promise.all([
+    getPendingOutOfficeRequestsForApprover(user, { limit: pageSize, offset: (pageNumber - 1) * pageSize }),
+    getPendingOutOfficeApprovalSummary(user),
+  ]);
+  const hasNextPage = fetchedRequests.length > pageSize;
+  const pendingRequests = fetchedRequests.slice(0, pageSize);
+  const needsActionCount = summary.pending;
+  const waitingReturnCount = summary.approved;
 
   return (
     <div className="space-y-6">
@@ -173,6 +180,10 @@ export default async function ApprovalsOutOfficePage() {
           ))}
         </div>
       )}
+      <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs">
+        <span className="text-slate-600">Trang {pageNumber} · {summary.total} đơn thuộc hàng đợi</span>
+        <div className="flex gap-2">{pageNumber > 1 && <Link href={`/approvals/out-office?page=${pageNumber - 1}`} className="rounded-lg border px-3 py-1.5 font-semibold text-slate-700">Trước</Link>}{hasNextPage && <Link href={`/approvals/out-office?page=${pageNumber + 1}`} className="rounded-lg border px-3 py-1.5 font-semibold text-slate-700">Tiếp</Link>}</div>
+      </div>
     </div>
   );
 }

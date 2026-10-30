@@ -13,6 +13,8 @@ export interface ScopedFilterOptions {
   teams: Array<{ id: string; name: string; department_id: string | null }>;
 }
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 /**
  * Lấy danh sách nhân viên trong phạm vi quyền của người dùng (trừ chính họ).
  * Dùng cho dropdown lọc theo nhân viên trong trang danh sách đơn.
@@ -25,10 +27,14 @@ export async function getUsersInScope(
   const scope = buildReportDataScope(user, 'u');
   const params: any[] = [...scope.params];
   const conditions = [scope.whereSql];
-  // Không thu hẹp danh sách option theo lựa chọn hiện tại; người dùng
-  // có thể đổi trực tiếp sang phòng ban/team/nhân viên khác.
-  void departmentId;
-  void teamId;
+  if (departmentId && UUID_PATTERN.test(departmentId)) {
+    params.push(departmentId);
+    conditions.push(`u.department_id = $${params.length}::uuid`);
+  }
+  if (teamId && UUID_PATTERN.test(teamId)) {
+    params.push(teamId);
+    conditions.push(`u.team_id = $${params.length}::uuid`);
+  }
   const sql = `
     SELECT u.id, u.full_name, u.role
     FROM users u
@@ -51,19 +57,18 @@ export async function getFilterOptionsInScope(
   const scope = buildReportDataScope(user, 'u');
   const baseParams: any[] = [...scope.params];
   const conditions = [scope.whereSql];
-  // Các dropdown luôn hiển thị toàn bộ lựa chọn trong phạm vi quyền.
-  // Điều kiện department/team chỉ áp dụng cho truy vấn kết quả, không áp dụng
-  // cho danh sách option để có thể đổi trực tiếp sang lựa chọn khác.
-  void departmentId;
-  void teamId;
+  if (departmentId && UUID_PATTERN.test(departmentId)) {
+    baseParams.push(departmentId);
+    conditions.push(`u.department_id = $${baseParams.length}::uuid`);
+  }
   const [departments, teams] = await Promise.all([
     query<{ id: string; name: string }>(
       `SELECT DISTINCT d.id, d.name
          FROM users u
          JOIN departments d ON d.id = u.department_id
-        WHERE ${conditions.join(' AND ')}
+        WHERE ${scope.whereSql}
         ORDER BY d.name`,
-      baseParams
+      [...scope.params]
     ),
     query<{ id: string; name: string; department_id: string | null }>(
       `SELECT DISTINCT t.id, t.name, t.department_id

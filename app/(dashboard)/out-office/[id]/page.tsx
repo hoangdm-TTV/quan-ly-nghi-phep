@@ -5,6 +5,9 @@ import { getSafeUserById } from '@/lib/db/queries/users';
 import { evaluateOutOfficeApproval } from '@/lib/out-office/workflow';
 import OutOfficeStatusBadge from '@/components/out-office/out-office-status-badge';
 import OutOfficeApprovalActions from '@/components/out-office/approval-actions';
+import PendingOutOfficeEditor from '@/components/out-office/pending-request-editor';
+import RequestChangeHistory from '@/components/requests/request-change-history';
+import { getRequestChangeHistory } from '@/lib/admin/queries';
 import Link from 'next/link';
 import {
   Calendar,
@@ -47,6 +50,7 @@ export default async function OutOfficeDetailPage({
   }
 
   const history = await getOutOfficeApprovalHistory(request.id);
+  const changeHistory = await getRequestChangeHistory('OUT_OFFICE', request.id);
 
   // Kế toán chỉ xem (chỉ đọc), không duyệt.
   const isReadOnly = currentUser.role === 'ACCOUNTANT';
@@ -202,6 +206,9 @@ export default async function OutOfficeDetailPage({
           </div>
         </div>
       </div>
+
+      {isOwner && request.status === 'PENDING' && <PendingOutOfficeEditor request={{ id: request.id, request_date: request.request_date, start_time: request.start_time, end_time: request.end_time, reason_type: request.reason_type, reason: request.reason }} />}
+      <RequestChangeHistory entries={changeHistory} />
 
       {/* Lịch sử phê duyệt */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">

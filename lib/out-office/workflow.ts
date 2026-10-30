@@ -1,6 +1,6 @@
 import { SafeUser } from '@/lib/types/user';
 
-export type OutOfficeStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'COMPLETED';
+export type OutOfficeStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'COMPLETED' | 'CANCELLED';
 export type OutOfficeReasonType = 'WORK' | 'PERSONAL';
 
 export interface OutOfficeEvaluation {

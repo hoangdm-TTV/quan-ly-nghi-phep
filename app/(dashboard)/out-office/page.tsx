@@ -8,7 +8,7 @@ import OutOfficeStatusBadge from '@/components/out-office/out-office-status-badg
 import ClickableRequestRow from '@/components/requests/clickable-request-row';
 import ScopeFilterForm from '@/components/requests/scope-filter-form';
 import Link from 'next/link';
-import { Plus, Clock, ArrowRight, Calendar, Briefcase } from 'lucide-react';
+import { Plus, Clock, ArrowRight, Calendar, Briefcase, Download } from 'lucide-react';
 
 export const metadata = {
   title: 'Đơn ra ngoài | Tri Thức Việt',
@@ -24,7 +24,7 @@ function validDate(value?: string): string | undefined {
 export default async function OutOfficeListPage({
   searchParams,
 }: {
-  searchParams: { status?: string; tab?: string; employeeId?: string; departmentId?: string; teamId?: string; from?: string; to?: string };
+  searchParams: { status?: string; tab?: string; employeeId?: string; departmentId?: string; teamId?: string; from?: string; to?: string; page?: string };
 }) {
   const user = await requireAuth();
   const canSubmit = canSubmitPersonalRequests(user.role);
@@ -34,6 +34,9 @@ export default async function OutOfficeListPage({
   }
 
   const currentFilter = searchParams?.status || 'ALL';
+  const pageSize = 25;
+  const pageNumber = Math.max(1, Math.min(100000, Number(searchParams?.page) || 1));
+  const pagination = { limit: pageSize, offset: (pageNumber - 1) * pageSize };
   const scopeLabel = getUserDataScopeLabel(user);
   const hasScope = canTrackScope;
   const activeTab = hasScope
@@ -46,6 +49,7 @@ export default async function OutOfficeListPage({
     { label: 'Đang ra ngoài', value: 'APPROVED' },
     { label: 'Đã hoàn tất', value: 'COMPLETED' },
     { label: 'Đã từ chối', value: 'REJECTED' },
+    { label: 'Đã hủy', value: 'CANCELLED' },
   ];
 
   let requests;
@@ -62,13 +66,16 @@ export default async function OutOfficeListPage({
       toDate: validDate(searchParams?.to),
     };
     [requests, scopedUsers, filterOptions] = await Promise.all([
-      getScopedOutOfficeRequests(user, filter),
+      getScopedOutOfficeRequests(user, filter, pagination),
       getUsersInScope(user, searchParams?.departmentId, searchParams?.teamId),
       getFilterOptionsInScope(user, searchParams?.departmentId, searchParams?.teamId),
     ]);
   } else {
-    requests = await getVisibleOutOfficeRequests(user, currentFilter);
+    requests = await getVisibleOutOfficeRequests(user, currentFilter, pagination);
   }
+
+  const hasNextPage = requests.length > pageSize;
+  requests = requests.slice(0, pageSize);
 
   const buildTabUrl = (tab: string) => {
     const params = new URLSearchParams();
@@ -90,6 +97,10 @@ export default async function OutOfficeListPage({
     const qs = params.toString();
     return qs ? `/out-office?${qs}` : '/out-office';
   };
+  const pageHref = (page: number) => `${buildFilterUrl(currentFilter)}${buildFilterUrl(currentFilter).includes('?') ? '&' : '?'}page=${page}`;
+  const exportParams = new URLSearchParams({ type: 'out-office' });
+  if (currentFilter !== 'ALL') exportParams.set('status', currentFilter);
+  if (activeTab === 'scope') for (const key of ['employeeId', 'departmentId', 'teamId', 'from', 'to'] as const) if (searchParams?.[key]) exportParams.set(key, searchParams[key]!);
 
   return (
     <div className="space-y-6">
@@ -165,6 +176,8 @@ export default async function OutOfficeListPage({
           users={scopedUsers}
         />
       )}
+
+      <div className="flex justify-end"><Link href={`/api/reports/export?${exportParams.toString()}`} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50"><Download className="h-4 w-4" />Xuất CSV (mở bằng Excel)</Link></div>
 
       {/* Filter Status Pills */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1">
@@ -278,6 +291,10 @@ export default async function OutOfficeListPage({
           </div>
         </div>
       )}
+      <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs">
+        <span className="text-slate-600">Trang {pageNumber} · tối đa {pageSize} đơn mỗi trang</span>
+        <div className="flex gap-2">{pageNumber > 1 && <Link href={pageHref(pageNumber - 1)} className="rounded-lg border px-3 py-1.5 font-semibold text-slate-700">Trước</Link>}{hasNextPage && <Link href={pageHref(pageNumber + 1)} className="rounded-lg border px-3 py-1.5 font-semibold text-slate-700">Tiếp</Link>}</div>
+      </div>
     </div>
   );
 }

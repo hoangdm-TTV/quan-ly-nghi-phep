@@ -26,6 +26,10 @@ export default function LeaveStatusBadge({ status }: LeaveStatusBadgeProps) {
       label: 'Đã từ chối',
       className: 'bg-rose-50 text-rose-700 border-rose-200',
     },
+    CANCELLED: {
+      label: 'Đã hủy',
+      className: 'bg-slate-50 text-slate-700 border-slate-200',
+    },
   };
 
   const current = configs[status] || {

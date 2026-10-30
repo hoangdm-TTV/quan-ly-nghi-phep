@@ -9,7 +9,7 @@ import ScopeFilterForm from '@/components/requests/scope-filter-form';
 import LeaveDocumentDialog from '@/components/leave/leave-document-dialog';
 import ClickableRequestRow from '@/components/requests/clickable-request-row';
 import Link from 'next/link';
-import { Plus, FileText, ArrowRight, Calendar, Filter } from 'lucide-react';
+import { Plus, FileText, ArrowRight, Calendar, Filter, Download } from 'lucide-react';
 
 export const metadata = {
   title: 'Đơn nghỉ phép | Tri Thức Việt',
@@ -25,7 +25,7 @@ function validDate(value?: string): string | undefined {
 export default async function LeaveListPage({
   searchParams,
 }: {
-  searchParams: { status?: string; tab?: string; employeeId?: string; departmentId?: string; teamId?: string; from?: string; to?: string };
+  searchParams: { status?: string; tab?: string; employeeId?: string; departmentId?: string; teamId?: string; from?: string; to?: string; page?: string };
 }) {
   const user = await requireAuth();
   const canSubmit = canSubmitPersonalRequests(user.role);
@@ -35,6 +35,9 @@ export default async function LeaveListPage({
   }
 
   const currentFilter = searchParams?.status || 'ALL';
+  const pageSize = 25;
+  const pageNumber = Math.max(1, Math.min(100000, Number(searchParams?.page) || 1));
+  const pagination = { limit: pageSize, offset: (pageNumber - 1) * pageSize };
   const scopeLabel = getUserDataScopeLabel(user);
   const hasScope = canTrackScope;
   const activeTab = hasScope
@@ -48,6 +51,7 @@ export default async function LeaveListPage({
     { label: 'Chờ nộp giấy', value: 'WAITING_FOR_DOC' },
     { label: 'Đã hoàn tất', value: 'COMPLETED' },
     { label: 'Từ chối', value: 'REJECTED' },
+    { label: 'Đã hủy', value: 'CANCELLED' },
   ];
 
   let requests;
@@ -64,13 +68,16 @@ export default async function LeaveListPage({
       toDate: validDate(searchParams?.to),
     };
     [requests, scopedUsers, filterOptions] = await Promise.all([
-      getScopedLeaveRequests(user, filter),
+      getScopedLeaveRequests(user, filter, pagination),
       getUsersInScope(user, searchParams?.departmentId, searchParams?.teamId),
       getFilterOptionsInScope(user, searchParams?.departmentId, searchParams?.teamId),
     ]);
   } else {
-    requests = await getVisibleLeaveRequests(user, currentFilter);
+    requests = await getVisibleLeaveRequests(user, currentFilter, pagination);
   }
+
+  const hasNextPage = requests.length > pageSize;
+  requests = requests.slice(0, pageSize);
 
   const buildTabUrl = (tab: string) => {
     const params = new URLSearchParams();
@@ -92,6 +99,10 @@ export default async function LeaveListPage({
     const qs = params.toString();
     return qs ? `/leave?${qs}` : '/leave';
   };
+  const pageHref = (page: number) => `${buildFilterUrl(currentFilter)}${buildFilterUrl(currentFilter).includes('?') ? '&' : '?'}page=${page}`;
+  const exportParams = new URLSearchParams({ type: 'leave' });
+  if (currentFilter !== 'ALL') exportParams.set('status', currentFilter);
+  if (activeTab === 'scope') for (const key of ['employeeId', 'departmentId', 'teamId', 'from', 'to'] as const) if (searchParams?.[key]) exportParams.set(key, searchParams[key]!);
 
   return (
     <div className="space-y-6">
@@ -167,6 +178,8 @@ export default async function LeaveListPage({
           users={scopedUsers}
         />
       )}
+
+      <div className="flex justify-end"><Link href={`/api/reports/export?${exportParams.toString()}`} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50"><Download className="h-4 w-4" />Xuất CSV (mở bằng Excel)</Link></div>
 
       {/* Filter Status Pills */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1">
@@ -280,6 +293,10 @@ export default async function LeaveListPage({
           </div>
         </div>
       )}
+      <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs">
+        <span className="text-slate-600">Trang {pageNumber} · tối đa {pageSize} đơn mỗi trang</span>
+        <div className="flex gap-2">{pageNumber > 1 && <Link href={pageHref(pageNumber - 1)} className="rounded-lg border px-3 py-1.5 font-semibold text-slate-700">Trước</Link>}{hasNextPage && <Link href={pageHref(pageNumber + 1)} className="rounded-lg border px-3 py-1.5 font-semibold text-slate-700">Tiếp</Link>}</div>
+      </div>
     </div>
   );
 }

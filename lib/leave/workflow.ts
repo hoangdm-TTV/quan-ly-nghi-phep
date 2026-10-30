@@ -5,7 +5,8 @@ export type LeaveStatus =
   | 'APPROVED_BY_LEAD'
   | 'WAITING_FOR_DOC'
   | 'COMPLETED'
-  | 'REJECTED';
+  | 'REJECTED'
+  | 'CANCELLED';
 
 export type ApprovalAction = 'APPROVED_LEAD' | 'APPROVED_DIRECTOR' | 'REJECTED';
 

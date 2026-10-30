@@ -9,7 +9,7 @@ import { requireAuth } from '@/lib/auth/permissions';
 import { getSafeUserById, hasActiveManagerForDepartment } from '@/lib/db/queries/users';
 import { calculateWorkingDaysWithHolidays } from './calculator';
 import { evaluateLeaveApproval, evaluateLeaveRejection, LeaveStatus } from './workflow';
-import { notifyLeaveApprovers } from '@/lib/notifications/push';
+import { notifyLeaveApprovers, notifyLeaveRequester } from '@/lib/notifications/push';
 
 const createLeaveSchema = z.object({
   startDate: z.string().refine(isRealDate, 'Ngày bắt đầu không hợp lệ (YYYY-MM-DD)'),
@@ -23,6 +23,12 @@ const approvalInputSchema = z.object({
 const rejectionInputSchema = z.object({
   requestId: z.string().uuid('Mã đơn không hợp lệ.'),
   rejectionReason: z.string().trim().min(5, 'Lý do từ chối cần ít nhất 5 ký tự.').max(1000, 'Lý do từ chối không được vượt quá 1000 ký tự.'),
+});
+const editLeaveSchema = z.object({
+  requestId: z.string().uuid('Mã đơn không hợp lệ.'),
+  startDate: z.string().refine(isRealDate, 'Ngày bắt đầu không hợp lệ (YYYY-MM-DD)'),
+  endDate: z.string().refine(isRealDate, 'Ngày kết thúc không hợp lệ (YYYY-MM-DD)'),
+  reason: z.string().trim().min(5, 'Lý do nghỉ phép phải có ít nhất 5 ký tự').max(1000, 'Lý do quá dài'),
 });
 
 function isRealDate(value: string): boolean {
@@ -219,6 +225,24 @@ export async function createLeaveRequestAction(
       };
     }
 
+    const leaveYear = Number(startDate.slice(0, 4));
+    const balanceResult = await client.query<{ entitled_days: number; used_days: number; pending_days: number }>(
+      `SELECT e.entitled_days::float AS entitled_days,
+              COALESCE(SUM(lr.duration_days) FILTER (WHERE lr.status IN ('WAITING_FOR_DOC', 'COMPLETED')), 0)::float AS used_days,
+              COALESCE(SUM(lr.duration_days) FILTER (WHERE lr.status IN ('PENDING', 'APPROVED_BY_LEAD')), 0)::float AS pending_days
+         FROM leave_entitlements e
+         LEFT JOIN leave_requests lr ON lr.employee_id = e.user_id AND EXTRACT(YEAR FROM lr.start_date) = e.leave_year
+        WHERE e.user_id = $1 AND e.leave_year = $2
+        GROUP BY e.entitled_days`,
+      [currentUser.id, leaveYear]
+    );
+    const balance = balanceResult.rows[0];
+    if (balance && Number(balance.used_days) + Number(balance.pending_days) + durationDays > Number(balance.entitled_days)) {
+      const remaining = Math.max(0, Number(balance.entitled_days) - Number(balance.used_days) - Number(balance.pending_days));
+      await client.query('ROLLBACK');
+      return { error: `Số ngày còn khả dụng trong năm ${leaveYear} là ${remaining}. Đơn này cần ${durationDays} ngày.` };
+    }
+
     const insertResult = await client.query<{ id: string }>(
       `INSERT INTO leave_requests (employee_id, start_date, end_date, duration_days, reason, status)
        VALUES ($1, $2, $3, $4, $5, 'PENDING') RETURNING id`,
@@ -335,6 +359,7 @@ export async function approveLeaveRequestAction(
       console.error('[Leave Push Notification Error]', error);
     });
   }
+  await notifyLeaveRequester(requestId, nextStatus === 'APPROVED_BY_LEAD' ? 'APPROVED_BY_LEAD' : 'WAITING_FOR_DOC').catch((error) => console.error('[Leave Requester Push Error]', error));
   revalidatePath('/approvals/leave');
   revalidatePath(`/leave/${requestId}`);
   return { success: true };
@@ -426,5 +451,127 @@ export async function rejectLeaveRequestAction(
 
   revalidatePath('/approvals/leave');
   revalidatePath(`/leave/${requestId}`);
+  await notifyLeaveRequester(requestId, 'REJECTED').catch((error) => console.error('[Leave Requester Push Error]', error));
+  return { success: true };
+}
+
+export async function updatePendingLeaveRequestAction(
+  _prevState: LeaveActionState | null,
+  formData: FormData
+): Promise<LeaveActionState> {
+  const user = await requireAuth();
+  const parsed = editLeaveSchema.safeParse({
+    requestId: formData.get('requestId'),
+    startDate: formData.get('startDate'),
+    endDate: formData.get('endDate'),
+    reason: formData.get('reason'),
+  });
+  if (!parsed.success) return { error: parsed.error.errors[0]?.message || 'Thông tin đơn không hợp lệ.' };
+  const { requestId, startDate, endDate, reason } = parsed.data;
+  if (endDate < startDate) return { error: 'Ngày kết thúc không được trước ngày bắt đầu.' };
+  let durationDays: number;
+  try { durationDays = await calculateWorkingDaysWithHolidays(startDate, endDate); }
+  catch { return { error: 'Khoảng ngày không hợp lệ.' }; }
+  if (durationDays <= 0) return { error: 'Khoảng ngày không có ngày làm việc.' };
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [user.id]);
+    const currentResult = await client.query(
+      `SELECT id, employee_id, status, start_date::text AS start_date, end_date::text AS end_date,
+              duration_days::float AS duration_days, reason
+         FROM leave_requests WHERE id = $1 FOR UPDATE`,
+      [requestId],
+    );
+    const current = currentResult.rows[0];
+    if (!current || current.employee_id !== user.id || current.status !== 'PENDING') {
+      await client.query('ROLLBACK');
+      return { error: 'Chỉ có thể sửa đơn đang chờ duyệt của chính bạn.' };
+    }
+    const overlap = await client.query(
+      `SELECT 1 FROM leave_requests
+        WHERE employee_id = $1 AND id <> $2 AND status NOT IN ('REJECTED', 'CANCELLED')
+          AND start_date <= $3 AND end_date >= $4 LIMIT 1`,
+      [user.id, requestId, endDate, startDate],
+    );
+    if (overlap.rowCount) {
+      await client.query('ROLLBACK');
+      return { error: 'Khoảng ngày mới bị trùng với một đơn khác.' };
+    }
+    const year = Number(startDate.slice(0, 4));
+    const balance = await client.query<{ entitled_days: number; committed_days: number }>(
+      `SELECT e.entitled_days::float AS entitled_days,
+              COALESCE(SUM(lr.duration_days) FILTER (WHERE lr.status IN ('WAITING_FOR_DOC','COMPLETED','PENDING','APPROVED_BY_LEAD')), 0)::float AS committed_days
+         FROM leave_entitlements e
+         LEFT JOIN leave_requests lr ON lr.employee_id = e.user_id AND EXTRACT(YEAR FROM lr.start_date) = e.leave_year AND lr.id <> $3
+        WHERE e.user_id = $1 AND e.leave_year = $2 GROUP BY e.entitled_days`,
+      [user.id, year, requestId],
+    );
+    const quota = balance.rows[0];
+    if (quota && Number(quota.committed_days) + durationDays > Number(quota.entitled_days)) {
+      await client.query('ROLLBACK');
+      return { error: `Hạn mức nghỉ phép năm ${year} không đủ cho khoảng ngày mới.` };
+    }
+    await client.query(
+      `UPDATE leave_requests SET start_date = $1, end_date = $2, duration_days = $3, reason = $4, updated_at = NOW() WHERE id = $5`,
+      [startDate, endDate, durationDays, reason, requestId],
+    );
+    await client.query(
+      `INSERT INTO request_change_history (request_type, request_id, actor_id, action, before_data, after_data)
+       VALUES ('LEAVE', $1, $2, 'UPDATED', $3::jsonb, $4::jsonb)`,
+      [requestId, user.id, JSON.stringify(current), JSON.stringify({ start_date: startDate, end_date: endDate, duration_days: durationDays, reason })],
+    );
+    await client.query('COMMIT');
+  } catch (error) {
+    try { await client.query('ROLLBACK'); } catch {}
+    console.error('[Update Leave Request Error]', error);
+    return { error: 'Không thể cập nhật đơn nghỉ phép lúc này.' };
+  } finally { client.release(); }
+  revalidatePath('/leave');
+  revalidatePath(`/leave/${requestId}`);
+  revalidatePath('/approvals/leave');
+  revalidatePath('/');
+  await notifyLeaveApprovers(requestId).catch((error) => console.error('[Leave Updated Request Push Error]', error));
+  return { success: true };
+}
+
+export async function cancelPendingLeaveRequestAction(
+  _prevState: LeaveActionState | null,
+  formData: FormData
+): Promise<LeaveActionState> {
+  const user = await requireAuth();
+  const parsedId = z.string().uuid().safeParse(formData.get('requestId'));
+  if (!parsedId.success) return { error: 'Mã đơn không hợp lệ.' };
+  const requestId = parsedId.data;
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [user.id]);
+    const selected = await client.query(
+      `SELECT id, employee_id, status, start_date::text AS start_date, end_date::text AS end_date,
+              duration_days::float AS duration_days, reason
+         FROM leave_requests WHERE id = $1 FOR UPDATE`, [requestId]);
+    const current = selected.rows[0];
+    if (!current || current.employee_id !== user.id || current.status !== 'PENDING') {
+      await client.query('ROLLBACK');
+      return { error: 'Chỉ có thể hủy đơn đang chờ duyệt của chính bạn.' };
+    }
+    await client.query("UPDATE leave_requests SET status = 'CANCELLED', updated_at = NOW() WHERE id = $1", [requestId]);
+    await client.query(
+      `INSERT INTO request_change_history (request_type, request_id, actor_id, action, before_data, after_data)
+       VALUES ('LEAVE', $1, $2, 'CANCELLED', $3::jsonb, '{"status":"CANCELLED"}'::jsonb)`,
+      [requestId, user.id, JSON.stringify(current)],
+    );
+    await client.query('COMMIT');
+  } catch (error) {
+    try { await client.query('ROLLBACK'); } catch {}
+    console.error('[Cancel Leave Request Error]', error);
+    return { error: 'Không thể hủy đơn nghỉ phép lúc này.' };
+  } finally { client.release(); }
+  revalidatePath('/leave');
+  revalidatePath(`/leave/${requestId}`);
+  revalidatePath('/approvals/leave');
+  revalidatePath('/');
   return { success: true };
 }
