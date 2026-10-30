@@ -1,4 +1,5 @@
 export type UserRole = 'STAFF' | 'TEAM_LEAD' | 'MANAGER' | 'ACCOUNTANT' | 'ADMIN' | 'DIRECTOR';
+export type EmploymentStatus = 'ACTIVE' | 'SUSPENDED' | 'TERMINATED';
 
 export interface User {
   id: string;
@@ -10,6 +11,7 @@ export interface User {
   team_id: string | null;
   manager_id: string | null;
   is_active: boolean;
+  employment_status: EmploymentStatus;
   created_at: Date;
   updated_at: Date;
 }
@@ -27,6 +29,7 @@ export interface SafeUser {
   team_name?: string | null;
   manager_id: string | null;
   is_active: boolean;
+  employment_status: EmploymentStatus;
 }
 
 export interface UserWithPassword extends User {

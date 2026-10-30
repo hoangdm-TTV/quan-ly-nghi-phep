@@ -23,6 +23,7 @@ const employeeSchema = z.object({
   departmentId: z.string().refine(isUuidOrEmpty),
   teamId: z.string().refine(isUuidOrEmpty),
   managerId: z.string().refine(isUuidOrEmpty),
+  employmentStatus: z.enum(['ACTIVE', 'SUSPENDED', 'TERMINATED']),
   isActive: z.enum(['true', 'false']),
   password: z.string().optional(),
 });
@@ -45,6 +46,7 @@ export async function saveEmployeeAction(_previous: AdminActionState, formData: 
     departmentId: formData.get('departmentId') || '',
     teamId: formData.get('teamId') || '',
     managerId: formData.get('managerId') || '',
+    employmentStatus: formData.get('employmentStatus') || 'ACTIVE',
     isActive: formData.get('isActive'),
     password: formData.get('password') || '',
   });
@@ -58,7 +60,7 @@ export async function saveEmployeeAction(_previous: AdminActionState, formData: 
   if (employeeId && data.password && (data.password.length < 6 || Buffer.byteLength(data.password, 'utf8') > 72)) {
     return { error: 'Mật khẩu mới cần từ 6 ký tự và tối đa 72 byte.' };
   }
-  if (employeeId && employeeId === actor.id && data.isActive !== 'true') {
+  if (employeeId && employeeId === actor.id && (data.isActive !== 'true' || data.employmentStatus !== 'ACTIVE')) {
     return { error: 'Không thể tự khóa tài khoản đang đăng nhập.' };
   }
   if (employeeId && employeeId === actor.id && data.role !== actor.role) {
@@ -69,7 +71,7 @@ export async function saveEmployeeAction(_previous: AdminActionState, formData: 
     return { error: 'Hãy đổi mật khẩu của chính bạn trong trang Hồ sơ tài khoản.' };
   }
   if (employeeId) {
-    const current = await pool.query<{ role: string }>('SELECT role FROM users WHERE id = $1', [employeeId]);
+      const current = await pool.query<{ role: string; employment_status: string }>('SELECT role, employment_status FROM users WHERE id = $1', [employeeId]);
     if (current.rows[0]?.role === 'DIRECTOR' && data.role !== 'DIRECTOR') return { error: 'Không thể đổi vai trò Giám đốc từ trang quản trị nhân sự.' };
     if (data.role === 'DIRECTOR' && current.rows[0]?.role !== 'DIRECTOR') return { error: 'Không thể cấp vai trò Giám đốc từ trang quản trị nhân sự.' };
   } else if (data.role === 'DIRECTOR') {
@@ -97,26 +99,29 @@ export async function saveEmployeeAction(_previous: AdminActionState, formData: 
     const values = [
       data.employeeCode || null, data.fullName, data.email.toLowerCase(), data.role,
       data.position || null, data.departmentId || null, data.teamId || null,
-      data.managerId || null, data.isActive === 'true',
+      data.managerId || null, data.employmentStatus === 'ACTIVE',
     ];
     if (employeeId) {
       const passwordHash = data.password ? await hashPassword(data.password) : null;
+      const before = await client.query('SELECT employee_code, full_name, email, role, position, department_id, team_id, manager_id, is_active, employment_status FROM users WHERE id = $1 FOR UPDATE', [employeeId]);
       await client.query(
         `UPDATE users SET employee_code = $1, full_name = $2, email = $3, role = $4,
                 position = $5, department_id = $6, team_id = $7, manager_id = $8,
-                is_active = $9, password_hash = COALESCE($10, password_hash), updated_at = NOW()
-          WHERE id = $11`,
-        [...values, passwordHash, employeeId],
+                is_active = $9, employment_status = $10, password_hash = COALESCE($11, password_hash), updated_at = NOW()
+          WHERE id = $12`,
+        [...values, data.employmentStatus, passwordHash, employeeId],
       );
-      if (data.isActive === 'false' || passwordHash) {
+      await client.query('INSERT INTO audit_logs (actor_id, action, entity_type, entity_id, before_data, after_data) VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb)', [actor.id, 'UPDATE_EMPLOYEE', 'USER', employeeId, JSON.stringify(before.rows[0] || null), JSON.stringify({ ...data, password: undefined })]);
+      if (data.employmentStatus !== 'ACTIVE' || passwordHash) {
         await client.query('DELETE FROM sessions WHERE user_id = $1', [employeeId]);
       }
     } else {
-      await client.query(
+      const inserted = await client.query<{ id: string }>(
         `INSERT INTO users (employee_code, full_name, email, role, position, department_id, team_id, manager_id, is_active, password_hash)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
-        [...values, await hashPassword(data.password!)],
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`,
+        [...values.slice(0, 8), data.employmentStatus === 'ACTIVE', await hashPassword(data.password!)],
       );
+      await client.query('INSERT INTO audit_logs (actor_id, action, entity_type, entity_id, after_data) VALUES ($1, $2, $3, $4, $5::jsonb)', [actor.id, 'CREATE_EMPLOYEE', 'USER', inserted.rows[0]?.id, JSON.stringify({ ...data, password: undefined })]);
     }
     await client.query('COMMIT');
   } catch (error) {

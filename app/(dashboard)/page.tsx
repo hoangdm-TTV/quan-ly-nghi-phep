@@ -13,6 +13,8 @@ import { getUserDataScopeLabel } from '@/lib/auth/data-scope';
 import { getPendingLeaveRequestsForApprover } from '@/lib/leave/queries';
 import { getPendingOutOfficeRequestsForApprover } from '@/lib/out-office/queries';
 import { canApproveOutOfficeRequests, canSubmitPersonalRequests } from '@/lib/auth/roles';
+import { getAbsenceCalendar } from '@/lib/dashboard/calendar';
+import AbsenceCalendar from '@/components/dashboard/absence-calendar';
 import Link from 'next/link';
 import {
   ArrowRight,
@@ -525,14 +527,17 @@ export default async function DashboardPage({
   const hasPersonalDashboard = canSubmit;
   const needsReport = isManager || isDirector || isAccountant;
   const scopeLabel = getUserDataScopeLabel(user);
+  const calendarFrom = reportFrom || new Date().toISOString().slice(0, 10);
+  const calendarTo = reportTo || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
-  const [stats, recentActivities, pendingLeaves, pendingOutOffices, scopeReport, scopeActivity] = await Promise.all([
+  const [stats, recentActivities, pendingLeaves, pendingOutOffices, scopeReport, scopeActivity, absenceItems] = await Promise.all([
     hasPersonalDashboard ? getDashboardStats(user) : Promise.resolve(emptyStats),
     hasPersonalDashboard ? getRecentActivities(user) : Promise.resolve([] as RecentActivityItem[]),
     isApprover ? getPendingLeaveRequestsForApprover(user) : Promise.resolve([]),
     isOutOfficeApprover ? getPendingOutOfficeRequestsForApprover(user) : Promise.resolve([]),
     needsReport ? getScopeReport(user, reportFrom, reportTo) : Promise.resolve(emptyReport),
     isManager ? getScopeActivityFeed(user, reportFrom, reportTo) : Promise.resolve([] as ScopeActivityItem[]),
+    getAbsenceCalendar(user, calendarFrom, calendarTo),
   ]);
 
   const totalPending = pendingLeaves.length + pendingOutOffices.length;
@@ -622,6 +627,8 @@ export default async function DashboardPage({
           showDepartmentBreakdown={isDirector || isAccountant}
         />
       )}
+
+      <AbsenceCalendar items={absenceItems} />
 
       {/* Personal KPI stats */}
       {hasPersonalDashboard && <PersonalSummary stats={stats} isManager={isManager} />}

@@ -14,6 +14,9 @@ import { notifyLeaveApprovers, notifyLeaveRequester } from '@/lib/notifications/
 const createLeaveSchema = z.object({
   startDate: z.string().refine(isRealDate, 'Ngày bắt đầu không hợp lệ (YYYY-MM-DD)'),
   endDate: z.string().refine(isRealDate, 'Ngày kết thúc không hợp lệ (YYYY-MM-DD)'),
+  dayPart: z.enum(['FULL_DAY', 'MORNING', 'AFTERNOON']).default('FULL_DAY'),
+  replacementUserId: z.string().uuid().optional().or(z.literal('')),
+  handoverNote: z.string().trim().max(2000, 'Ghi chú bàn giao không được vượt quá 2000 ký tự.').optional(),
   reason: z.string().trim().min(5, 'Lý do nghỉ phép phải có ít nhất 5 ký tự').max(1000, 'Lý do quá dài'),
 });
 const approvalInputSchema = z.object({
@@ -172,11 +175,17 @@ export async function createLeaveRequestAction(
   // 2. Validate dữ liệu đầu vào
   const rawStartDate = formData.get('startDate');
   const rawEndDate = formData.get('endDate');
+  const rawDayPart = formData.get('dayPart') || 'FULL_DAY';
+  const rawReplacementUserId = formData.get('replacementUserId') || '';
+  const rawHandoverNote = formData.get('handoverNote') || '';
   const rawReason = formData.get('reason');
 
   const validated = createLeaveSchema.safeParse({
     startDate: rawStartDate,
     endDate: rawEndDate,
+    dayPart: rawDayPart,
+    replacementUserId: rawReplacementUserId,
+    handoverNote: rawHandoverNote,
     reason: rawReason,
   });
 
@@ -184,8 +193,15 @@ export async function createLeaveRequestAction(
     return { error: validated.error.errors[0]?.message || 'Dữ liệu không hợp lệ.' };
   }
 
-  const { startDate, endDate, reason } = validated.data;
+  const { startDate, endDate, dayPart, replacementUserId, handoverNote, reason } = validated.data;
   if (endDate < startDate) return { error: 'Ngày kết thúc không được trước ngày bắt đầu.' };
+
+  if (dayPart !== 'FULL_DAY' && startDate !== endDate) {
+    return { error: 'Nghỉ buổi sáng hoặc buổi chiều chỉ áp dụng trong một ngày.' };
+  }
+  if (replacementUserId === currentUser.id) {
+    return { error: 'Người thay thế phải là một nhân viên khác.' };
+  }
 
   // 3. Tính số ngày nghỉ làm việc thực tế ở Server (trừ Chủ Nhật và ngày lễ)
   let durationDays: number;
@@ -200,6 +216,8 @@ export async function createLeaveRequestAction(
       error: 'Khoảng thời gian bạn chọn không có ngày làm việc nào (toàn bộ rơi vào ngày Chủ Nhật hoặc ngày lễ).',
     };
   }
+
+  const effectiveDuration = dayPart === 'FULL_DAY' ? durationDays : 0.5;
 
   // 4. Kiểm tra trùng + ghi đơn trong cùng transaction để chống race condition
   const client = await pool.connect();
@@ -237,16 +255,17 @@ export async function createLeaveRequestAction(
       [currentUser.id, leaveYear]
     );
     const balance = balanceResult.rows[0];
-    if (balance && Number(balance.used_days) + Number(balance.pending_days) + durationDays > Number(balance.entitled_days)) {
+    if (balance && Number(balance.used_days) + Number(balance.pending_days) + effectiveDuration > Number(balance.entitled_days)) {
       const remaining = Math.max(0, Number(balance.entitled_days) - Number(balance.used_days) - Number(balance.pending_days));
       await client.query('ROLLBACK');
-      return { error: `Số ngày còn khả dụng trong năm ${leaveYear} là ${remaining}. Đơn này cần ${durationDays} ngày.` };
+      return { error: `Số ngày còn khả dụng trong năm ${leaveYear} là ${remaining}. Đơn này cần ${effectiveDuration} ngày.` };
     }
 
     const insertResult = await client.query<{ id: string }>(
-      `INSERT INTO leave_requests (employee_id, start_date, end_date, duration_days, reason, status)
-       VALUES ($1, $2, $3, $4, $5, 'PENDING') RETURNING id`,
-      [currentUser.id, startDate, endDate, durationDays, reason.trim()]
+      `INSERT INTO leave_requests
+        (employee_id, start_date, end_date, duration_days, day_part, replacement_user_id, handover_note, reason, status)
+       VALUES ($1, $2, $3, $4, $5, NULLIF($6, '')::uuid, NULLIF($7, ''), $8, 'PENDING') RETURNING id`,
+      [currentUser.id, startDate, endDate, effectiveDuration, dayPart, replacementUserId || '', handoverNote?.trim() || '', reason.trim()]
     );
     requestId = insertResult.rows[0]?.id;
     await client.query('COMMIT');

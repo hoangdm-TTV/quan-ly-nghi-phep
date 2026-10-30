@@ -92,8 +92,8 @@ export async function loginAction(
     }
 
     // 2. Kiểm tra tài khoản có bị vô hiệu hóa không
-    if (!user.is_active) {
-      return { error: 'Email hoặc mật khẩu không chính xác' };
+    if (!user.is_active || user.employment_status !== 'ACTIVE') {
+      return { error: user.employment_status === 'TERMINATED' ? 'Tài khoản đã được đánh dấu nghỉ việc.' : 'Tài khoản đang bị tạm khóa.' };
     }
 
     // 3. Xác minh mật khẩu băm

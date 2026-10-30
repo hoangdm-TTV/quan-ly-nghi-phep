@@ -94,7 +94,7 @@ Các lệnh có trong `package.json`: `npm run dev`, `npm run build`, `npm run s
 
 ## Database và migrations
 
-Migrations trong thư mục [`migrations/`](migrations) được chạy theo thứ tự `001` → `006`:
+Migrations trong thư mục [`migrations/`](migrations) được chạy theo thứ tự `001` → `007`:
 
 | Tệp                           | Nội dung                                                                          |
 | ----------------------------- | --------------------------------------------------------------------------------- |
@@ -104,6 +104,7 @@ Migrations trong thư mục [`migrations/`](migrations) được chạy theo th�
 | `004_profile_avatars.sql`     | Lưu ảnh đại diện                                                                  |
 | `005_login_rate_limits.sql`   | Giới hạn thử đăng nhập theo email                                                 |
 | `006_leave_balance_history_and_reminders.sql` | Hạn mức phép, lịch sử sửa/hủy, trạng thái hủy, nhắc việc, vai trò ADMIN và tài khoản quản trị duy nhất |
+| `007_leave_and_employee_details.sql` | Buổi nghỉ, người thay thế, ghi chú bàn giao, trạng thái nhân sự và audit log |
 
 Ứng dụng không tự chạy migration khi khởi động. Hãy áp dụng schema trước khi triển khai phiên bản tương ứng. Cơ sở dữ liệu phải có các bảng và cột mà migration/source yêu cầu; nếu đang dùng schema cũ, cần đối chiếu trước khi chạy.
 
