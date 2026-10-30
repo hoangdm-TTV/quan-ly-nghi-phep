@@ -7,11 +7,17 @@ import { pool } from '@/lib/db/pool';
 import { requireAuth } from '@/lib/auth/permissions';
 
 const holidaySchema = z.object({
-  name: z.string().min(2, 'Tên ngày lễ phải có ít nhất 2 ký tự').max(255, 'Tên quá dài'),
-  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Ngày bắt đầu không hợp lệ (YYYY-MM-DD)'),
-  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Ngày kết thúc không hợp lệ (YYYY-MM-DD)'),
+  name: z.string().trim().min(2, 'Tên ngày lễ phải có ít nhất 2 ký tự').max(255, 'Tên quá dài'),
+  startDate: z.string().refine(isRealDate, 'Ngày bắt đầu không hợp lệ (YYYY-MM-DD)'),
+  endDate: z.string().refine(isRealDate, 'Ngày kết thúc không hợp lệ (YYYY-MM-DD)'),
   isActive: z.string().optional(),
 });
+
+function isRealDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
 
 export type HolidayActionState = {
   success?: boolean;

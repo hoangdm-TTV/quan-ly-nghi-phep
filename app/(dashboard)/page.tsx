@@ -12,7 +12,7 @@ import {
 import { getUserDataScopeLabel } from '@/lib/auth/data-scope';
 import { getPendingLeaveRequestsForApprover } from '@/lib/leave/queries';
 import { getPendingOutOfficeRequestsForApprover } from '@/lib/out-office/queries';
-import { canApproveOutOfficeRequests } from '@/lib/auth/roles';
+import { canApproveOutOfficeRequests, canSubmitPersonalRequests } from '@/lib/auth/roles';
 import Link from 'next/link';
 import {
   ArrowRight,
@@ -517,7 +517,7 @@ export default async function DashboardPage({
   const isManager = user.role === 'MANAGER';
   const isApprover = isManager || isDirector;
   const isOutOfficeApprover = canApproveOutOfficeRequests(user.role);
-  const canSubmit = user.role === 'STAFF' || user.role === 'TEAM_LEAD' || isManager;
+  const canSubmit = canSubmitPersonalRequests(user.role);
   const hasPersonalDashboard = canSubmit;
   const needsReport = isManager || isDirector || isAccountant;
   const scopeLabel = getUserDataScopeLabel(user);

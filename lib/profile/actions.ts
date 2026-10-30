@@ -3,8 +3,9 @@
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { requireAuth } from '@/lib/auth/permissions';
-import { query } from '@/lib/db/pool';
+import { pool, query } from '@/lib/db/pool';
 import { hashPassword, verifyPassword } from '@/lib/auth/password';
+import { getSessionIdFromCookie } from '@/lib/auth/session';
 
 export type ProfileActionState = {
   success?: boolean;
@@ -66,7 +67,8 @@ export async function updateProfileAvatarAction(
 
 const passwordSchema = z.object({
   currentPassword: z.string().min(1, 'Vui lòng nhập mật khẩu hiện tại.'),
-  newPassword: z.string().min(6, 'Mật khẩu mới phải có ít nhất 6 ký tự.'),
+  newPassword: z.string().min(6, 'Mật khẩu mới phải có ít nhất 6 ký tự.')
+    .refine((value) => Buffer.byteLength(value, 'utf8') <= 72, 'Mật khẩu mới không được vượt quá 72 byte.'),
   confirmPassword: z.string().min(1, 'Vui lòng nhập lại mật khẩu mới.'),
 }).refine((value) => value.newPassword === value.confirmPassword, {
   message: 'Mật khẩu xác nhận không khớp.',
@@ -88,16 +90,30 @@ export async function changePasswordAction(
     return { error: 'Mật khẩu mới phải khác mật khẩu hiện tại.' };
   }
 
-  const result = await query<{ password_hash: string | null }>(
-    'SELECT password_hash FROM users WHERE id = $1 AND is_active = true',
-    [user.id]
-  );
-  const passwordHash = result.rows[0]?.password_hash;
-  if (!passwordHash || !(await verifyPassword(parsed.data.currentPassword, passwordHash))) {
-    return { error: 'Mật khẩu hiện tại không chính xác.' };
-  }
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const result = await client.query<{ password_hash: string | null }>(
+      'SELECT password_hash FROM users WHERE id = $1 AND is_active = true FOR UPDATE',
+      [user.id]
+    );
+    const passwordHash = result.rows[0]?.password_hash;
+    if (!passwordHash || !(await verifyPassword(parsed.data.currentPassword, passwordHash))) {
+      await client.query('ROLLBACK');
+      return { error: 'Mật khẩu hiện tại không chính xác.' };
+    }
 
-  await query('UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2', [await hashPassword(parsed.data.newPassword), user.id]);
+    await client.query('UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2', [await hashPassword(parsed.data.newPassword), user.id]);
+    const currentSessionId = getSessionIdFromCookie() || '';
+    await client.query('DELETE FROM sessions WHERE user_id = $1 AND id <> $2', [user.id, currentSessionId]);
+    await client.query('COMMIT');
+  } catch (error) {
+    try { await client.query('ROLLBACK'); } catch {}
+    console.error('[Change Password Error]', error);
+    return { error: 'Không thể cập nhật mật khẩu lúc này. Vui lòng thử lại sau.' };
+  } finally {
+    client.release();
+  }
   revalidatePath('/profile');
   return { success: true };
 }

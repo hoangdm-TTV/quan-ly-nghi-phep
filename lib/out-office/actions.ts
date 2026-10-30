@@ -11,7 +11,7 @@ import { evaluateOutOfficeApproval, evaluateOutOfficeRejection, OutOfficeStatus 
 import { notifyOutOfficeApprovers } from '@/lib/notifications/push';
 
 const createOutOfficeSchema = z.object({
-  requestDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Ngày không hợp lệ (YYYY-MM-DD)'),
+  requestDate: z.string().refine(isRealDate, 'Ngày không hợp lệ (YYYY-MM-DD)'),
   startTime: z.string().regex(/^\d{2}:\d{2}$/, 'Giờ bắt đầu không hợp lệ (HH:MM)'),
   endTime: z.string().regex(/^\d{2}:\d{2}$/, 'Giờ kết thúc không hợp lệ (HH:MM)'),
   reasonType: z.enum(['WORK', 'PERSONAL'], {
@@ -19,6 +19,20 @@ const createOutOfficeSchema = z.object({
   }),
   reason: z.string().trim().min(5, 'Lý do xin ra ngoài phải có ít nhất 5 ký tự').max(1000, 'Lý do quá dài'),
 });
+const approvalInputSchema = z.object({
+  requestId: z.string().uuid('Mã đơn không hợp lệ.'),
+  comment: z.string().trim().max(1000, 'Ghi chú không được vượt quá 1000 ký tự.').optional(),
+});
+const rejectionInputSchema = z.object({
+  requestId: z.string().uuid('Mã đơn không hợp lệ.'),
+  rejectionReason: z.string().trim().min(5, 'Lý do từ chối cần ít nhất 5 ký tự.').max(1000, 'Lý do từ chối không được vượt quá 1000 ký tự.'),
+});
+
+function isRealDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
 
 export type OutOfficeActionState = {
   success?: boolean;
@@ -72,6 +86,8 @@ export async function createOutOfficeRequestAction(
   let requestId: string | undefined;
   try {
     await client.query('BEGIN');
+    // Serialize submissions by employee so concurrent requests cannot both pass the overlap check.
+    await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [currentUser.id]);
     const overlapCheck = await client.query(
       `SELECT id FROM out_office_requests
        WHERE employee_id = $1
@@ -121,12 +137,13 @@ export async function approveOutOfficeRequestAction(
   formData: FormData
 ): Promise<OutOfficeActionState> {
   const currentUser = await requireAuth();
-  const requestId = formData.get('requestId') as string;
-  const comment = (formData.get('comment') as string) || null;
-
-  if (!requestId) {
-    return { error: 'Thiếu mã đơn cần phê duyệt.' };
-  }
+  const input = approvalInputSchema.safeParse({
+    requestId: formData.get('requestId'),
+    comment: formData.get('comment') || undefined,
+  });
+  if (!input.success) return { error: input.error.errors[0]?.message || 'Thông tin phê duyệt không hợp lệ.' };
+  const { requestId } = input.data;
+  const comment = input.data.comment || null;
 
   const client = await pool.connect();
 
@@ -197,16 +214,12 @@ export async function rejectOutOfficeRequestAction(
   formData: FormData
 ): Promise<OutOfficeActionState> {
   const currentUser = await requireAuth();
-  const requestId = formData.get('requestId') as string;
-  const rejectionReason = (formData.get('rejectionReason') as string)?.trim();
-
-  if (!requestId) {
-    return { error: 'Thiếu mã đơn cần từ chối.' };
-  }
-
-  if (!rejectionReason || rejectionReason.length < 5) {
-    return { error: 'Bắt buộc phải nhập lý do từ chối cụ thể (tối thiểu 5 ký tự).' };
-  }
+  const input = rejectionInputSchema.safeParse({
+    requestId: formData.get('requestId'),
+    rejectionReason: formData.get('rejectionReason'),
+  });
+  if (!input.success) return { error: input.error.errors[0]?.message || 'Thông tin từ chối không hợp lệ.' };
+  const { requestId, rejectionReason } = input.data;
 
   const client = await pool.connect();
 

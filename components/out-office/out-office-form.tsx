@@ -37,7 +37,9 @@ function SubmitButton() {
 export default function OutOfficeForm() {
   const initialState: OutOfficeActionState = {};
   const [state, formAction] = useFormState(createOutOfficeRequestAction, initialState);
-  const todayStr = new Date().toLocaleDateString('en-CA');
+  const todayStr = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(new Date());
   const [requestDate, setRequestDate] = useState(todayStr);
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');

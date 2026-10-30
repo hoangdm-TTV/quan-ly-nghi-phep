@@ -6,8 +6,8 @@ const SALT_ROUNDS = 10;
  * Băm mật khẩu bằng bcrypt (an toàn một chiều)
  */
 export async function hashPassword(plainPassword: string): Promise<string> {
-  if (!plainPassword || plainPassword.length < 6) {
-    throw new Error('Password must be at least 6 characters long.');
+  if (!plainPassword || plainPassword.length < 6 || Buffer.byteLength(plainPassword, 'utf8') > 72) {
+    throw new Error('Password must be at least 6 characters and no more than 72 UTF-8 bytes.');
   }
   return bcrypt.hash(plainPassword, SALT_ROUNDS);
 }

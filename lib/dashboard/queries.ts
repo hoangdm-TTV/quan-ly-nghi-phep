@@ -1,8 +1,8 @@
 import { query } from '@/lib/db/pool';
 import { SafeUser } from '@/lib/types/user';
 import { buildReportDataScope, buildUserDataScope } from '@/lib/auth/data-scope';
-import { getPendingLeaveRequestsForApprover } from '@/lib/leave/queries';
-import { getPendingOutOfficeRequestsForApprover } from '@/lib/out-office/queries';
+import { getPendingLeaveApprovalCount } from '@/lib/leave/queries';
+import { getPendingOutOfficeApprovalCount } from '@/lib/out-office/queries';
 
 export interface ScopeReportDepartment {
   departmentName: string;
@@ -91,8 +91,8 @@ export async function getDashboardStats(user: SafeUser): Promise<DashboardStats>
   const [leaveRes, outOfficeRes, pendingLeaves, pendingOutOffices] = await Promise.all([
     query(leaveStatsQuery, [user.id]),
     query(outOfficeStatsQuery, [user.id]),
-    getPendingLeaveRequestsForApprover(user),
-    getPendingOutOfficeRequestsForApprover(user),
+    getPendingLeaveApprovalCount(user),
+    getPendingOutOfficeApprovalCount(user),
   ]);
 
   const leaveRow = leaveRes.rows[0] || {};
@@ -109,8 +109,8 @@ export async function getDashboardStats(user: SafeUser): Promise<DashboardStats>
     myOutOfficeActive: outOfficeRow.active || 0,
     myOutOfficeCompleted: outOfficeRow.completed || 0,
 
-    pendingLeaveApprovals: pendingLeaves.length,
-    pendingOutOfficeApprovals: pendingOutOffices.length,
+    pendingLeaveApprovals: pendingLeaves,
+    pendingOutOfficeApprovals: pendingOutOffices,
   };
 }
 
@@ -125,7 +125,7 @@ export async function getScopeReport(
   const leaveFilters = [scope.whereSql];
   if (fromDate) {
     leaveParams.push(fromDate);
-    leaveFilters.push(`lr.start_date >= $${leaveParams.length}`);
+    leaveFilters.push(`lr.end_date >= $${leaveParams.length}`);
   }
   if (toDate) {
     leaveParams.push(toDate);

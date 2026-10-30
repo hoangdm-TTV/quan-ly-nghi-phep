@@ -29,6 +29,15 @@ function loadEnv() {
 
 loadEnv();
 
+if (process.env.NODE_ENV === 'production') {
+  console.error('Từ chối chạy seed dữ liệu demo trong môi trường production.');
+  process.exit(1);
+}
+if (process.env.ALLOW_DEMO_SEED !== '1') {
+  console.error('Seed này tạo tài khoản demo với mật khẩu dùng chung. Chỉ chạy thử nghiệm cô lập bằng ALLOW_DEMO_SEED=1.');
+  process.exit(1);
+}
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   host: process.env.PGHOST || 'localhost',
