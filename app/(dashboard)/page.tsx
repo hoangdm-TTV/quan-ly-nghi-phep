@@ -3,11 +3,13 @@ import {
   getDashboardStats,
   getRecentActivities,
   getScopeReport,
+  getHrAdvancedReport,
   getScopeActivityFeed,
   type DashboardStats,
   type ScopeReport,
   type ScopeActivityItem,
   type RecentActivityItem,
+  type HrAdvancedReport,
 } from '@/lib/dashboard/queries';
 import { getUserDataScopeLabel } from '@/lib/auth/data-scope';
 import { getPendingLeaveRequestsForApprover } from '@/lib/leave/queries';
@@ -15,6 +17,7 @@ import { getPendingOutOfficeRequestsForApprover } from '@/lib/out-office/queries
 import { canApproveOutOfficeRequests, canSubmitPersonalRequests } from '@/lib/auth/roles';
 import { getAbsenceCalendar } from '@/lib/dashboard/calendar';
 import AbsenceCalendar from '@/components/dashboard/absence-calendar';
+import AdvancedReportSection from '@/components/dashboard/advanced-report-section';
 import Link from 'next/link';
 import {
   ArrowRight,
@@ -67,6 +70,15 @@ const emptyReport: ScopeReport = {
     outOfficeCancelled: 0,
     outOfficeHours: 0,
   },
+};
+
+const emptyAdvancedReport: HrAdvancedReport = {
+  monthlyLeave: [],
+  topLeaveEmployees: [],
+  averageApprovalHours: 0,
+  pendingByLevel: [],
+  employeesWithoutEntitlement: 0,
+  lateOutOfficeReturns: 0,
 };
 
 const statusLabels: Record<string, { label: string; class: string }> = {
@@ -151,7 +163,7 @@ function ReportSection({
           <p className="text-xs font-bold text-[#005a3c] uppercase tracking-wider">Tổng đơn nghỉ phép</p>
           <p className="mt-1.5 text-2xl sm:text-3xl font-black text-slate-900">{totals.leaveTotal}</p>
           <p className="mt-1 text-xs text-slate-600">
-            <span className="font-semibold text-amber-700">{totals.leavePending} chờ</span> · {totals.leaveApproved} duyệt · {totals.leaveCancelled} hủy
+            <span className="font-semibold text-amber-700">{totals.leavePending} chờ</span> · {totals.leaveApproved} duyệt · <span className="font-semibold text-rose-700">{totals.leaveRejected} từ chối</span> · {totals.leaveCancelled} hủy
           </p>
         </div>
 
@@ -165,7 +177,7 @@ function ReportSection({
           <p className="text-xs font-bold text-blue-800 uppercase tracking-wider">Tổng đơn ra ngoài</p>
           <p className="mt-1.5 text-2xl sm:text-3xl font-black text-slate-900">{totals.outOfficeTotal}</p>
           <p className="mt-1 text-xs text-slate-600">
-            <span className="font-semibold text-amber-700">{totals.outOfficePending} chờ</span> · {totals.outOfficeCompleted} hoàn tất · {totals.outOfficeCancelled} hủy
+            <span className="font-semibold text-amber-700">{totals.outOfficePending} chờ</span> · {totals.outOfficeCompleted} hoàn tất · <span className="font-semibold text-rose-700">{totals.outOfficeRejected} từ chối</span> · {totals.outOfficeCancelled} hủy
           </p>
         </div>
 
@@ -521,21 +533,23 @@ export default async function DashboardPage({
   const isAdmin = user.role === 'ADMIN';
   const isDirector = user.role === 'DIRECTOR';
   const isManager = user.role === 'MANAGER';
+  const isTeamLead = user.role === 'TEAM_LEAD';
   const isApprover = isManager || isDirector;
   const isOutOfficeApprover = canApproveOutOfficeRequests(user.role);
   const canSubmit = canSubmitPersonalRequests(user.role);
   const hasPersonalDashboard = canSubmit;
-  const needsReport = isManager || isDirector || isAccountant;
+  const needsReport = isAdmin || isTeamLead || isManager || isDirector || isAccountant;
   const scopeLabel = getUserDataScopeLabel(user);
   const calendarFrom = reportFrom || new Date().toISOString().slice(0, 10);
   const calendarTo = reportTo || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
-  const [stats, recentActivities, pendingLeaves, pendingOutOffices, scopeReport, scopeActivity, absenceItems] = await Promise.all([
+  const [stats, recentActivities, pendingLeaves, pendingOutOffices, scopeReport, advancedReport, scopeActivity, absenceItems] = await Promise.all([
     hasPersonalDashboard ? getDashboardStats(user) : Promise.resolve(emptyStats),
     hasPersonalDashboard ? getRecentActivities(user) : Promise.resolve([] as RecentActivityItem[]),
     isApprover ? getPendingLeaveRequestsForApprover(user) : Promise.resolve([]),
     isOutOfficeApprover ? getPendingOutOfficeRequestsForApprover(user) : Promise.resolve([]),
     needsReport ? getScopeReport(user, reportFrom, reportTo) : Promise.resolve(emptyReport),
+    needsReport ? getHrAdvancedReport(user, reportFrom, reportTo) : Promise.resolve(emptyAdvancedReport),
     isManager ? getScopeActivityFeed(user, reportFrom, reportTo) : Promise.resolve([] as ScopeActivityItem[]),
     getAbsenceCalendar(user, calendarFrom, calendarTo),
   ]);
@@ -624,9 +638,11 @@ export default async function DashboardPage({
           scopeLabel={scopeLabel}
           reportFrom={reportFrom}
           reportTo={reportTo}
-          showDepartmentBreakdown={isDirector || isAccountant}
+          showDepartmentBreakdown={isAdmin || isDirector || isAccountant}
         />
       )}
+
+      {needsReport && <AdvancedReportSection report={advancedReport} />}
 
       <AbsenceCalendar items={absenceItems} />
 

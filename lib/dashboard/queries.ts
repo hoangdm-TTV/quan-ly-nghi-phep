@@ -254,6 +254,93 @@ export async function getScopeReport(
   return { departments, totals };
 }
 
+export interface HrAdvancedReport {
+  monthlyLeave: Array<{ month: string; requests: number; approvedDays: number; leaveRate: number }>;
+  topLeaveEmployees: Array<{ employeeName: string; departmentName: string; leaveDays: number }>;
+  averageApprovalHours: number;
+  pendingByLevel: Array<{ level: string; count: number }>;
+  employeesWithoutEntitlement: number;
+  lateOutOfficeReturns: number;
+}
+
+const emptyHrAdvancedReport: HrAdvancedReport = {
+  monthlyLeave: [],
+  topLeaveEmployees: [],
+  averageApprovalHours: 0,
+  pendingByLevel: [],
+  employeesWithoutEntitlement: 0,
+  lateOutOfficeReturns: 0,
+};
+
+/** Báo cáo chuyên sâu cho HR/Director/Accountant trong đúng phạm vi dữ liệu. */
+export async function getHrAdvancedReport(
+  user: SafeUser,
+  fromDate?: string,
+  toDate?: string,
+): Promise<HrAdvancedReport> {
+  if (!['ADMIN', 'TEAM_LEAD', 'MANAGER', 'DIRECTOR', 'ACCOUNTANT'].includes(user.role)) return emptyHrAdvancedReport;
+
+  const scope = buildReportDataScope(user, 'u');
+  const dateFilter = (column: string, params: any[], conditions: string[]) => {
+    if (fromDate) {
+      params.push(fromDate);
+      conditions.push(`${column} >= $${params.length}`);
+    }
+    if (toDate) {
+      params.push(toDate);
+      conditions.push(`${column} <= $${params.length}`);
+    }
+  };
+
+  const monthlyParams: any[] = [...scope.params];
+  const monthlyConditions = [scope.whereSql];
+  dateFilter('lr.start_date', monthlyParams, monthlyConditions);
+  const topParams: any[] = [...scope.params];
+  const topConditions = [scope.whereSql];
+  dateFilter('lr.start_date', topParams, topConditions);
+  const approvalParams: any[] = [...scope.params];
+  const approvalConditions = [scope.whereSql];
+  dateFilter('COALESCE(lr.start_date, oo.request_date)', approvalParams, approvalConditions);
+  const pendingLeaveParams: any[] = [...scope.params];
+  const pendingLeaveConditions = [scope.whereSql];
+  dateFilter('lr.start_date', pendingLeaveParams, pendingLeaveConditions);
+  const pendingOutParams: any[] = [...scope.params];
+  const pendingOutConditions = [scope.whereSql];
+  dateFilter('oo.request_date', pendingOutParams, pendingOutConditions);
+  const entitlementParams: any[] = [...scope.params];
+  const entitlementConditions = [scope.whereSql, `u.is_active = TRUE`, `u.employment_status = 'ACTIVE'`];
+  const leaveYear = Number((fromDate || new Date().toISOString().slice(0, 10)).slice(0, 4));
+  entitlementParams.push(leaveYear);
+  const lateParams: any[] = [...scope.params];
+  const lateConditions = [scope.whereSql, `oo.status = 'COMPLETED'`];
+  dateFilter('oo.request_date', lateParams, lateConditions);
+
+  const [monthly, top, approval, pendingLeave, pendingOut, noEntitlement, lateReturns] = await Promise.all([
+    query(`SELECT TO_CHAR(DATE_TRUNC('month', lr.start_date), 'YYYY-MM') AS month, COUNT(*)::int AS requests, COALESCE(SUM(lr.duration_days) FILTER (WHERE lr.status IN ('WAITING_FOR_DOC','COMPLETED')), 0)::float AS approved_days FROM leave_requests lr JOIN users u ON u.id = lr.employee_id WHERE ${monthlyConditions.join(' AND ')} GROUP BY 1 ORDER BY 1`, monthlyParams),
+    query(`SELECT u.full_name AS employee_name, COALESCE(d.name, 'Chưa phân bổ') AS department_name, COALESCE(SUM(lr.duration_days), 0)::float AS leave_days FROM leave_requests lr JOIN users u ON u.id = lr.employee_id LEFT JOIN departments d ON d.id = u.department_id WHERE ${topConditions.join(' AND ')} AND lr.status IN ('WAITING_FOR_DOC','COMPLETED') GROUP BY u.id, u.full_name, d.name ORDER BY leave_days DESC LIMIT 10`, topParams),
+    query<{ average_hours: number | null }>(`SELECT AVG(EXTRACT(EPOCH FROM (ah.created_at - COALESCE(lr.created_at, oo.created_at))) / 3600)::float AS average_hours FROM approval_history ah LEFT JOIN leave_requests lr ON ah.request_type = 'LEAVE' AND lr.id = ah.request_id LEFT JOIN out_office_requests oo ON ah.request_type = 'OUT_OFFICE' AND oo.id = ah.request_id JOIN users u ON u.id = COALESCE(lr.employee_id, oo.employee_id) WHERE ${approvalConditions.join(' AND ')} AND ah.action IN ('APPROVED_LEAD','APPROVED_DIRECTOR','REJECTED')`, approvalParams),
+    query(`SELECT 'Nghỉ phép - Trưởng phòng' AS level, COUNT(*)::int AS count FROM leave_requests lr JOIN users u ON u.id = lr.employee_id WHERE ${pendingLeaveConditions.join(' AND ')} AND lr.status = 'PENDING' AND u.role IN ('STAFF','TEAM_LEAD','ACCOUNTANT') AND EXISTS (SELECT 1 FROM users m WHERE m.role = 'MANAGER' AND m.is_active = TRUE AND m.department_id = u.department_id) UNION ALL SELECT 'Nghỉ phép - Giám đốc' AS level, COUNT(*)::int AS count FROM leave_requests lr JOIN users u ON u.id = lr.employee_id WHERE ${pendingLeaveConditions.join(' AND ')} AND ((lr.status = 'APPROVED_BY_LEAD') OR (lr.status = 'PENDING' AND (u.role = 'MANAGER' OR NOT EXISTS (SELECT 1 FROM users m WHERE m.role = 'MANAGER' AND m.is_active = TRUE AND m.department_id = u.department_id))))`, pendingLeaveParams),
+    query(`SELECT 'Ra ngoài - Trưởng nhóm' AS level, COUNT(*)::int AS count FROM out_office_requests oo JOIN users u ON u.id = oo.employee_id WHERE ${pendingOutConditions.join(' AND ')} AND oo.status = 'PENDING' AND u.role = 'STAFF' AND EXISTS (SELECT 1 FROM users tl WHERE tl.role = 'TEAM_LEAD' AND tl.is_active = TRUE AND tl.team_id = u.team_id) UNION ALL SELECT 'Ra ngoài - Trưởng phòng' AS level, COUNT(*)::int AS count FROM out_office_requests oo JOIN users u ON u.id = oo.employee_id WHERE ${pendingOutConditions.join(' AND ')} AND oo.status = 'PENDING' AND u.role IN ('TEAM_LEAD','ACCOUNTANT') UNION ALL SELECT 'Ra ngoài - Giám đốc' AS level, COUNT(*)::int AS count FROM out_office_requests oo JOIN users u ON u.id = oo.employee_id WHERE ${pendingOutConditions.join(' AND ')} AND oo.status = 'PENDING' AND u.role = 'MANAGER'`, pendingOutParams),
+    query<{ count: number }>(`SELECT COUNT(*)::int AS count FROM users u WHERE ${entitlementConditions.join(' AND ')} AND NOT EXISTS (SELECT 1 FROM leave_entitlements e WHERE e.user_id = u.id AND e.leave_year = $${entitlementParams.length})`, entitlementParams),
+    query<{ count: number }>(`SELECT COUNT(*)::int AS count FROM out_office_requests oo JOIN users u ON u.id = oo.employee_id WHERE ${lateConditions.join(' AND ')} AND ((oo.updated_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date = oo.request_date) AND (oo.updated_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::time > oo.end_time`, lateParams),
+  ]);
+
+  return {
+    monthlyLeave: (() => {
+      const totalApprovedDays = monthly.rows.reduce((sum: number, row: any) => sum + Number(row.approved_days), 0);
+      return monthly.rows.map((row: any) => {
+        const approvedDays = Number(row.approved_days);
+        return { month: row.month, requests: Number(row.requests), approvedDays, leaveRate: totalApprovedDays ? (approvedDays / totalApprovedDays) * 100 : 0 };
+      });
+    })(),
+    topLeaveEmployees: top.rows.map((row: any) => ({ employeeName: row.employee_name, departmentName: row.department_name, leaveDays: Number(row.leave_days) })),
+    averageApprovalHours: Number(approval.rows[0]?.average_hours || 0),
+    pendingByLevel: [...pendingLeave.rows, ...pendingOut.rows].map((row: any) => ({ level: row.level, count: Number(row.count) })),
+    employeesWithoutEntitlement: Number(noEntitlement.rows[0]?.count || 0),
+    lateOutOfficeReturns: Number(lateReturns.rows[0]?.count || 0),
+  };
+}
+
 /**
  * Lấy danh sách hoạt động gần đây của người dùng
  */

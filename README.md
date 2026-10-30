@@ -18,6 +18,8 @@
 - Người duyệt đơn ra ngoài xác nhận lúc nhân viên quay về để chuyển đơn sang hoàn tất.
 - Lịch sử phê duyệt, thông báo Web Push tùy chọn, hồ sơ cá nhân, đổi mật khẩu và ảnh đại diện.
 - Quản lý ngày lễ (chỉ ADMIN), lọc danh sách và dashboard thống kê theo phạm vi quyền.
+- Báo cáo quản trị theo phạm vi quyền: tổng hợp ngày nghỉ theo phòng ban, tỷ trọng nghỉ theo tháng, top nhân viên nghỉ nhiều, thời gian xử lý trung bình, đơn chờ theo cấp, nhân viên chưa có hạn mức và đơn ra ngoài được xác nhận về muộn.
+- Báo cáo được hiển thị cho ADMIN (toàn công ty), TEAM_LEAD (trong team), MANAGER (trong phòng ban), ACCOUNTANT và DIRECTOR (toàn công ty). Hệ thống chưa ghi nhận giờ rời đi thực tế nên chưa thể kết luận chính xác tình trạng đi muộn.
 
 ## Vai trò và phạm vi
 
@@ -80,7 +82,7 @@ Yêu cầu Node.js tương thích với Next.js 14 và PostgreSQL.
 
    Không commit `.env` hoặc `.env.local`.
 
-3. Áp dụng các migration theo thứ tự `001` → `006` lên đúng database. Có thể dùng DBeaver hoặc `psql`; sao lưu database và kiểm tra schema hiện có trước khi áp dụng trên môi trường đang có dữ liệu.
+3. Áp dụng các migration theo thứ tự `001` → `007` lên đúng database. Có thể dùng DBeaver hoặc `psql`; sao lưu database và kiểm tra schema hiện có trước khi áp dụng trên môi trường đang có dữ liệu.
 
 4. Khởi động ứng dụng:
 
