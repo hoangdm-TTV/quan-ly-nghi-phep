@@ -169,12 +169,12 @@ export async function getPendingOutOfficeRequestsForApprover(
     if (!approver.team_id) return [];
     params.push(approver.team_id);
     pendingScope = `u.role = 'STAFF' AND u.team_id = $2::uuid`;
-  } else if (approver.role === 'MANAGER') {
-    if (!approver.department_id) return [];
-    params.push(approver.department_id);
-    pendingScope = `u.department_id = $2::uuid AND u.role IN ('TEAM_LEAD', 'ACCOUNTANT')`;
-  } else {
-    pendingScope = `u.role = 'MANAGER'`;
+	  } else if (approver.role === 'MANAGER') {
+	    if (!approver.department_id) return [];
+	    params.push(approver.department_id);
+	    pendingScope = `u.department_id = $2::uuid AND (u.role IN ('TEAM_LEAD', 'ACCOUNTANT') OR (u.role = 'STAFF' AND NOT EXISTS (SELECT 1 FROM users tl WHERE tl.role = 'TEAM_LEAD' AND tl.is_active = TRUE AND tl.employment_status = 'ACTIVE' AND tl.team_id = u.team_id)))`;
+	  } else {
+	    pendingScope = `(u.role = 'MANAGER' OR (u.role IN ('TEAM_LEAD', 'ACCOUNTANT') AND NOT EXISTS (SELECT 1 FROM users m WHERE m.role = 'MANAGER' AND m.is_active = TRUE AND m.employment_status = 'ACTIVE' AND m.department_id = u.department_id)) OR (u.role = 'STAFF' AND NOT EXISTS (SELECT 1 FROM users tl WHERE tl.role = 'TEAM_LEAD' AND tl.is_active = TRUE AND tl.employment_status = 'ACTIVE' AND tl.team_id = u.team_id) AND NOT EXISTS (SELECT 1 FROM users m WHERE m.role = 'MANAGER' AND m.is_active = TRUE AND m.employment_status = 'ACTIVE' AND m.department_id = u.department_id)))`;
   }
 
   const sql = `
@@ -228,12 +228,12 @@ export async function getPendingOutOfficeApprovalCount(approver: SafeUser): Prom
     if (!approver.team_id) return 0;
     params.push(approver.team_id);
     pendingScope = `u.role = 'STAFF' AND u.team_id = $2::uuid`;
-  } else if (approver.role === 'MANAGER') {
-    if (!approver.department_id) return 0;
-    params.push(approver.department_id);
-    pendingScope = `u.department_id = $2::uuid AND u.role IN ('TEAM_LEAD', 'ACCOUNTANT')`;
-  } else {
-    pendingScope = `u.role = 'MANAGER'`;
+	  } else if (approver.role === 'MANAGER') {
+	    if (!approver.department_id) return 0;
+	    params.push(approver.department_id);
+	    pendingScope = `u.department_id = $2::uuid AND (u.role IN ('TEAM_LEAD', 'ACCOUNTANT') OR (u.role = 'STAFF' AND NOT EXISTS (SELECT 1 FROM users tl WHERE tl.role = 'TEAM_LEAD' AND tl.is_active = TRUE AND tl.employment_status = 'ACTIVE' AND tl.team_id = u.team_id)))`;
+	  } else {
+	    pendingScope = `(u.role = 'MANAGER' OR (u.role IN ('TEAM_LEAD', 'ACCOUNTANT') AND NOT EXISTS (SELECT 1 FROM users m WHERE m.role = 'MANAGER' AND m.is_active = TRUE AND m.employment_status = 'ACTIVE' AND m.department_id = u.department_id)) OR (u.role = 'STAFF' AND NOT EXISTS (SELECT 1 FROM users tl WHERE tl.role = 'TEAM_LEAD' AND tl.is_active = TRUE AND tl.employment_status = 'ACTIVE' AND tl.team_id = u.team_id) AND NOT EXISTS (SELECT 1 FROM users m WHERE m.role = 'MANAGER' AND m.is_active = TRUE AND m.employment_status = 'ACTIVE' AND m.department_id = u.department_id)))`;
   }
   const result = await query<{ count: number }>(
     `SELECT COUNT(*)::int AS count FROM out_office_requests oo JOIN users u ON oo.employee_id = u.id WHERE oo.employee_id != $1 AND ((oo.status = 'PENDING' AND ${pendingScope}) OR (oo.status = 'APPROVED' AND oo.approver_id = $1))`,
@@ -251,8 +251,8 @@ export async function getPendingOutOfficeApprovalSummary(approver: SafeUser): Pr
     params.push(approver.team_id); scope = `u.role='STAFF' AND u.team_id=$2::uuid`;
   } else if (approver.role === 'MANAGER') {
     if (!approver.department_id) return { total: 0, pending: 0, approved: 0 };
-    params.push(approver.department_id); scope = `u.department_id=$2::uuid AND u.role IN ('TEAM_LEAD','ACCOUNTANT')`;
-  } else scope = `u.role='MANAGER'`;
+    params.push(approver.department_id); scope = `u.department_id=$2::uuid AND (u.role IN ('TEAM_LEAD','ACCOUNTANT') OR (u.role='STAFF' AND NOT EXISTS (SELECT 1 FROM users tl WHERE tl.role='TEAM_LEAD' AND tl.is_active=TRUE AND tl.employment_status='ACTIVE' AND tl.team_id=u.team_id)))`;
+  } else scope = `(u.role='MANAGER' OR (u.role IN ('TEAM_LEAD','ACCOUNTANT') AND NOT EXISTS (SELECT 1 FROM users m WHERE m.role='MANAGER' AND m.is_active=TRUE AND m.employment_status='ACTIVE' AND m.department_id=u.department_id)) OR (u.role='STAFF' AND NOT EXISTS (SELECT 1 FROM users tl WHERE tl.role='TEAM_LEAD' AND tl.is_active=TRUE AND tl.employment_status='ACTIVE' AND tl.team_id=u.team_id) AND NOT EXISTS (SELECT 1 FROM users m WHERE m.role='MANAGER' AND m.is_active=TRUE AND m.employment_status='ACTIVE' AND m.department_id=u.department_id)))`;
   const result = await query<{ total: number; pending: number; approved: number }>(
     `SELECT COUNT(*)::int AS total, COUNT(*) FILTER (WHERE oo.status='PENDING')::int AS pending,
             COUNT(*) FILTER (WHERE oo.status='APPROVED')::int AS approved

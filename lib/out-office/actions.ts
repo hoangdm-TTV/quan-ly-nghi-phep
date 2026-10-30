@@ -8,6 +8,7 @@ import { requireAuth } from '@/lib/auth/permissions';
 import { getSafeUserById } from '@/lib/db/queries/users';
 import { calculateEstimatedHours } from './calculator';
 import { evaluateOutOfficeApproval, evaluateOutOfficeRejection, OutOfficeStatus } from './workflow';
+import { getOutOfficeRoutingAvailability } from './routing';
 import { notifyOutOfficeApprovers, notifyOutOfficeRequester } from '@/lib/notifications/push';
 
 const createOutOfficeSchema = z.object({
@@ -174,7 +175,8 @@ export async function approveOutOfficeRequestAction(
       return { error: 'Không tìm thấy thông tin nhân viên tạo đơn.' };
     }
 
-    const evaluation = evaluateOutOfficeApproval(currentUser, applicant, request.status as OutOfficeStatus, request.approver_id);
+    const routing = await getOutOfficeRoutingAvailability(applicant.department_id, applicant.team_id);
+    const evaluation = evaluateOutOfficeApproval(currentUser, applicant, request.status as OutOfficeStatus, request.approver_id, routing);
 
     if (!evaluation.allowed || !evaluation.nextStatus || !evaluation.action) {
       await client.query('ROLLBACK');
@@ -251,7 +253,8 @@ export async function rejectOutOfficeRequestAction(
       return { error: 'Không tìm thấy thông tin nhân viên tạo đơn.' };
     }
 
-    const evaluation = evaluateOutOfficeRejection(currentUser, applicant, request.status as OutOfficeStatus, request.approver_id);
+    const routing = await getOutOfficeRoutingAvailability(applicant.department_id, applicant.team_id);
+    const evaluation = evaluateOutOfficeRejection(currentUser, applicant, request.status as OutOfficeStatus, request.approver_id, routing);
 
     if (!evaluation.allowed) {
       await client.query('ROLLBACK');

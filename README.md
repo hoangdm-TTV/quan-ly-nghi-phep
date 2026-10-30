@@ -10,7 +10,7 @@
 - Người tạo có thể sửa hoặc hủy đơn nghỉ/ra ngoài khi còn `PENDING`; thay đổi được ghi lịch sử.
 - Tài khoản `admin@trithucvietbn.com` quản lý hồ sơ nhân sự, phòng ban, team, quản lý trực tiếp, hạn mức phép và ngày lễ; Giám đốc giữ các quyền duyệt đơn.
 - Danh sách có phân trang; có thể tải CSV UTF-8 tương thích Excel theo bộ lọc và quyền truy cập.
-- Push thông báo cho người xin đơn khi duyệt/từ chối; endpoint cron gửi nhắc hằng ngày cho đơn chờ xử lý quá 24 giờ.
+- Thông báo nội bộ trong ứng dụng cho người xin đơn/người duyệt; Web Push là tùy chọn bổ sung. Chuông thông báo có số chưa đọc, xem chi tiết và đánh dấu đã đọc; endpoint cron ghi cả nhắc hằng ngày cho đơn chờ xử lý quá 24 giờ.
 - Tạo và theo dõi đơn nghỉ phép. Số ngày được tính theo ngày làm việc từ thứ Hai đến thứ Bảy, bỏ Chủ Nhật và ngày lễ đang hoạt động.
 - Duyệt nghỉ phép theo cấp: đơn tối đa một ngày cần một cấp; đơn trên một ngày cần Trưởng phòng rồi Giám đốc. Đơn của Trưởng phòng do Giám đốc duyệt.
 - Sau khi được duyệt, chủ đơn tải giấy đã ký (PDF, PNG hoặc JPEG, tối đa 50 MB) để hoàn tất. Tệp lưu trong PostgreSQL và chỉ tải qua endpoint đã xác thực.
@@ -20,6 +20,7 @@
 - Quản lý ngày lễ (chỉ ADMIN), lọc danh sách và dashboard thống kê theo phạm vi quyền.
 - Báo cáo quản trị theo phạm vi quyền: tổng hợp ngày nghỉ theo phòng ban, tỷ trọng nghỉ theo tháng, top nhân viên nghỉ nhiều, thời gian xử lý trung bình, đơn chờ theo cấp, nhân viên chưa có hạn mức và đơn ra ngoài được xác nhận về muộn.
 - Báo cáo được hiển thị cho ADMIN (toàn công ty), TEAM_LEAD (trong team), MANAGER (trong phòng ban), ACCOUNTANT và DIRECTOR (toàn công ty). Hệ thống chưa ghi nhận giờ rời đi thực tế nên chưa thể kết luận chính xác tình trạng đi muộn.
+- Báo cáo có bộ lọc theo ngày với nút `Lọc` và `Xóa bộ lọc`; khi chưa lọc, lịch vắng mặt hiển thị toàn bộ đơn đã duyệt trong phạm vi quyền của người dùng.
 
 ## Vai trò và phạm vi
 
@@ -32,7 +33,7 @@
 | `ADMIN`      | Quản trị nhân sự                                             | Chỉ tài khoản `admin@trithucvietbn.com` được vào trang quản trị và quản lý ngày lễ; không thể cấp quyền ADMIN cho tài khoản khác |
 | `DIRECTOR`   | Toàn công ty                                                 | Duyệt cấp cuối nghỉ phép và đơn của Trưởng phòng; duyệt đơn ra ngoài theo cấp trực tiếp |
 
-> Quyền duyệt được kiểm tra ở server. Không người dùng nào được tự duyệt đơn của mình. Với STAFF chưa được gán team, đơn ra ngoài không có cấp duyệt phù hợp cho đến khi hồ sơ được cấu hình.
+> Quyền duyệt được kiểm tra ở server. Không người dùng nào được tự duyệt đơn của mình. Với STAFF chưa được gán team, hệ thống sẽ chuyển theo cấp phòng ban nếu đủ dữ liệu; nếu không xác định được người duyệt thì cần cấu hình lại hồ sơ nhân sự.
 
 ### Luồng nghỉ phép
 
@@ -54,7 +55,7 @@ PENDING ── duyệt ──> APPROVED ── người đã duyệt xác nhận
    └── từ chối ──> REJECTED
 ```
 
-Mỗi đơn áp dụng trong một ngày; giờ kết thúc phải sau giờ bắt đầu. Từ chối cần có lý do. Người duyệt trực tiếp theo code hiện tại: STAFF → TEAM_LEAD cùng team; TEAM_LEAD/ACCOUNTANT → MANAGER cùng phòng; MANAGER → DIRECTOR.
+Mỗi đơn áp dụng trong một ngày; giờ kết thúc phải sau giờ bắt đầu. Từ chối cần có lý do. Người duyệt trực tiếp: STAFF → TEAM_LEAD cùng team; nếu không có TEAM_LEAD thì → MANAGER cùng phòng; nếu không có cả TEAM_LEAD và MANAGER thì → DIRECTOR. TEAM_LEAD/ACCOUNTANT → MANAGER cùng phòng, nếu không có MANAGER thì → DIRECTOR; MANAGER → DIRECTOR.
 
 ## Công nghệ
 
@@ -82,7 +83,7 @@ Yêu cầu Node.js tương thích với Next.js 14 và PostgreSQL.
 
    Không commit `.env` hoặc `.env.local`.
 
-3. Áp dụng các migration theo thứ tự `001` → `007` lên đúng database. Có thể dùng DBeaver hoặc `psql`; sao lưu database và kiểm tra schema hiện có trước khi áp dụng trên môi trường đang có dữ liệu.
+3. Áp dụng các migration theo thứ tự `001` → `008` lên đúng database. Có thể dùng DBeaver hoặc `psql`; sao lưu database và kiểm tra schema hiện có trước khi áp dụng trên môi trường đang có dữ liệu.
 
 4. Khởi động ứng dụng:
 
@@ -96,7 +97,7 @@ Các lệnh có trong `package.json`: `npm run dev`, `npm run build`, `npm run s
 
 ## Database và migrations
 
-Migrations trong thư mục [`migrations/`](migrations) được chạy theo thứ tự `001` → `007`:
+Migrations trong thư mục [`migrations/`](migrations) được chạy theo thứ tự `001` → `008`:
 
 | Tệp                           | Nội dung                                                                          |
 | ----------------------------- | --------------------------------------------------------------------------------- |
@@ -107,6 +108,7 @@ Migrations trong thư mục [`migrations/`](migrations) được chạy theo th�
 | `005_login_rate_limits.sql`   | Giới hạn thử đăng nhập theo email                                                 |
 | `006_leave_balance_history_and_reminders.sql` | Hạn mức phép, lịch sử sửa/hủy, trạng thái hủy, nhắc việc, vai trò ADMIN và tài khoản quản trị duy nhất |
 | `007_leave_and_employee_details.sql` | Buổi nghỉ, người thay thế, ghi chú bàn giao, trạng thái nhân sự và audit log |
+| `008_in_app_notifications.sql` | Thông báo nội bộ, trạng thái đã đọc/chưa đọc và chỉ mục tra cứu |
 
 Ứng dụng không tự chạy migration khi khởi động. Hãy áp dụng schema trước khi triển khai phiên bản tương ứng. Cơ sở dữ liệu phải có các bảng và cột mà migration/source yêu cầu; nếu đang dùng schema cũ, cần đối chiếu trước khi chạy.
 

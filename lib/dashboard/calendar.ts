@@ -18,11 +18,23 @@ export type AbsenceCalendarItem = {
   reason: string | null;
 };
 
-export async function getAbsenceCalendar(user: SafeUser, fromDate: string, toDate: string): Promise<AbsenceCalendarItem[]> {
+export async function getAbsenceCalendar(user: SafeUser, fromDate?: string, toDate?: string): Promise<AbsenceCalendarItem[]> {
   const scope = buildReportDataScope(user, 'u');
-  const params = [...scope.params, fromDate, toDate];
-  const fromParam = `$${params.length - 1}`;
-  const toParam = `$${params.length}`;
+  const params = [...scope.params];
+  let leaveDateFilter = '';
+  let outOfficeDateFilter = '';
+  if (fromDate) {
+    params.push(fromDate);
+    const fromParam = `$${params.length}`;
+    leaveDateFilter += ` AND lr.end_date >= ${fromParam}::date`;
+    outOfficeDateFilter += ` AND oo.request_date >= ${fromParam}::date`;
+  }
+  if (toDate) {
+    params.push(toDate);
+    const toParam = `$${params.length}`;
+    leaveDateFilter += ` AND lr.start_date <= ${toParam}::date`;
+    outOfficeDateFilter += ` AND oo.request_date <= ${toParam}::date`;
+  }
   const sql = `
     SELECT * FROM (
       SELECT lr.id, 'LEAVE'::text AS type, u.full_name AS employee_name,
@@ -37,7 +49,7 @@ export async function getAbsenceCalendar(user: SafeUser, fromDate: string, toDat
         LEFT JOIN teams t ON t.id = u.team_id
        WHERE ${scope.whereSql}
          AND lr.status IN ('WAITING_FOR_DOC', 'COMPLETED')
-         AND lr.end_date >= ${fromParam}::date AND lr.start_date <= ${toParam}::date
+         ${leaveDateFilter}
       UNION ALL
       SELECT oo.id, 'OUT_OFFICE'::text, u.full_name, d.name, t.name,
              oo.request_date::text, oo.request_date::text, NULL,
@@ -49,7 +61,7 @@ export async function getAbsenceCalendar(user: SafeUser, fromDate: string, toDat
         LEFT JOIN teams t ON t.id = u.team_id
        WHERE ${scope.whereSql}
          AND oo.status IN ('APPROVED', 'COMPLETED')
-         AND oo.request_date BETWEEN ${fromParam}::date AND ${toParam}::date
+         ${outOfficeDateFilter}
     ) calendar
     ORDER BY start_date, type, employee_name`;
 

@@ -21,7 +21,7 @@ export default function AbsenceCalendar({ items }: { items: AbsenceCalendarItem[
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
         <div>
           <h2 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2"><CalendarDays className="w-5 h-5 text-[#005a3c]" /> Lịch vắng mặt</h2>
-          <p className="text-xs sm:text-sm text-slate-500">Đã duyệt trong khoảng thời gian đang chọn</p>
+          <p className="text-xs sm:text-sm text-slate-500">Các đơn đã duyệt trong phạm vi quyền của bạn; có thể lọc thêm theo ngày ở phần báo cáo</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <label className="relative"><Search className="absolute left-2.5 top-2.5 w-4 h-4 text-slate-400" /><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm người, phòng, team" className="pl-8 pr-3 py-2 text-xs rounded-lg border border-slate-300 w-56" /></label>
