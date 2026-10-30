@@ -8,7 +8,7 @@
 - Đổi mật khẩu từ hồ sơ cá nhân; mật khẩu mới tối thiểu 6 ký tự và các phiên khác bị thu hồi.
 - Quản lý hạn mức phép theo nhân viên/năm; đơn mới và đơn sửa được giữ chỗ số ngày khi chờ duyệt.
 - Người tạo có thể sửa hoặc hủy đơn nghỉ/ra ngoài khi còn `PENDING`; thay đổi được ghi lịch sử.
-- Tài khoản `admin@trithucvietbn.com` quản lý hồ sơ nhân sự, phòng ban, team, quản lý trực tiếp và hạn mức phép; Giám đốc giữ các quyền duyệt và quản lý ngày lễ như hiện tại.
+- Tài khoản `admin@trithucvietbn.com` quản lý hồ sơ nhân sự, phòng ban, team, quản lý trực tiếp, hạn mức phép và ngày lễ; Giám đốc giữ các quyền duyệt đơn.
 - Danh sách có phân trang; có thể tải CSV UTF-8 tương thích Excel theo bộ lọc và quyền truy cập.
 - Push thông báo cho người xin đơn khi duyệt/từ chối; endpoint cron gửi nhắc hằng ngày cho đơn chờ xử lý quá 24 giờ.
 - Tạo và theo dõi đơn nghỉ phép. Số ngày được tính theo ngày làm việc từ thứ Hai đến thứ Bảy, bỏ Chủ Nhật và ngày lễ đang hoạt động.
@@ -17,7 +17,7 @@
 - Tạo đơn ra ngoài theo ngày, giờ, mục đích và lý do. Hệ thống tự tính thời lượng, từ chối khoảng giờ không hợp lệ và phát hiện đơn bị trùng.
 - Người duyệt đơn ra ngoài xác nhận lúc nhân viên quay về để chuyển đơn sang hoàn tất.
 - Lịch sử phê duyệt, thông báo Web Push tùy chọn, hồ sơ cá nhân, đổi mật khẩu và ảnh đại diện.
-- Quản lý ngày lễ (Giám đốc), lọc danh sách và dashboard thống kê theo phạm vi quyền.
+- Quản lý ngày lễ (chỉ ADMIN), lọc danh sách và dashboard thống kê theo phạm vi quyền.
 
 ## Vai trò và phạm vi
 
@@ -27,8 +27,8 @@
 | `TEAM_LEAD`  | Đơn cá nhân và đơn trong team                                | Tạo đơn; đơn nghỉ do Trưởng phòng cùng phòng ban duyệt; đơn ra ngoài do Trưởng phòng duyệt               |
 | `MANAGER`    | Đơn cá nhân và trong phòng ban                               | Tạo đơn; duyệt nghỉ của nhân viên trong phòng ban; duyệt đơn ra ngoài theo cấp trực tiếp                 |
 | `ACCOUNTANT` | Toàn công ty khi tra cứu/báo cáo; chỉ đọc đơn của người khác | Tạo đơn cá nhân; đơn nghỉ do Trưởng phòng duyệt; đơn ra ngoài do Trưởng phòng duyệt                      |
-| `ADMIN`      | Quản trị nhân sự                                             | Chỉ tài khoản `admin@trithucvietbn.com` được vào trang quản trị; không thể cấp quyền ADMIN cho tài khoản khác |
-| `DIRECTOR`   | Toàn công ty                                                 | Duyệt cấp cuối nghỉ phép và đơn của Trưởng phòng; duyệt đơn ra ngoài theo cấp trực tiếp; quản lý ngày lễ |
+| `ADMIN`      | Quản trị nhân sự                                             | Chỉ tài khoản `admin@trithucvietbn.com` được vào trang quản trị và quản lý ngày lễ; không thể cấp quyền ADMIN cho tài khoản khác |
+| `DIRECTOR`   | Toàn công ty                                                 | Duyệt cấp cuối nghỉ phép và đơn của Trưởng phòng; duyệt đơn ra ngoài theo cấp trực tiếp |
 
 > Quyền duyệt được kiểm tra ở server. Không người dùng nào được tự duyệt đơn của mình. Với STAFF chưa được gán team, đơn ra ngoài không có cấp duyệt phù hợp cho đến khi hồ sơ được cấu hình.
 

@@ -29,7 +29,7 @@ export function canViewRequestScope(role: UserRole): boolean {
   return role === 'TEAM_LEAD' || role === 'MANAGER' || canViewAllRequests(role);
 }
 
-/** Chỉ Giám đốc được quản lý ngày lễ. */
+/** Chỉ ADMIN được quản lý ngày lễ. */
 export function canManageHolidays(role: UserRole): boolean {
-  return role === 'DIRECTOR';
+  return role === 'ADMIN';
 }

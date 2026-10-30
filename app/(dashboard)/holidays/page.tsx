@@ -5,6 +5,7 @@ import HolidayForm from '@/components/holidays/holiday-form';
 import DeleteHolidayButton from '@/components/holidays/delete-holiday-button';
 import HolidayListClient from '@/components/holidays/holiday-list-client';
 import { Calendar, Plus, CalendarDays } from 'lucide-react';
+import { canManageHolidays } from '@/lib/auth/roles';
 
 export const metadata = {
   title: 'Quản lý ngày lễ | Tri Thức Việt',
@@ -12,7 +13,7 @@ export const metadata = {
 
 export default async function HolidaysPage() {
   const user = await requireAuth();
-  if (user.role !== 'DIRECTOR') {
+  if (!canManageHolidays(user.role)) {
     redirect('/');
   }
 
