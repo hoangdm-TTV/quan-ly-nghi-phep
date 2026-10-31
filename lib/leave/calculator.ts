@@ -4,18 +4,18 @@
  * Số ngày làm việc = tổng số ngày trong khoảng [start, end] loại trừ Chủ Nhật và ngày lễ.
  */
 
-import { getActiveHolidaysInRange } from '@/lib/holidays/queries';
+import { getActiveHolidaysInRange } from "@/lib/holidays/queries";
 
 export function parseDateOnly(dateStr: string): Date {
-  const [year, month, day] = dateStr.split('-').map(Number);
+  const [year, month, day] = dateStr.split("-").map(Number);
   if (!year || !month || !day) {
-    throw new Error('Định dạng ngày không hợp lệ. Yêu cầu YYYY-MM-DD.');
+    throw new Error("Định dạng ngày không hợp lệ. Yêu cầu YYYY-MM-DD.");
   }
   return new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
 }
 
 export function formatDateOnly(date: Date): string {
-  return date.toISOString().split('T')[0];
+  return date.toISOString().split("T")[0];
 }
 
 interface HolidayRange {
@@ -24,9 +24,7 @@ interface HolidayRange {
 }
 
 function isDateInHolidays(dateStr: string, holidays: HolidayRange[]): boolean {
-  return holidays.some(
-    (h) => dateStr >= h.start_date && dateStr <= h.end_date
-  );
+  return holidays.some((h) => dateStr >= h.start_date && dateStr <= h.end_date);
 }
 
 /**
@@ -35,13 +33,13 @@ function isDateInHolidays(dateStr: string, holidays: HolidayRange[]): boolean {
 export function calculateWorkingDays(
   startDateStr: string,
   endDateStr: string,
-  holidays: HolidayRange[] = []
+  holidays: HolidayRange[] = [],
 ): number {
   const start = parseDateOnly(startDateStr);
   const end = parseDateOnly(endDateStr);
 
   if (end < start) {
-    throw new Error('Ngày kết thúc không được nhỏ hơn ngày bắt đầu.');
+    throw new Error("Ngày kết thúc không được nhỏ hơn ngày bắt đầu.");
   }
 
   let workingDays = 0;
@@ -64,7 +62,7 @@ export function calculateWorkingDays(
  */
 export async function calculateWorkingDaysWithHolidays(
   startDateStr: string,
-  endDateStr: string
+  endDateStr: string,
 ): Promise<number> {
   const holidays = await getActiveHolidaysInRange(startDateStr, endDateStr);
   return calculateWorkingDays(startDateStr, endDateStr, holidays);

@@ -1,6 +1,6 @@
-import { query } from '../pool';
-import { SafeUser, UserWithPassword } from '@/lib/types/user';
-import { buildReportDataScope } from '@/lib/auth/data-scope';
+import { query } from "../pool";
+import { SafeUser, UserWithPassword } from "@/lib/types/user";
+import { buildReportDataScope } from "@/lib/auth/data-scope";
 
 export interface ScopedUserOption {
   id: string;
@@ -13,7 +13,8 @@ export interface ScopedFilterOptions {
   teams: Array<{ id: string; name: string; department_id: string | null }>;
 }
 
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 /**
  * Lấy danh sách nhân viên trong phạm vi quyền của người dùng (trừ chính họ).
@@ -22,9 +23,9 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3
 export async function getUsersInScope(
   user: SafeUser,
   departmentId?: string,
-  teamId?: string
+  teamId?: string,
 ): Promise<ScopedUserOption[]> {
-  const scope = buildReportDataScope(user, 'u');
+  const scope = buildReportDataScope(user, "u");
   const params: any[] = [...scope.params];
   const conditions = [scope.whereSql];
   if (departmentId && UUID_PATTERN.test(departmentId)) {
@@ -38,7 +39,7 @@ export async function getUsersInScope(
   const sql = `
     SELECT u.id, u.full_name, u.role
     FROM users u
-    WHERE ${conditions.join(' AND ')}
+    WHERE ${conditions.join(" AND ")}
       AND u.id != $${params.length + 1}
       AND u.is_active = true
     ORDER BY u.full_name ASC
@@ -52,9 +53,9 @@ export async function getUsersInScope(
 export async function getFilterOptionsInScope(
   user: SafeUser,
   departmentId?: string,
-  teamId?: string
+  teamId?: string,
 ): Promise<ScopedFilterOptions> {
-  const scope = buildReportDataScope(user, 'u');
+  const scope = buildReportDataScope(user, "u");
   const baseParams: any[] = [...scope.params];
   const conditions = [scope.whereSql];
   if (departmentId && UUID_PATTERN.test(departmentId)) {
@@ -68,15 +69,15 @@ export async function getFilterOptionsInScope(
          JOIN departments d ON d.id = u.department_id
         WHERE ${scope.whereSql}
         ORDER BY d.name`,
-      [...scope.params]
+      [...scope.params],
     ),
     query<{ id: string; name: string; department_id: string | null }>(
       `SELECT DISTINCT t.id, t.name, t.department_id
          FROM users u
          JOIN teams t ON t.id = u.team_id
-        WHERE ${conditions.join(' AND ')}
+        WHERE ${conditions.join(" AND ")}
         ORDER BY t.name`,
-      baseParams
+      baseParams,
     ),
   ]);
   return { departments: departments.rows, teams: teams.rows };
@@ -86,7 +87,9 @@ export async function getFilterOptionsInScope(
  * Tìm người dùng theo email (kèm password_hash để xác thực phía server)
  * Chỉ dùng trong module auth nội bộ, không bao giờ gửi password_hash ra client
  */
-export async function getUserByEmail(email: string): Promise<UserWithPassword | null> {
+export async function getUserByEmail(
+  email: string,
+): Promise<UserWithPassword | null> {
   const sql = `
     SELECT id, email, full_name, role, position, department_id, team_id, manager_id, password_hash, is_active, employment_status, created_at, updated_at
     FROM users
@@ -127,7 +130,9 @@ export async function getSafeUserById(id: string): Promise<SafeUser | null> {
 }
 
 /** Kiểm tra phòng ban có Trưởng phòng đang hoạt động hay chưa. */
-export async function hasActiveManagerForDepartment(departmentId: string | null): Promise<boolean> {
+export async function hasActiveManagerForDepartment(
+  departmentId: string | null,
+): Promise<boolean> {
   if (!departmentId) return false;
 
   const result = await query<{ exists: boolean }>(
@@ -138,7 +143,7 @@ export async function hasActiveManagerForDepartment(departmentId: string | null)
          AND role = 'MANAGER'
          AND is_active = true
      ) AS exists`,
-    [departmentId]
+    [departmentId],
   );
 
   return Boolean(result.rows[0]?.exists);

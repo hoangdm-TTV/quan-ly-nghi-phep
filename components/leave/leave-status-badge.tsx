@@ -1,4 +1,4 @@
-import { LeaveStatus } from '@/lib/leave/workflow';
+import { LeaveStatus } from "@/lib/leave/workflow";
 
 interface LeaveStatusBadgeProps {
   status: LeaveStatus;
@@ -7,34 +7,34 @@ interface LeaveStatusBadgeProps {
 export default function LeaveStatusBadge({ status }: LeaveStatusBadgeProps) {
   const configs: Record<LeaveStatus, { label: string; className: string }> = {
     PENDING: {
-      label: 'Chờ duyệt',
-      className: 'bg-amber-50 text-amber-700 border-amber-200',
+      label: "Chờ duyệt",
+      className: "bg-amber-50 text-amber-700 border-amber-200",
     },
     APPROVED_BY_LEAD: {
-      label: 'Chờ Giám đốc duyệt',
-      className: 'bg-blue-50 text-blue-700 border-blue-200',
+      label: "Chờ Giám đốc duyệt",
+      className: "bg-blue-50 text-blue-700 border-blue-200",
     },
     WAITING_FOR_DOC: {
-      label: 'Chờ nộp giấy đã ký',
-      className: 'bg-violet-50 text-violet-700 border-violet-200',
+      label: "Chờ nộp giấy đã ký",
+      className: "bg-violet-50 text-violet-700 border-violet-200",
     },
     COMPLETED: {
-      label: 'Đã hoàn tất',
-      className: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      label: "Đã hoàn tất",
+      className: "bg-emerald-50 text-emerald-700 border-emerald-200",
     },
     REJECTED: {
-      label: 'Đã từ chối',
-      className: 'bg-rose-50 text-rose-700 border-rose-200',
+      label: "Đã từ chối",
+      className: "bg-rose-50 text-rose-700 border-rose-200",
     },
     CANCELLED: {
-      label: 'Đã hủy',
-      className: 'bg-slate-50 text-slate-700 border-slate-200',
+      label: "Đã hủy",
+      className: "bg-slate-50 text-slate-700 border-slate-200",
     },
   };
 
   const current = configs[status] || {
     label: status,
-    className: 'bg-slate-50 text-slate-700 border-slate-200',
+    className: "bg-slate-50 text-slate-700 border-slate-200",
   };
 
   return (

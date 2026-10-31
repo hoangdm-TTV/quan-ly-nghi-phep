@@ -1,9 +1,13 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
-import { approveLeaveRequestAction, rejectLeaveRequestAction, LeaveActionState } from '@/lib/leave/actions';
-import { CheckCircle2, XCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { useState } from "react";
+import { useFormState, useFormStatus } from "react-dom";
+import {
+  approveLeaveRequestAction,
+  rejectLeaveRequestAction,
+  LeaveActionState,
+} from "@/lib/leave/actions";
+import { CheckCircle2, XCircle, AlertCircle, Loader2 } from "lucide-react";
 
 interface ApprovalActionsProps {
   requestId: string;
@@ -56,13 +60,19 @@ function RejectBtn() {
 }
 
 export default function ApprovalActions({ requestId }: ApprovalActionsProps) {
-  const [mode, setMode] = useState<'idle' | 'approve' | 'reject'>('idle');
+  const [mode, setMode] = useState<"idle" | "approve" | "reject">("idle");
 
   const initialApproveState: LeaveActionState = {};
-  const [approveState, approveAction] = useFormState(approveLeaveRequestAction, initialApproveState);
+  const [approveState, approveAction] = useFormState(
+    approveLeaveRequestAction,
+    initialApproveState,
+  );
 
   const initialRejectState: LeaveActionState = {};
-  const [rejectState, rejectAction] = useFormState(rejectLeaveRequestAction, initialRejectState);
+  const [rejectState, rejectAction] = useFormState(
+    rejectLeaveRequestAction,
+    initialRejectState,
+  );
 
   return (
     <div className="space-y-3">
@@ -79,17 +89,17 @@ export default function ApprovalActions({ requestId }: ApprovalActionsProps) {
         </div>
       )}
 
-      {mode === 'idle' && (
+      {mode === "idle" && (
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setMode('approve')}
+            onClick={() => setMode("approve")}
             className="inline-flex items-center px-3.5 py-1.5 text-xs font-semibold rounded-lg text-emerald-700 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 transition-colors"
           >
             <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
             Phê duyệt
           </button>
           <button
-            onClick={() => setMode('reject')}
+            onClick={() => setMode("reject")}
             className="inline-flex items-center px-3.5 py-1.5 text-xs font-semibold rounded-lg text-rose-700 bg-rose-50 border border-rose-200 hover:bg-rose-100 transition-colors"
           >
             <XCircle className="w-3.5 h-3.5 mr-1.5" />
@@ -98,8 +108,11 @@ export default function ApprovalActions({ requestId }: ApprovalActionsProps) {
         </div>
       )}
 
-      {mode === 'approve' && (
-        <form action={approveAction} className="p-3 bg-emerald-50/60 border border-emerald-200 rounded-lg space-y-2.5">
+      {mode === "approve" && (
+        <form
+          action={approveAction}
+          className="p-3 bg-emerald-50/60 border border-emerald-200 rounded-lg space-y-2.5"
+        >
           <input type="hidden" name="requestId" value={requestId} />
           <div>
             <label className="block text-xs font-medium text-emerald-900 mb-1">
@@ -116,7 +129,7 @@ export default function ApprovalActions({ requestId }: ApprovalActionsProps) {
             <ApproveBtn />
             <button
               type="button"
-              onClick={() => setMode('idle')}
+              onClick={() => setMode("idle")}
               className="px-3 py-2 text-xs font-medium text-slate-600 hover:text-slate-800"
             >
               Hủy
@@ -125,8 +138,11 @@ export default function ApprovalActions({ requestId }: ApprovalActionsProps) {
         </form>
       )}
 
-      {mode === 'reject' && (
-        <form action={rejectAction} className="p-3 bg-rose-50/60 border border-rose-200 rounded-lg space-y-2.5">
+      {mode === "reject" && (
+        <form
+          action={rejectAction}
+          className="p-3 bg-rose-50/60 border border-rose-200 rounded-lg space-y-2.5"
+        >
           <input type="hidden" name="requestId" value={requestId} />
           <div>
             <label className="block text-xs font-medium text-rose-900 mb-1">
@@ -144,7 +160,7 @@ export default function ApprovalActions({ requestId }: ApprovalActionsProps) {
             <RejectBtn />
             <button
               type="button"
-              onClick={() => setMode('idle')}
+              onClick={() => setMode("idle")}
               className="px-3 py-2 text-xs font-medium text-slate-600 hover:text-slate-800"
             >
               Hủy

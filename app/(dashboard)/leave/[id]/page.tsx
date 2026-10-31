@@ -1,15 +1,22 @@
-import { notFound, redirect } from 'next/navigation';
-import { requireAuth, canAccessUserData } from '@/lib/auth/permissions';
-import { getLeaveRequestById, getLeaveApprovalHistory, getLeaveDocumentMetadataById } from '@/lib/leave/queries';
-import { evaluateLeaveApproval } from '@/lib/leave/workflow';
-import { getSafeUserById, hasActiveManagerForDepartment } from '@/lib/db/queries/users';
-import LeaveStatusBadge from '@/components/leave/leave-status-badge';
-import LeaveDocumentForm from '@/components/leave/leave-document-form';
-import ApprovalActions from '@/components/leave/approval-actions';
-import PendingLeaveEditor from '@/components/leave/pending-request-editor';
-import RequestChangeHistory from '@/components/requests/request-change-history';
-import { getRequestChangeHistory } from '@/lib/admin/queries';
-import Link from 'next/link';
+import { notFound, redirect } from "next/navigation";
+import { requireAuth, canAccessUserData } from "@/lib/auth/permissions";
+import {
+  getLeaveRequestById,
+  getLeaveApprovalHistory,
+  getLeaveDocumentMetadataById,
+} from "@/lib/leave/queries";
+import { evaluateLeaveApproval } from "@/lib/leave/workflow";
+import {
+  getSafeUserById,
+  hasActiveManagerForDepartment,
+} from "@/lib/db/queries/users";
+import LeaveStatusBadge from "@/components/leave/leave-status-badge";
+import LeaveDocumentForm from "@/components/leave/leave-document-form";
+import ApprovalActions from "@/components/leave/approval-actions";
+import PendingLeaveEditor from "@/components/leave/pending-request-editor";
+import RequestChangeHistory from "@/components/requests/request-change-history";
+import { getRequestChangeHistory } from "@/lib/admin/queries";
+import Link from "next/link";
 import {
   Calendar,
   Clock,
@@ -21,10 +28,10 @@ import {
   AlertTriangle,
   History,
   ShieldAlert,
-} from 'lucide-react';
+} from "lucide-react";
 
 export const metadata = {
-  title: 'Chi tiết đơn nghỉ phép | Leave & Gate Pass',
+  title: "Chi tiết đơn nghỉ phép | Leave & Gate Pass",
 };
 
 export default async function LeaveDetailPage({
@@ -49,18 +56,19 @@ export default async function LeaveDetailPage({
   const hasManagerialAccess = canAccessUserData(currentUser, applicant);
 
   if (!isOwner && !hasManagerialAccess) {
-    redirect('/leave');
+    redirect("/leave");
   }
 
   const documentMetadata = await getLeaveDocumentMetadataById(request.id);
   const history = await getLeaveApprovalHistory(request.id);
-  const changeHistory = await getRequestChangeHistory('LEAVE', request.id);
+  const changeHistory = await getRequestChangeHistory("LEAVE", request.id);
 
   // Kế toán chỉ xem (chỉ đọc), không duyệt.
-  const isReadOnly = currentUser.role === 'ACCOUNTANT';
-  const directorDirectApproval = currentUser.role === 'DIRECTOR'
-    && request.status === 'PENDING'
-    && !(await hasActiveManagerForDepartment(applicant.department_id));
+  const isReadOnly = currentUser.role === "ACCOUNTANT";
+  const directorDirectApproval =
+    currentUser.role === "DIRECTOR" &&
+    request.status === "PENDING" &&
+    !(await hasActiveManagerForDepartment(applicant.department_id));
   const approvalEvaluation = isReadOnly
     ? { allowed: false }
     : evaluateLeaveApproval(
@@ -68,7 +76,7 @@ export default async function LeaveDetailPage({
         applicant,
         request.status,
         request.duration_days,
-        directorDirectApproval
+        directorDirectApproval,
       );
   const canApproveNow = approvalEvaluation.allowed;
 
@@ -94,15 +102,19 @@ export default async function LeaveDetailPage({
               Đơn xin nghỉ phép #{request.id.slice(0, 8)}
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Tạo lúc {new Date(request.created_at).toLocaleString('vi-VN')}
+              Tạo lúc {new Date(request.created_at).toLocaleString("vi-VN")}
             </p>
           </div>
 
           {(canApproveNow || isReadOnly) && (
             <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
-              <p className="text-xs font-semibold text-slate-700 mb-2">Thao tác xử lý đơn:</p>
+              <p className="text-xs font-semibold text-slate-700 mb-2">
+                Thao tác xử lý đơn:
+              </p>
               {isReadOnly ? (
-                <p className="text-xs text-slate-500 italic">Tài khoản Kế toán chỉ xem (chỉ đọc), không phê duyệt.</p>
+                <p className="text-xs text-slate-500 italic">
+                  Tài khoản Kế toán chỉ xem (chỉ đọc), không phê duyệt.
+                </p>
               ) : (
                 <ApprovalActions requestId={request.id} />
               )}
@@ -111,22 +123,24 @@ export default async function LeaveDetailPage({
         </div>
 
         {/* Thông báo trạng thái đặc biệt */}
-        {request.status === 'REJECTED' && (
+        {request.status === "REJECTED" && (
           <div className="p-4 bg-rose-50 border border-rose-200 rounded-lg space-y-1">
             <div className="flex items-center gap-2 text-rose-800 font-semibold text-sm">
               <ShieldAlert className="w-4 h-4 text-rose-600" />
               Đơn nghỉ phép này đã bị từ chối
             </div>
             <p className="text-xs text-rose-700">
-              <span className="font-medium">Người từ chối:</span> {request.approver_name || 'Người quản lý'}
+              <span className="font-medium">Người từ chối:</span>{" "}
+              {request.approver_name || "Người quản lý"}
             </p>
             <p className="text-xs text-rose-700">
-              <span className="font-medium">Lý do từ chối:</span> {request.rejection_reason || 'Không có lý do chi tiết'}
+              <span className="font-medium">Lý do từ chối:</span>{" "}
+              {request.rejection_reason || "Không có lý do chi tiết"}
             </p>
           </div>
         )}
 
-        {request.status === 'WAITING_FOR_DOC' && (
+        {request.status === "WAITING_FOR_DOC" && (
           <div className="p-4 bg-violet-50 border border-violet-200 rounded-lg space-y-1">
             <div className="flex items-center gap-2 text-violet-900 font-semibold text-sm">
               <Clock className="w-4 h-4 text-violet-600" />
@@ -134,22 +148,27 @@ export default async function LeaveDetailPage({
             </div>
             <p className="text-xs text-violet-700">
               {isOwner
-                ? 'Đơn đã được duyệt. Nộp ảnh hoặc PDF giấy xin nghỉ phép đã ký để chuyển đơn sang hoàn tất.'
-                : 'Đơn đã được duyệt và đang chờ chủ đơn nộp giấy đã ký.'}
+                ? "Đơn đã được duyệt. Nộp ảnh hoặc PDF giấy xin nghỉ phép đã ký để chuyển đơn sang hoàn tất."
+                : "Đơn đã được duyệt và đang chờ chủ đơn nộp giấy đã ký."}
             </p>
           </div>
         )}
 
-        {request.status === 'WAITING_FOR_DOC' && isOwner && (
+        {request.status === "WAITING_FOR_DOC" && isOwner && (
           <LeaveDocumentForm requestId={request.id} />
         )}
 
-        {request.status === 'COMPLETED' && documentMetadata && (
+        {request.status === "COMPLETED" && documentMetadata && (
           <div className="flex flex-col gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-xs sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="font-semibold text-emerald-900">Giấy nghỉ phép đã nộp</p>
+              <p className="font-semibold text-emerald-900">
+                Giấy nghỉ phép đã nộp
+              </p>
               <p className="mt-1 text-emerald-800">
-                {documentMetadata.document_file_name} · {new Date(documentMetadata.document_uploaded_at).toLocaleString('vi-VN')}
+                {documentMetadata.document_file_name} ·{" "}
+                {new Date(documentMetadata.document_uploaded_at).toLocaleString(
+                  "vi-VN",
+                )}
               </p>
             </div>
             <a
@@ -170,19 +189,27 @@ export default async function LeaveDetailPage({
             <div className="bg-slate-50 p-4 rounded-lg space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-slate-500">Họ và tên:</span>
-                <span className="font-semibold text-slate-900">{request.employee_name}</span>
+                <span className="font-semibold text-slate-900">
+                  {request.employee_name}
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-slate-500">Chức vụ:</span>
-                <span className="font-medium text-slate-700">{request.employee_role}</span>
+                <span className="font-medium text-slate-700">
+                  {request.employee_role}
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-slate-500">Phòng ban:</span>
-                <span className="text-slate-700">{request.department_name || 'Chưa phân bổ'}</span>
+                <span className="text-slate-700">
+                  {request.department_name || "Chưa phân bổ"}
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-slate-500">Nhóm (Team):</span>
-                <span className="text-slate-700">{request.team_name || 'Chưa phân bổ'}</span>
+                <span className="text-slate-700">
+                  {request.team_name || "Chưa phân bổ"}
+                </span>
               </div>
             </div>
           </div>
@@ -207,13 +234,15 @@ export default async function LeaveDetailPage({
               <div className="flex items-center justify-between">
                 <span className="text-slate-500">Quy trình duyệt:</span>
                 <span className="text-slate-700">
-                  {request.duration_days <= 1 ? '1 cấp duyệt' : '2 cấp duyệt (Cấp 1 + Giám đốc)'}
+                  {request.duration_days <= 1
+                    ? "1 cấp duyệt"
+                    : "2 cấp duyệt (Cấp 1 + Giám đốc)"}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-slate-500">Cập nhật lần cuối:</span>
                 <span className="text-slate-700">
-                  {new Date(request.updated_at).toLocaleDateString('vi-VN')}
+                  {new Date(request.updated_at).toLocaleDateString("vi-VN")}
                 </span>
               </div>
             </div>
@@ -226,12 +255,21 @@ export default async function LeaveDetailPage({
             Lý do xin nghỉ phép
           </h3>
           <div className="p-4 bg-slate-50 rounded-lg text-xs text-slate-700 whitespace-pre-wrap leading-relaxed">
-            {request.reason || 'Không có lý do cụ thể.'}
+            {request.reason || "Không có lý do cụ thể."}
           </div>
         </div>
       </div>
 
-      {isOwner && request.status === 'PENDING' && <PendingLeaveEditor request={{ id: request.id, start_date: request.start_date, end_date: request.end_date, reason: request.reason }} />}
+      {isOwner && request.status === "PENDING" && (
+        <PendingLeaveEditor
+          request={{
+            id: request.id,
+            start_date: request.start_date,
+            end_date: request.end_date,
+            reason: request.reason,
+          }}
+        />
+      )}
       <RequestChangeHistory entries={changeHistory} />
 
       {/* Lịch sử phê duyệt */}
@@ -261,16 +299,16 @@ export default async function LeaveDetailPage({
                       {h.approver_name} ({h.approver_role})
                     </p>
                     <span className="text-[11px] text-slate-400">
-                      {new Date(h.created_at).toLocaleString('vi-VN')}
+                      {new Date(h.created_at).toLocaleString("vi-VN")}
                     </span>
                   </div>
                   <p className="text-slate-600">
-                    <span className="font-medium">Hành động:</span>{' '}
-                    {h.action === 'APPROVED_LEAD'
-                      ? 'Đã duyệt Cấp 1 (Trưởng phòng)'
-                      : h.action === 'APPROVED_DIRECTOR'
-                      ? 'Đã duyệt Cấp 2 (Giám đốc hoàn tất phê duyệt)'
-                      : 'Đã từ chối đơn'}
+                    <span className="font-medium">Hành động:</span>{" "}
+                    {h.action === "APPROVED_LEAD"
+                      ? "Đã duyệt Cấp 1 (Trưởng phòng)"
+                      : h.action === "APPROVED_DIRECTOR"
+                        ? "Đã duyệt Cấp 2 (Giám đốc hoàn tất phê duyệt)"
+                        : "Đã từ chối đơn"}
                   </p>
                   {h.comment && (
                     <p className="text-slate-600 italic bg-white p-2 rounded border border-slate-200 mt-1">

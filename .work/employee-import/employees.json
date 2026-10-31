@@ -1,1346 +1,1346 @@
 ﻿[
-    {
-        "employee_code":  "GD001",
-        "full_name":  "Nguyễn Quang Ninh",
-        "department":  "Ban giám đốc",
-        "position":  "Giám đốc",
-        "manager_name":  "Nguyễn Quang Ninh",
-        "hire_date":  "2009-11-03"
-    },
-    {
-        "employee_code":  "GD002",
-        "full_name":  "Vũ Thị Hồng Bé",
-        "department":  "Ban giám đốc",
-        "position":  "Trưởng bộ phận",
-        "manager_name":  "Nguyễn Quang Ninh",
-        "hire_date":  "2009-11-03"
-    },
-    {
-        "employee_code":  "NV003",
-        "full_name":  "Nguyễn Quang Nghiêm",
-        "department":  "Quản lý chung",
-        "position":  "Trưởng bộ phận",
-        "manager_name":  "Nguyễn Quang Ninh",
-        "hire_date":  "2013-11-01"
-    },
-    {
-        "employee_code":  "NV004",
-        "full_name":  "Hoàng Văn Học",
-        "department":  "Tuyển dụng",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2014-03-09"
-    },
-    {
-        "employee_code":  "NV005",
-        "full_name":  "Nguyễn Thị Tường Loan",
-        "department":  "Tuyển dụng",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2015-12-18"
-    },
-    {
-        "employee_code":  "NV007",
-        "full_name":  "Nguyễn Thị Thơ",
-        "department":  "Kế toán",
-        "position":  "Nhân viên",
-        "manager_name":  "Vũ Thị Hồng Bé",
-        "hire_date":  "2016-11-08"
-    },
-    {
-        "employee_code":  "NV008",
-        "full_name":  "Hoàng Thị Hằng",
-        "department":  "Tuyển dụng",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2017-03-19"
-    },
-    {
-        "employee_code":  "NV009",
-        "full_name":  "Nguyễn Thị Chinh",
-        "department":  "Tuyển dụng",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2017-04-01"
-    },
-    {
-        "employee_code":  "NV010",
-        "full_name":  "Đặng Tuấn Cương",
-        "department":  "Tuyển dụng",
-        "position":  "Trưởng bộ phận",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2017-05-04"
-    },
-    {
-        "employee_code":  "NV011",
-        "full_name":  "Nguyễn Quang Giang",
-        "department":  "Dịch vụ",
-        "position":  "Nhân viên",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2017-10-25"
-    },
-    {
-        "employee_code":  "NV012",
-        "full_name":  "Đặng Hữu Hoàng",
-        "department":  "Quản lý",
-        "position":  "Nhân viên",
-        "manager_name":  "Nguyễn Trọng Đức",
-        "hire_date":  "2018-06-11"
-    },
-    {
-        "employee_code":  "NV014",
-        "full_name":  "Trần Văn Thắng",
-        "department":  "Quản lý",
-        "position":  "Nhân viên",
-        "manager_name":  "Nguyễn Trọng Đức",
-        "hire_date":  "2018-08-27"
-    },
-    {
-        "employee_code":  "NV015",
-        "full_name":  "Hà Văn Dũng",
-        "department":  "Quản lý",
-        "position":  "Nhân viên",
-        "manager_name":  "Nguyễn Trọng Đức",
-        "hire_date":  "2018-12-01"
-    },
-    {
-        "employee_code":  "NV016",
-        "full_name":  "Lê Văn Quỳnh",
-        "department":  "Quản lý",
-        "position":  "Nhân viên",
-        "manager_name":  "Nguyễn Trọng Đức",
-        "hire_date":  "2019-03-18"
-    },
-    {
-        "employee_code":  "NV017",
-        "full_name":  "Phan Văn Sâm",
-        "department":  "Dịch vụ",
-        "position":  "Lái xe",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2019-10-23"
-    },
-    {
-        "employee_code":  "NV018",
-        "full_name":  "Nguyễn Thị Hồng",
-        "department":  "Tuyển dụng",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2020-03-23"
-    },
-    {
-        "employee_code":  "NV019",
-        "full_name":  "Đỗ Thị Tiến",
-        "department":  "Tuyển dụng",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2020-06-09"
-    },
-    {
-        "employee_code":  "NV020",
-        "full_name":  "Phạm Khắc Huân",
-        "department":  "Quản lý",
-        "position":  "Nhân viên",
-        "manager_name":  "Nguyễn Trọng Đức",
-        "hire_date":  "2020-06-29"
-    },
-    {
-        "employee_code":  "NV021",
-        "full_name":  "Lê Quang Quyền",
-        "department":  "Quản lý",
-        "position":  "Nhân viên",
-        "manager_name":  "Nguyễn Trọng Đức",
-        "hire_date":  "2020-09-01"
-    },
-    {
-        "employee_code":  "NV022",
-        "full_name":  "Lục Văn Đức",
-        "department":  "Dịch vụ",
-        "position":  "Lái xe",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2020-12-22"
-    },
-    {
-        "employee_code":  "NV023",
-        "full_name":  "Nguyễn Thị Ngọc",
-        "department":  "Tuyển dụng",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2021-03-08"
-    },
-    {
-        "employee_code":  "NV025",
-        "full_name":  "Trần Quốc Việt",
-        "department":  "Quản lý",
-        "position":  "Nhân viên",
-        "manager_name":  "Nguyễn Trọng Đức",
-        "hire_date":  "2021-08-25"
-    },
-    {
-        "employee_code":  "NV026",
-        "full_name":  "Nguyễn Hữu Kiên",
-        "department":  "Quản lý",
-        "position":  "Nhân viên",
-        "manager_name":  "Nguyễn Trọng Đức",
-        "hire_date":  "2021-09-03"
-    },
-    {
-        "employee_code":  "NV028",
-        "full_name":  "Nguyễn Thảo Linh",
-        "department":  "Kế toán",
-        "position":  "Nhân viên",
-        "manager_name":  "Vũ Thị Hồng Bé",
-        "hire_date":  "2021-11-03"
-    },
-    {
-        "employee_code":  "NV029",
-        "full_name":  "Đinh Thị Lan Anh",
-        "department":  "Tuyển dụng",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2021-11-03"
-    },
-    {
-        "employee_code":  "NV030",
-        "full_name":  "Nguyễn Nguyên Ngọc",
-        "department":  "Quản lý",
-        "position":  "Nhân viên",
-        "manager_name":  "Nguyễn Trọng Đức",
-        "hire_date":  "2021-12-03"
-    },
-    {
-        "employee_code":  "NV031",
-        "full_name":  "Hà Thị Liễu",
-        "department":  "Tuyển dụng",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2022-03-26"
-    },
-    {
-        "employee_code":  "NV032",
-        "full_name":  "Hoàng Thị Thao",
-        "department":  "Dịch vụ",
-        "position":  "Tạp vụ",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2022-04-06"
-    },
-    {
-        "employee_code":  "NV033",
-        "full_name":  "Nguyễn Quang Tuấn",
-        "department":  "Dịch vụ",
-        "position":  "Nhân viên",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2022-04-12"
-    },
-    {
-        "employee_code":  "NV034",
-        "full_name":  "Mai Thị Hoàn",
-        "department":  "Dịch vụ",
-        "position":  "Lễ tân",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2022-05-05"
-    },
-    {
-        "employee_code":  "NV035",
-        "full_name":  "Lâm Thị Cúc",
-        "department":  "Dịch vụ",
-        "position":  "Tạp vụ",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2022-06-02"
-    },
-    {
-        "employee_code":  "NV036",
-        "full_name":  "Trần Văn Lượng",
-        "department":  "Tuyển dụng",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2022-07-25"
-    },
-    {
-        "employee_code":  "NV037",
-        "full_name":  "Nguyễn Trọng Đức",
-        "department":  "Quản lý",
-        "position":  "Nhân viên",
-        "manager_name":  "Nguyễn Trọng Đức",
-        "hire_date":  "2022-08-15"
-    },
-    {
-        "employee_code":  "NV038",
-        "full_name":  "Hoàng Thị Hậu",
-        "department":  "Tuyển dụng",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2022-11-26"
-    },
-    {
-        "employee_code":  "NV039",
-        "full_name":  "Nguyễn Duy Điệp",
-        "department":  "Truyền thông",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2023-03-09"
-    },
-    {
-        "employee_code":  "NV040",
-        "full_name":  "Nguyễn Hữu Khiêm",
-        "department":  "Dịch vụ",
-        "position":  "Nhân viên",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2023-03-13"
-    },
-    {
-        "employee_code":  "NV041",
-        "full_name":  "Võ Lê Hà Giang",
-        "department":  "Tuyển dụng",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2023-06-28"
-    },
-    {
-        "employee_code":  "NV044",
-        "full_name":  "Nguyễn Thị Phương",
-        "department":  "Tuyển dụng",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2023-07-26"
-    },
-    {
-        "employee_code":  "NV045",
-        "full_name":  "Lộc Thị Hương",
-        "department":  "Tuyển dụng",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2023-07-29"
-    },
-    {
-        "employee_code":  "NV046",
-        "full_name":  "Lê Trùng Dương",
-        "department":  "Dịch vụ",
-        "position":  "Lái xe",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2023-09-10"
-    },
-    {
-        "employee_code":  "NV047",
-        "full_name":  "Võ Thị Ngọc Thu",
-        "department":  "Tuyển dụng",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2023-09-26"
-    },
-    {
-        "employee_code":  "NV048",
-        "full_name":  "Nguyễn Mai Hương",
-        "department":  "Tuyển dụng",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2023-10-23"
-    },
-    {
-        "employee_code":  "NV049",
-        "full_name":  "Trần Thị Diệu Hương",
-        "department":  "Tuyển dụng",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2023-12-08"
-    },
-    {
-        "employee_code":  "NV050",
-        "full_name":  "Lương Quốc Huy",
-        "department":  "Quản lý",
-        "position":  "Nhân viên",
-        "manager_name":  "Nguyễn Trọng Đức",
-        "hire_date":  "2024-01-03"
-    },
-    {
-        "employee_code":  "NV051",
-        "full_name":  "Nguyễn Thị Minh Châu",
-        "department":  "Kế toán",
-        "position":  "Nhân viên",
-        "manager_name":  "Vũ Thị Hồng Bé",
-        "hire_date":  "2024-03-04"
-    },
-    {
-        "employee_code":  "NV052",
-        "full_name":  "Cung Cường Huân",
-        "department":  "Dịch vụ",
-        "position":  "Lái xe",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2024-03-18"
-    },
-    {
-        "employee_code":  "NV053",
-        "full_name":  "Nguyễn Thị Nhàn",
-        "department":  "Tuyển dụng",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2024-03-21"
-    },
-    {
-        "employee_code":  "NV054",
-        "full_name":  "Hoàng Thu Hằng",
-        "department":  "Tuyển dụng",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2024-03-23"
-    },
-    {
-        "employee_code":  "NV055",
-        "full_name":  "Nguyễn Đức Hải",
-        "department":  "Quản lý",
-        "position":  "Nhân viên",
-        "manager_name":  "Nguyễn Trọng Đức",
-        "hire_date":  "2024-03-23"
-    },
-    {
-        "employee_code":  "NV056",
-        "full_name":  "Nguyễn Quang Tuấn 2000",
-        "department":  "Truyền thông",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2024-03-27"
-    },
-    {
-        "employee_code":  "NV057",
-        "full_name":  "Nguyễn Đắc Vương",
-        "department":  "Quản lý",
-        "position":  "Nhân viên",
-        "manager_name":  "Nguyễn Trọng Đức",
-        "hire_date":  "2024-04-11"
-    },
-    {
-        "employee_code":  "NV058",
-        "full_name":  "Hoàng Khánh Huyền",
-        "department":  "Truyền thông",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2024-04-15"
-    },
-    {
-        "employee_code":  "NV059",
-        "full_name":  "Võ Phước Quang Đại",
-        "department":  "Quản lý",
-        "position":  "Nhân viên",
-        "manager_name":  "Nguyễn Trọng Đức",
-        "hire_date":  "2024-04-15"
-    },
-    {
-        "employee_code":  "NV061",
-        "full_name":  "La Thị Sáu",
-        "department":  "Tuyển dụng",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2024-05-06"
-    },
-    {
-        "employee_code":  "NV062",
-        "full_name":  "Nguyễn Công Hồng",
-        "department":  "Dịch vụ",
-        "position":  "Lái xe",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2024-05-17"
-    },
-    {
-        "employee_code":  "NV064",
-        "full_name":  "Đỗ Quyết Thắng",
-        "department":  "Quản lý",
-        "position":  "Nhân viên",
-        "manager_name":  "Nguyễn Trọng Đức",
-        "hire_date":  "2024-06-03"
-    },
-    {
-        "employee_code":  "NV065",
-        "full_name":  "Nguyễn Thị Hồng Nhung",
-        "department":  "Tuyển dụng",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2024-06-03"
-    },
-    {
-        "employee_code":  "NV067",
-        "full_name":  "Nông Thị Nheo",
-        "department":  "Dịch vụ",
-        "position":  "Tạp vụ",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2024-06-24"
-    },
-    {
-        "employee_code":  "NV068",
-        "full_name":  "Đỗ Đình Thư",
-        "department":  "Dịch vụ",
-        "position":  "Trưởng bộ phận",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2024-07-01"
-    },
-    {
-        "employee_code":  "NV069",
-        "full_name":  "Trần Công Tình",
-        "department":  "Quản lý",
-        "position":  "Nhân viên",
-        "manager_name":  "Nguyễn Trọng Đức",
-        "hire_date":  "2024-07-03"
-    },
-    {
-        "employee_code":  "NV070",
-        "full_name":  "Vũ Thị Thảo Phương",
-        "department":  "Kế toán",
-        "position":  "Nhân viên",
-        "manager_name":  "Vũ Thị Hồng Bé",
-        "hire_date":  "2024-07-19"
-    },
-    {
-        "employee_code":  "NV071",
-        "full_name":  "Phạm Thị Thư",
-        "department":  "Tuyển dụng",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2024-08-02"
-    },
-    {
-        "employee_code":  "NV073",
-        "full_name":  "Bàn Thị Đông",
-        "department":  "Tuyển dụng",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2024-08-13"
-    },
-    {
-        "employee_code":  "NV076",
-        "full_name":  "Phùng Thị Thao",
-        "department":  "Tuyển dụng",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2024-09-05"
-    },
-    {
-        "employee_code":  "NV077",
-        "full_name":  "Đinh Thế Hoàng",
-        "department":  "Truyền thông",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2024-09-07"
-    },
-    {
-        "employee_code":  "NV081",
-        "full_name":  "Lê Thị Thu Phương",
-        "department":  "Tuyển dụng",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2024-09-24"
-    },
-    {
-        "employee_code":  "NV085",
-        "full_name":  "Đỗ Văn Thảo",
-        "department":  "Dịch vụ",
-        "position":  "Nhân viên",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2024-11-01"
-    },
-    {
-        "employee_code":  "NV086",
-        "full_name":  "Lương Tuấn Tú",
-        "department":  "Dịch vụ",
-        "position":  "Lái xe",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2024-11-06"
-    },
-    {
-        "employee_code":  "NV088",
-        "full_name":  "Nguyễn Thị Quý",
-        "department":  "Dịch vụ",
-        "position":  "Tạp vụ",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2024-11-16"
-    },
-    {
-        "employee_code":  "NV090",
-        "full_name":  "Triệu Thị Đức",
-        "department":  "Dịch vụ",
-        "position":  "Lễ tân",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2024-12-25"
-    },
-    {
-        "employee_code":  "NV093",
-        "full_name":  "Nguyễn Viết Long",
-        "department":  "Tuyển dụng",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2025-01-06"
-    },
-    {
-        "employee_code":  "NV095",
-        "full_name":  "Nguyễn Thị Minh Nguyệt",
-        "department":  "Tuyển dụng",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2025-01-13"
-    },
-    {
-        "employee_code":  "NV101",
-        "full_name":  "Trương Thị Nguyên",
-        "department":  "Truyền thông",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2025-02-17"
-    },
-    {
-        "employee_code":  "NV102",
-        "full_name":  "Lục Văn Quân",
-        "department":  "Dịch vụ",
-        "position":  "Lái xe",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2025-02-17"
-    },
-    {
-        "employee_code":  "NV107",
-        "full_name":  "Trương Văn Hiền",
-        "department":  "Dịch vụ",
-        "position":  "Nhân viên",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2025-03-06"
-    },
-    {
-        "employee_code":  "NV115",
-        "full_name":  "Dương Thị Yến",
-        "department":  "Tuyển dụng",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2025-04-21"
-    },
-    {
-        "employee_code":  "NV117",
-        "full_name":  "Dương Thị Mỹ Lệ",
-        "department":  "Truyền thông",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2025-05-05"
-    },
-    {
-        "employee_code":  "NV118",
-        "full_name":  "Lù Thị Cọt",
-        "department":  "Dịch vụ",
-        "position":  "Tạp vụ",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2025-05-06"
-    },
-    {
-        "employee_code":  "NV122",
-        "full_name":  "Lê Thị Thái",
-        "department":  "Dịch vụ",
-        "position":  "Tạp vụ",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2025-05-19"
-    },
-    {
-        "employee_code":  "NV126",
-        "full_name":  "Nguyễn Thái Nam",
-        "department":  "Dịch vụ",
-        "position":  "Bảo vệ",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2025-06-12"
-    },
-    {
-        "employee_code":  "NV129",
-        "full_name":  "Nguyễn Thị Hà",
-        "department":  "Tuyển dụng",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2025-06-17"
-    },
-    {
-        "employee_code":  "NV131",
-        "full_name":  "Nguyễn Vũ Nam",
-        "department":  "Dịch vụ",
-        "position":  "Lái xe",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2025-06-26"
-    },
-    {
-        "employee_code":  "NV132",
-        "full_name":  "Vũ Văn Hiệp",
-        "department":  "Dịch vụ",
-        "position":  "Nhân viên",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2025-06-30"
-    },
-    {
-        "employee_code":  "NV138",
-        "full_name":  "Lê Thị Phận",
-        "department":  "Dịch vụ",
-        "position":  "Lễ tân",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2025-07-12"
-    },
-    {
-        "employee_code":  "NV146",
-        "full_name":  "Trần Minh Thao",
-        "department":  "Quản lý",
-        "position":  "Nhân viên",
-        "manager_name":  "Nguyễn Trọng Đức",
-        "hire_date":  "2025-08-01"
-    },
-    {
-        "employee_code":  "NV148",
-        "full_name":  "Nguyễn Mạnh Thành",
-        "department":  "Dịch vụ",
-        "position":  "Lái xe",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2025-08-01"
-    },
-    {
-        "employee_code":  "NV151",
-        "full_name":  "Dương Đăng Giang",
-        "department":  "Dịch vụ",
-        "position":  "Lái xe",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2025-08-06"
-    },
-    {
-        "employee_code":  "NV154",
-        "full_name":  "Lê Thị Hương",
-        "department":  "Truyền thông",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2025-08-11"
-    },
-    {
-        "employee_code":  "NV156",
-        "full_name":  "Nguyễn Công Minh",
-        "department":  "Truyền thông",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2025-08-11"
-    },
-    {
-        "employee_code":  "NV157",
-        "full_name":  "Bùi Thị Thúy Nga",
-        "department":  "Dịch vụ",
-        "position":  "Lễ tân",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2025-08-19"
-    },
-    {
-        "employee_code":  "NV161",
-        "full_name":  "Nguyễn Thu Hiền",
-        "department":  "Tuyển dụng",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2025-08-25"
-    },
-    {
-        "employee_code":  "NV162",
-        "full_name":  "Vi Thị Thùy",
-        "department":  "Dịch vụ",
-        "position":  "Lễ tân",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2025-08-26"
-    },
-    {
-        "employee_code":  "NV168",
-        "full_name":  "Ngọc Thị Thúy",
-        "department":  "Kế toán",
-        "position":  "Nhân viên",
-        "manager_name":  "Vũ Thị Hồng Bé",
-        "hire_date":  "2025-09-16"
-    },
-    {
-        "employee_code":  "NV171",
-        "full_name":  "Nguyễn Đức Thạo",
-        "department":  "Dịch vụ",
-        "position":  "Bảo vệ",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2025-09-27"
-    },
-    {
-        "employee_code":  "NV170",
-        "full_name":  "Nguyễn Thanh Bình",
-        "department":  "Dịch vụ",
-        "position":  "Lái xe",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2025-09-25"
-    },
-    {
-        "employee_code":  "NV178",
-        "full_name":  "Nguyễn Phương Thảo",
-        "department":  "Dịch vụ",
-        "position":  "Nhân viên",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2025-10-22"
-    },
-    {
-        "employee_code":  "NV177",
-        "full_name":  "Nguyễn Văn Quyết",
-        "department":  "Dịch vụ",
-        "position":  "Lái xe",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2025-10-20"
-    },
-    {
-        "employee_code":  "NV181",
-        "full_name":  "Lê Hồng Gấm",
-        "department":  "Dịch vụ",
-        "position":  "Tạp vụ",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2025-11-05"
-    },
-    {
-        "employee_code":  "NV184",
-        "full_name":  "Lãnh Thị Tuyến",
-        "department":  "Tuyển dụng",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2025-11-10"
-    },
-    {
-        "employee_code":  "NV197",
-        "full_name":  "Trần Thị Mão",
-        "department":  "Dịch vụ",
-        "position":  "Tạp vụ",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-01-02"
-    },
-    {
-        "employee_code":  "NV204",
-        "full_name":  "Nguyễn Ngọc Tuấn",
-        "department":  "Dịch vụ",
-        "position":  "Lái xe",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-01-23"
-    },
-    {
-        "employee_code":  "NV205",
-        "full_name":  "Nông Văn Hải",
-        "department":  "Dịch vụ",
-        "position":  "Lái xe",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-02-01"
-    },
-    {
-        "employee_code":  "NV206",
-        "full_name":  "Phạm Thị Quỳnh Dao",
-        "department":  "Truyền thông",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2026-02-26"
-    },
-    {
-        "employee_code":  "NV214",
-        "full_name":  "Phan Thị Quỳnh Anh",
-        "department":  "Tuyển dụng",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2026-03-02"
-    },
-    {
-        "employee_code":  "NV216",
-        "full_name":  "Nguyễn Huy Hoàng",
-        "department":  "Quản lý",
-        "position":  "Nhân viên",
-        "manager_name":  "Nguyễn Trọng Đức",
-        "hire_date":  "2026-03-02"
-    },
-    {
-        "employee_code":  "NV217",
-        "full_name":  "Hà Văn Dũng LX",
-        "department":  "Dịch vụ",
-        "position":  "Lái xe",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-03-02"
-    },
-    {
-        "employee_code":  "NV219",
-        "full_name":  "Trần Đức Trung",
-        "department":  "Dịch vụ",
-        "position":  "Lái xe",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-03-02"
-    },
-    {
-        "employee_code":  "NV225",
-        "full_name":  "Trần Thị Ngọc Ánh",
-        "department":  "Kế toán",
-        "position":  "Nhân viên",
-        "manager_name":  "Vũ Thị Hồng Bé",
-        "hire_date":  "2026-03-09"
-    },
-    {
-        "employee_code":  "NV227",
-        "full_name":  "Nông Văn Cường",
-        "department":  "Dịch vụ",
-        "position":  "Lái xe",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-03-10"
-    },
-    {
-        "employee_code":  "NV231",
-        "full_name":  "Trần Thanh",
-        "department":  "Dịch vụ",
-        "position":  "Nhân viên",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-03-20"
-    },
-    {
-        "employee_code":  "NV232",
-        "full_name":  "Hoàng Doãn Việt Quốc",
-        "department":  "Truyền thông",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2026-03-23"
-    },
-    {
-        "employee_code":  "NV237",
-        "full_name":  "Lê Văn Bình",
-        "department":  "Dịch vụ",
-        "position":  "Lái xe",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-04-20"
-    },
-    {
-        "employee_code":  "NV239",
-        "full_name":  "Đặng Thị Thùy",
-        "department":  "Tuyển dụng",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2026-05-08"
-    },
-    {
-        "employee_code":  "NV241",
-        "full_name":  "Nguyễn Thị Họa",
-        "department":  "Dịch vụ",
-        "position":  "Tạp vụ",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-05-11"
-    },
-    {
-        "employee_code":  "NV243",
-        "full_name":  "Khúc Thái Sơn",
-        "department":  "Dịch vụ",
-        "position":  "Bảo vệ",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-05-13"
-    },
-    {
-        "employee_code":  "NV244",
-        "full_name":  "Vi Văn Hữu",
-        "department":  "Dịch vụ",
-        "position":  "Lái xe",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-05-14"
-    },
-    {
-        "employee_code":  "NV252",
-        "full_name":  "Phương Thị Nhàn",
-        "department":  "Dịch vụ",
-        "position":  "Lễ tân",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-05-25"
-    },
-    {
-        "employee_code":  "NV255",
-        "full_name":  "Bàn Thị Trà My",
-        "department":  "Tuyển dụng",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2026-05-26"
-    },
-    {
-        "employee_code":  "NV257",
-        "full_name":  "Đào Duy Tiến",
-        "department":  "Dịch vụ",
-        "position":  "Lái xe",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-06-03"
-    },
-    {
-        "employee_code":  "NV259",
-        "full_name":  "Đinh Trọng Tài",
-        "department":  "Dịch vụ",
-        "position":  "Lái xe",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-06-05"
-    },
-    {
-        "employee_code":  "NV261",
-        "full_name":  "Phù Thị Đê",
-        "department":  "Dịch vụ",
-        "position":  "Lễ tân",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-06-08"
-    },
-    {
-        "employee_code":  "NV263",
-        "full_name":  "Đỗ Văn Tân",
-        "department":  "Dịch vụ",
-        "position":  "Nhân viên",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-06-09"
-    },
-    {
-        "employee_code":  "NV264",
-        "full_name":  "Mông Đình Diện",
-        "department":  "Dịch vụ",
-        "position":  "Bảo vệ",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-06-09"
-    },
-    {
-        "employee_code":  "NV270",
-        "full_name":  "Phạm Thành Lợi",
-        "department":  "Dịch vụ",
-        "position":  "Lái xe",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-06-18"
-    },
-    {
-        "employee_code":  "NV271",
-        "full_name":  "Lương Thị Hương",
-        "department":  "Dịch vụ",
-        "position":  "Bảo vệ",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-06-18"
-    },
-    {
-        "employee_code":  "NV277",
-        "full_name":  "Nông Thị Tương",
-        "department":  "Dịch vụ",
-        "position":  "Tạp vụ",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-06-26"
-    },
-    {
-        "employee_code":  "NV280",
-        "full_name":  "Nông Đức Tụy",
-        "department":  "Dịch vụ",
-        "position":  "Bảo vệ",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-07-01"
-    },
-    {
-        "employee_code":  "NV281",
-        "full_name":  "Nguyễn Phương Thành",
-        "department":  "Dịch vụ",
-        "position":  "Lái xe",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-07-01"
-    },
-    {
-        "employee_code":  "NV282",
-        "full_name":  "Nguyễn Đức Chi",
-        "department":  "Dịch vụ",
-        "position":  "Bảo vệ",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-07-03"
-    },
-    {
-        "employee_code":  "NV288",
-        "full_name":  "Chu Hà Trang",
-        "department":  "Tuyển dụng",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2026-07-07"
-    },
-    {
-        "employee_code":  "NV289",
-        "full_name":  "Mai Tùng Anh",
-        "department":  "Truyền thông",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2026-07-07"
-    },
-    {
-        "employee_code":  "NV290",
-        "full_name":  "Nguyễn Thị Xoan",
-        "department":  "Dịch vụ",
-        "position":  "Tạp vụ",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-07-12"
-    },
-    {
-        "employee_code":  "NV294",
-        "full_name":  "Nguyễn Hồng Ngọc",
-        "department":  "Kế toán",
-        "position":  "Nhân viên",
-        "manager_name":  "Vũ Thị Hồng Bé",
-        "hire_date":  "2026-07-13"
-    },
-    {
-        "employee_code":  "NV295",
-        "full_name":  "Bùi Thị Sinh",
-        "department":  "Tuyển dụng",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2026-07-14"
-    },
-    {
-        "employee_code":  "NV298",
-        "full_name":  "Nguyễn Thế Nghĩa",
-        "department":  "Dịch vụ",
-        "position":  "Bảo vệ",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-07-15"
-    },
-    {
-        "employee_code":  "NV299",
-        "full_name":  "Trần Thị Thúy Hằng",
-        "department":  "Tuyển dụng",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2026-07-17"
-    },
-    {
-        "employee_code":  "NV302",
-        "full_name":  "Thạch Thị Thương Thương",
-        "department":  "Tuyển dụng",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2026-07-21"
-    },
-    {
-        "employee_code":  "NV303",
-        "full_name":  "Phạm Thu Hương",
-        "department":  "Tuyển dụng",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2026-07-21"
-    },
-    {
-        "employee_code":  "NV304",
-        "full_name":  "Nông Thị Gia",
-        "department":  "Dịch vụ",
-        "position":  "Tạp vụ",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-07-25"
-    },
-    {
-        "employee_code":  "NV310",
-        "full_name":  "Nguyễn Phú Cường",
-        "department":  "Dịch vụ",
-        "position":  "Lái xe",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-08-11"
-    },
-    {
-        "employee_code":  "NV311",
-        "full_name":  "Vi Văn Nguyện",
-        "department":  "Dịch vụ",
-        "position":  "Lái xe",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-08-12"
-    },
-    {
-        "employee_code":  "NV315",
-        "full_name":  "Lê Văn Giang",
-        "department":  "Dịch vụ",
-        "position":  "Lái xe",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-08-14"
-    },
-    {
-        "employee_code":  "NV316",
-        "full_name":  "Nguyễn Anh Tú",
-        "department":  "IT",
-        "position":  "Nhân viên",
-        "manager_name":  "Nguyễn Quang Nghiêm",
-        "hire_date":  "2026-08-24"
-    },
-    {
-        "employee_code":  "NV317",
-        "full_name":  "Phạm Thúy Hằng",
-        "department":  "Tuyển dụng",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2026-08-24"
-    },
-    {
-        "employee_code":  "NV318",
-        "full_name":  "Nguyễn Văn Duy",
-        "department":  "Truyền thông",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2026-08-24"
-    },
-    {
-        "employee_code":  "NV319",
-        "full_name":  "Nguyễn Sỹ Long",
-        "department":  "Dịch vụ",
-        "position":  "Lái xe",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-08-26"
-    },
-    {
-        "employee_code":  "NV321",
-        "full_name":  "Đỗ Minh Hoàng",
-        "department":  "IT",
-        "position":  "Nhân viên",
-        "manager_name":  "Nguyễn Quang Nghiêm",
-        "hire_date":  "2026-09-03"
-    },
-    {
-        "employee_code":  "NV324",
-        "full_name":  "Lô Thị Viết",
-        "department":  "Dịch vụ",
-        "position":  "Tạp vụ",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-09-05"
-    },
-    {
-        "employee_code":  "NV325",
-        "full_name":  "Nguyễn Tài Tuệ Minh",
-        "department":  "Dịch vụ",
-        "position":  "Lễ tân",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-09-06"
-    },
-    {
-        "employee_code":  "NV326",
-        "full_name":  "Trần Thị Mai Quỳnh",
-        "department":  "Tuyển dụng",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2026-09-07"
-    },
-    {
-        "employee_code":  "NV329",
-        "full_name":  "Nông Văn Tuyển",
-        "department":  "Dịch vụ",
-        "position":  "Lái xe",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-09-08"
-    },
-    {
-        "employee_code":  "NV330",
-        "full_name":  "Hoàng Thị Nhàn",
-        "department":  "Dịch vụ",
-        "position":  "Tạp vụ",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-09-09"
-    },
-    {
-        "employee_code":  "NV331",
-        "full_name":  "Nông Thị Viên",
-        "department":  "Dịch vụ",
-        "position":  "Tạp vụ",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-09-12"
-    },
-    {
-        "employee_code":  "NV332",
-        "full_name":  "Phạm Đình Bắc",
-        "department":  "Dịch vụ",
-        "position":  "Nhân viên",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-09-15"
-    },
-    {
-        "employee_code":  "NV333",
-        "full_name":  "Hoàng Thị Lưu",
-        "department":  "Dịch vụ",
-        "position":  "Lễ tân",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-09-17"
-    },
-    {
-        "employee_code":  "NV335",
-        "full_name":  "Lăng Thị Huyền",
-        "department":  "Dịch vụ",
-        "position":  "Tạp vụ",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-09-19"
-    },
-    {
-        "employee_code":  "NV080",
-        "full_name":  "Nguyễn Thị Thoan",
-        "department":  "Dịch vụ",
-        "position":  "Tạp vụ",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-09-19"
-    },
-    {
-        "employee_code":  "NV336",
-        "full_name":  "Nguyễn Bá Toản",
-        "department":  "Truyền thông",
-        "position":  "Nhân viên",
-        "manager_name":  "Đặng Tuấn Cương",
-        "hire_date":  "2026-09-21"
-    },
-    {
-        "employee_code":  "NV337",
-        "full_name":  "Lèo Thi Nơi",
-        "department":  "Dịch vụ",
-        "position":  "Tạp vụ",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-09-25"
-    },
-    {
-        "employee_code":  "NV338",
-        "full_name":  "Lô Thị Nhình",
-        "department":  "Dịch vụ",
-        "position":  "Tạp vụ",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-09-30"
-    },
-    {
-        "employee_code":  "NV339",
-        "full_name":  "Vi Thị Thu Hà",
-        "department":  "Dịch vụ",
-        "position":  "Tạp vụ",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-09-30"
-    },
-    {
-        "employee_code":  "NV341",
-        "full_name":  "Nguyễn Thị Hân",
-        "department":  "Kế toán",
-        "position":  "Nhân viên",
-        "manager_name":  "Vũ Thị Hồng Bé",
-        "hire_date":  "2026-10-06"
-    },
-    {
-        "employee_code":  "NV342",
-        "full_name":  "Phạm Thị Viên",
-        "department":  "Dịch vụ",
-        "position":  "Tạp vụ",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-10-06"
-    },
-    {
-        "employee_code":  "NV343",
-        "full_name":  "Hoàng Thị Mương",
-        "department":  "Dịch vụ",
-        "position":  "Tạp vụ",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-10-14"
-    },
-    {
-        "employee_code":  "NV344",
-        "full_name":  "Triệu Thị Tâm",
-        "department":  "Dịch vụ",
-        "position":  "Tạp vụ",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-10-17"
-    },
-    {
-        "employee_code":  "NV345",
-        "full_name":  "Bế Thị Quy",
-        "department":  "Dịch vụ",
-        "position":  "Tạp vụ",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-10-17"
-    },
-    {
-        "employee_code":  "NV346",
-        "full_name":  "Trần Thị Hương",
-        "department":  "Dịch vụ",
-        "position":  "Tạp vụ",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-10-20"
-    },
-    {
-        "employee_code":  "NV347",
-        "full_name":  "Lô Thị Liệm",
-        "department":  "Dịch vụ",
-        "position":  "Tạp vụ",
-        "manager_name":  "Đỗ Đình Thư",
-        "hire_date":  "2026-10-20"
-    }
+  {
+    "employee_code": "GD001",
+    "full_name": "Nguyễn Quang Ninh",
+    "department": "Ban giám đốc",
+    "position": "Giám đốc",
+    "manager_name": "Nguyễn Quang Ninh",
+    "hire_date": "2009-11-03"
+  },
+  {
+    "employee_code": "GD002",
+    "full_name": "Vũ Thị Hồng Bé",
+    "department": "Ban giám đốc",
+    "position": "Trưởng bộ phận",
+    "manager_name": "Nguyễn Quang Ninh",
+    "hire_date": "2009-11-03"
+  },
+  {
+    "employee_code": "NV003",
+    "full_name": "Nguyễn Quang Nghiêm",
+    "department": "Quản lý chung",
+    "position": "Trưởng bộ phận",
+    "manager_name": "Nguyễn Quang Ninh",
+    "hire_date": "2013-11-01"
+  },
+  {
+    "employee_code": "NV004",
+    "full_name": "Hoàng Văn Học",
+    "department": "Tuyển dụng",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2014-03-09"
+  },
+  {
+    "employee_code": "NV005",
+    "full_name": "Nguyễn Thị Tường Loan",
+    "department": "Tuyển dụng",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2015-12-18"
+  },
+  {
+    "employee_code": "NV007",
+    "full_name": "Nguyễn Thị Thơ",
+    "department": "Kế toán",
+    "position": "Nhân viên",
+    "manager_name": "Vũ Thị Hồng Bé",
+    "hire_date": "2016-11-08"
+  },
+  {
+    "employee_code": "NV008",
+    "full_name": "Hoàng Thị Hằng",
+    "department": "Tuyển dụng",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2017-03-19"
+  },
+  {
+    "employee_code": "NV009",
+    "full_name": "Nguyễn Thị Chinh",
+    "department": "Tuyển dụng",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2017-04-01"
+  },
+  {
+    "employee_code": "NV010",
+    "full_name": "Đặng Tuấn Cương",
+    "department": "Tuyển dụng",
+    "position": "Trưởng bộ phận",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2017-05-04"
+  },
+  {
+    "employee_code": "NV011",
+    "full_name": "Nguyễn Quang Giang",
+    "department": "Dịch vụ",
+    "position": "Nhân viên",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2017-10-25"
+  },
+  {
+    "employee_code": "NV012",
+    "full_name": "Đặng Hữu Hoàng",
+    "department": "Quản lý",
+    "position": "Nhân viên",
+    "manager_name": "Nguyễn Trọng Đức",
+    "hire_date": "2018-06-11"
+  },
+  {
+    "employee_code": "NV014",
+    "full_name": "Trần Văn Thắng",
+    "department": "Quản lý",
+    "position": "Nhân viên",
+    "manager_name": "Nguyễn Trọng Đức",
+    "hire_date": "2018-08-27"
+  },
+  {
+    "employee_code": "NV015",
+    "full_name": "Hà Văn Dũng",
+    "department": "Quản lý",
+    "position": "Nhân viên",
+    "manager_name": "Nguyễn Trọng Đức",
+    "hire_date": "2018-12-01"
+  },
+  {
+    "employee_code": "NV016",
+    "full_name": "Lê Văn Quỳnh",
+    "department": "Quản lý",
+    "position": "Nhân viên",
+    "manager_name": "Nguyễn Trọng Đức",
+    "hire_date": "2019-03-18"
+  },
+  {
+    "employee_code": "NV017",
+    "full_name": "Phan Văn Sâm",
+    "department": "Dịch vụ",
+    "position": "Lái xe",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2019-10-23"
+  },
+  {
+    "employee_code": "NV018",
+    "full_name": "Nguyễn Thị Hồng",
+    "department": "Tuyển dụng",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2020-03-23"
+  },
+  {
+    "employee_code": "NV019",
+    "full_name": "Đỗ Thị Tiến",
+    "department": "Tuyển dụng",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2020-06-09"
+  },
+  {
+    "employee_code": "NV020",
+    "full_name": "Phạm Khắc Huân",
+    "department": "Quản lý",
+    "position": "Nhân viên",
+    "manager_name": "Nguyễn Trọng Đức",
+    "hire_date": "2020-06-29"
+  },
+  {
+    "employee_code": "NV021",
+    "full_name": "Lê Quang Quyền",
+    "department": "Quản lý",
+    "position": "Nhân viên",
+    "manager_name": "Nguyễn Trọng Đức",
+    "hire_date": "2020-09-01"
+  },
+  {
+    "employee_code": "NV022",
+    "full_name": "Lục Văn Đức",
+    "department": "Dịch vụ",
+    "position": "Lái xe",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2020-12-22"
+  },
+  {
+    "employee_code": "NV023",
+    "full_name": "Nguyễn Thị Ngọc",
+    "department": "Tuyển dụng",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2021-03-08"
+  },
+  {
+    "employee_code": "NV025",
+    "full_name": "Trần Quốc Việt",
+    "department": "Quản lý",
+    "position": "Nhân viên",
+    "manager_name": "Nguyễn Trọng Đức",
+    "hire_date": "2021-08-25"
+  },
+  {
+    "employee_code": "NV026",
+    "full_name": "Nguyễn Hữu Kiên",
+    "department": "Quản lý",
+    "position": "Nhân viên",
+    "manager_name": "Nguyễn Trọng Đức",
+    "hire_date": "2021-09-03"
+  },
+  {
+    "employee_code": "NV028",
+    "full_name": "Nguyễn Thảo Linh",
+    "department": "Kế toán",
+    "position": "Nhân viên",
+    "manager_name": "Vũ Thị Hồng Bé",
+    "hire_date": "2021-11-03"
+  },
+  {
+    "employee_code": "NV029",
+    "full_name": "Đinh Thị Lan Anh",
+    "department": "Tuyển dụng",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2021-11-03"
+  },
+  {
+    "employee_code": "NV030",
+    "full_name": "Nguyễn Nguyên Ngọc",
+    "department": "Quản lý",
+    "position": "Nhân viên",
+    "manager_name": "Nguyễn Trọng Đức",
+    "hire_date": "2021-12-03"
+  },
+  {
+    "employee_code": "NV031",
+    "full_name": "Hà Thị Liễu",
+    "department": "Tuyển dụng",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2022-03-26"
+  },
+  {
+    "employee_code": "NV032",
+    "full_name": "Hoàng Thị Thao",
+    "department": "Dịch vụ",
+    "position": "Tạp vụ",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2022-04-06"
+  },
+  {
+    "employee_code": "NV033",
+    "full_name": "Nguyễn Quang Tuấn",
+    "department": "Dịch vụ",
+    "position": "Nhân viên",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2022-04-12"
+  },
+  {
+    "employee_code": "NV034",
+    "full_name": "Mai Thị Hoàn",
+    "department": "Dịch vụ",
+    "position": "Lễ tân",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2022-05-05"
+  },
+  {
+    "employee_code": "NV035",
+    "full_name": "Lâm Thị Cúc",
+    "department": "Dịch vụ",
+    "position": "Tạp vụ",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2022-06-02"
+  },
+  {
+    "employee_code": "NV036",
+    "full_name": "Trần Văn Lượng",
+    "department": "Tuyển dụng",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2022-07-25"
+  },
+  {
+    "employee_code": "NV037",
+    "full_name": "Nguyễn Trọng Đức",
+    "department": "Quản lý",
+    "position": "Nhân viên",
+    "manager_name": "Nguyễn Trọng Đức",
+    "hire_date": "2022-08-15"
+  },
+  {
+    "employee_code": "NV038",
+    "full_name": "Hoàng Thị Hậu",
+    "department": "Tuyển dụng",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2022-11-26"
+  },
+  {
+    "employee_code": "NV039",
+    "full_name": "Nguyễn Duy Điệp",
+    "department": "Truyền thông",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2023-03-09"
+  },
+  {
+    "employee_code": "NV040",
+    "full_name": "Nguyễn Hữu Khiêm",
+    "department": "Dịch vụ",
+    "position": "Nhân viên",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2023-03-13"
+  },
+  {
+    "employee_code": "NV041",
+    "full_name": "Võ Lê Hà Giang",
+    "department": "Tuyển dụng",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2023-06-28"
+  },
+  {
+    "employee_code": "NV044",
+    "full_name": "Nguyễn Thị Phương",
+    "department": "Tuyển dụng",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2023-07-26"
+  },
+  {
+    "employee_code": "NV045",
+    "full_name": "Lộc Thị Hương",
+    "department": "Tuyển dụng",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2023-07-29"
+  },
+  {
+    "employee_code": "NV046",
+    "full_name": "Lê Trùng Dương",
+    "department": "Dịch vụ",
+    "position": "Lái xe",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2023-09-10"
+  },
+  {
+    "employee_code": "NV047",
+    "full_name": "Võ Thị Ngọc Thu",
+    "department": "Tuyển dụng",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2023-09-26"
+  },
+  {
+    "employee_code": "NV048",
+    "full_name": "Nguyễn Mai Hương",
+    "department": "Tuyển dụng",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2023-10-23"
+  },
+  {
+    "employee_code": "NV049",
+    "full_name": "Trần Thị Diệu Hương",
+    "department": "Tuyển dụng",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2023-12-08"
+  },
+  {
+    "employee_code": "NV050",
+    "full_name": "Lương Quốc Huy",
+    "department": "Quản lý",
+    "position": "Nhân viên",
+    "manager_name": "Nguyễn Trọng Đức",
+    "hire_date": "2024-01-03"
+  },
+  {
+    "employee_code": "NV051",
+    "full_name": "Nguyễn Thị Minh Châu",
+    "department": "Kế toán",
+    "position": "Nhân viên",
+    "manager_name": "Vũ Thị Hồng Bé",
+    "hire_date": "2024-03-04"
+  },
+  {
+    "employee_code": "NV052",
+    "full_name": "Cung Cường Huân",
+    "department": "Dịch vụ",
+    "position": "Lái xe",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2024-03-18"
+  },
+  {
+    "employee_code": "NV053",
+    "full_name": "Nguyễn Thị Nhàn",
+    "department": "Tuyển dụng",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2024-03-21"
+  },
+  {
+    "employee_code": "NV054",
+    "full_name": "Hoàng Thu Hằng",
+    "department": "Tuyển dụng",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2024-03-23"
+  },
+  {
+    "employee_code": "NV055",
+    "full_name": "Nguyễn Đức Hải",
+    "department": "Quản lý",
+    "position": "Nhân viên",
+    "manager_name": "Nguyễn Trọng Đức",
+    "hire_date": "2024-03-23"
+  },
+  {
+    "employee_code": "NV056",
+    "full_name": "Nguyễn Quang Tuấn 2000",
+    "department": "Truyền thông",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2024-03-27"
+  },
+  {
+    "employee_code": "NV057",
+    "full_name": "Nguyễn Đắc Vương",
+    "department": "Quản lý",
+    "position": "Nhân viên",
+    "manager_name": "Nguyễn Trọng Đức",
+    "hire_date": "2024-04-11"
+  },
+  {
+    "employee_code": "NV058",
+    "full_name": "Hoàng Khánh Huyền",
+    "department": "Truyền thông",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2024-04-15"
+  },
+  {
+    "employee_code": "NV059",
+    "full_name": "Võ Phước Quang Đại",
+    "department": "Quản lý",
+    "position": "Nhân viên",
+    "manager_name": "Nguyễn Trọng Đức",
+    "hire_date": "2024-04-15"
+  },
+  {
+    "employee_code": "NV061",
+    "full_name": "La Thị Sáu",
+    "department": "Tuyển dụng",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2024-05-06"
+  },
+  {
+    "employee_code": "NV062",
+    "full_name": "Nguyễn Công Hồng",
+    "department": "Dịch vụ",
+    "position": "Lái xe",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2024-05-17"
+  },
+  {
+    "employee_code": "NV064",
+    "full_name": "Đỗ Quyết Thắng",
+    "department": "Quản lý",
+    "position": "Nhân viên",
+    "manager_name": "Nguyễn Trọng Đức",
+    "hire_date": "2024-06-03"
+  },
+  {
+    "employee_code": "NV065",
+    "full_name": "Nguyễn Thị Hồng Nhung",
+    "department": "Tuyển dụng",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2024-06-03"
+  },
+  {
+    "employee_code": "NV067",
+    "full_name": "Nông Thị Nheo",
+    "department": "Dịch vụ",
+    "position": "Tạp vụ",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2024-06-24"
+  },
+  {
+    "employee_code": "NV068",
+    "full_name": "Đỗ Đình Thư",
+    "department": "Dịch vụ",
+    "position": "Trưởng bộ phận",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2024-07-01"
+  },
+  {
+    "employee_code": "NV069",
+    "full_name": "Trần Công Tình",
+    "department": "Quản lý",
+    "position": "Nhân viên",
+    "manager_name": "Nguyễn Trọng Đức",
+    "hire_date": "2024-07-03"
+  },
+  {
+    "employee_code": "NV070",
+    "full_name": "Vũ Thị Thảo Phương",
+    "department": "Kế toán",
+    "position": "Nhân viên",
+    "manager_name": "Vũ Thị Hồng Bé",
+    "hire_date": "2024-07-19"
+  },
+  {
+    "employee_code": "NV071",
+    "full_name": "Phạm Thị Thư",
+    "department": "Tuyển dụng",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2024-08-02"
+  },
+  {
+    "employee_code": "NV073",
+    "full_name": "Bàn Thị Đông",
+    "department": "Tuyển dụng",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2024-08-13"
+  },
+  {
+    "employee_code": "NV076",
+    "full_name": "Phùng Thị Thao",
+    "department": "Tuyển dụng",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2024-09-05"
+  },
+  {
+    "employee_code": "NV077",
+    "full_name": "Đinh Thế Hoàng",
+    "department": "Truyền thông",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2024-09-07"
+  },
+  {
+    "employee_code": "NV081",
+    "full_name": "Lê Thị Thu Phương",
+    "department": "Tuyển dụng",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2024-09-24"
+  },
+  {
+    "employee_code": "NV085",
+    "full_name": "Đỗ Văn Thảo",
+    "department": "Dịch vụ",
+    "position": "Nhân viên",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2024-11-01"
+  },
+  {
+    "employee_code": "NV086",
+    "full_name": "Lương Tuấn Tú",
+    "department": "Dịch vụ",
+    "position": "Lái xe",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2024-11-06"
+  },
+  {
+    "employee_code": "NV088",
+    "full_name": "Nguyễn Thị Quý",
+    "department": "Dịch vụ",
+    "position": "Tạp vụ",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2024-11-16"
+  },
+  {
+    "employee_code": "NV090",
+    "full_name": "Triệu Thị Đức",
+    "department": "Dịch vụ",
+    "position": "Lễ tân",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2024-12-25"
+  },
+  {
+    "employee_code": "NV093",
+    "full_name": "Nguyễn Viết Long",
+    "department": "Tuyển dụng",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2025-01-06"
+  },
+  {
+    "employee_code": "NV095",
+    "full_name": "Nguyễn Thị Minh Nguyệt",
+    "department": "Tuyển dụng",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2025-01-13"
+  },
+  {
+    "employee_code": "NV101",
+    "full_name": "Trương Thị Nguyên",
+    "department": "Truyền thông",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2025-02-17"
+  },
+  {
+    "employee_code": "NV102",
+    "full_name": "Lục Văn Quân",
+    "department": "Dịch vụ",
+    "position": "Lái xe",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2025-02-17"
+  },
+  {
+    "employee_code": "NV107",
+    "full_name": "Trương Văn Hiền",
+    "department": "Dịch vụ",
+    "position": "Nhân viên",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2025-03-06"
+  },
+  {
+    "employee_code": "NV115",
+    "full_name": "Dương Thị Yến",
+    "department": "Tuyển dụng",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2025-04-21"
+  },
+  {
+    "employee_code": "NV117",
+    "full_name": "Dương Thị Mỹ Lệ",
+    "department": "Truyền thông",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2025-05-05"
+  },
+  {
+    "employee_code": "NV118",
+    "full_name": "Lù Thị Cọt",
+    "department": "Dịch vụ",
+    "position": "Tạp vụ",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2025-05-06"
+  },
+  {
+    "employee_code": "NV122",
+    "full_name": "Lê Thị Thái",
+    "department": "Dịch vụ",
+    "position": "Tạp vụ",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2025-05-19"
+  },
+  {
+    "employee_code": "NV126",
+    "full_name": "Nguyễn Thái Nam",
+    "department": "Dịch vụ",
+    "position": "Bảo vệ",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2025-06-12"
+  },
+  {
+    "employee_code": "NV129",
+    "full_name": "Nguyễn Thị Hà",
+    "department": "Tuyển dụng",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2025-06-17"
+  },
+  {
+    "employee_code": "NV131",
+    "full_name": "Nguyễn Vũ Nam",
+    "department": "Dịch vụ",
+    "position": "Lái xe",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2025-06-26"
+  },
+  {
+    "employee_code": "NV132",
+    "full_name": "Vũ Văn Hiệp",
+    "department": "Dịch vụ",
+    "position": "Nhân viên",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2025-06-30"
+  },
+  {
+    "employee_code": "NV138",
+    "full_name": "Lê Thị Phận",
+    "department": "Dịch vụ",
+    "position": "Lễ tân",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2025-07-12"
+  },
+  {
+    "employee_code": "NV146",
+    "full_name": "Trần Minh Thao",
+    "department": "Quản lý",
+    "position": "Nhân viên",
+    "manager_name": "Nguyễn Trọng Đức",
+    "hire_date": "2025-08-01"
+  },
+  {
+    "employee_code": "NV148",
+    "full_name": "Nguyễn Mạnh Thành",
+    "department": "Dịch vụ",
+    "position": "Lái xe",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2025-08-01"
+  },
+  {
+    "employee_code": "NV151",
+    "full_name": "Dương Đăng Giang",
+    "department": "Dịch vụ",
+    "position": "Lái xe",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2025-08-06"
+  },
+  {
+    "employee_code": "NV154",
+    "full_name": "Lê Thị Hương",
+    "department": "Truyền thông",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2025-08-11"
+  },
+  {
+    "employee_code": "NV156",
+    "full_name": "Nguyễn Công Minh",
+    "department": "Truyền thông",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2025-08-11"
+  },
+  {
+    "employee_code": "NV157",
+    "full_name": "Bùi Thị Thúy Nga",
+    "department": "Dịch vụ",
+    "position": "Lễ tân",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2025-08-19"
+  },
+  {
+    "employee_code": "NV161",
+    "full_name": "Nguyễn Thu Hiền",
+    "department": "Tuyển dụng",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2025-08-25"
+  },
+  {
+    "employee_code": "NV162",
+    "full_name": "Vi Thị Thùy",
+    "department": "Dịch vụ",
+    "position": "Lễ tân",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2025-08-26"
+  },
+  {
+    "employee_code": "NV168",
+    "full_name": "Ngọc Thị Thúy",
+    "department": "Kế toán",
+    "position": "Nhân viên",
+    "manager_name": "Vũ Thị Hồng Bé",
+    "hire_date": "2025-09-16"
+  },
+  {
+    "employee_code": "NV171",
+    "full_name": "Nguyễn Đức Thạo",
+    "department": "Dịch vụ",
+    "position": "Bảo vệ",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2025-09-27"
+  },
+  {
+    "employee_code": "NV170",
+    "full_name": "Nguyễn Thanh Bình",
+    "department": "Dịch vụ",
+    "position": "Lái xe",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2025-09-25"
+  },
+  {
+    "employee_code": "NV178",
+    "full_name": "Nguyễn Phương Thảo",
+    "department": "Dịch vụ",
+    "position": "Nhân viên",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2025-10-22"
+  },
+  {
+    "employee_code": "NV177",
+    "full_name": "Nguyễn Văn Quyết",
+    "department": "Dịch vụ",
+    "position": "Lái xe",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2025-10-20"
+  },
+  {
+    "employee_code": "NV181",
+    "full_name": "Lê Hồng Gấm",
+    "department": "Dịch vụ",
+    "position": "Tạp vụ",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2025-11-05"
+  },
+  {
+    "employee_code": "NV184",
+    "full_name": "Lãnh Thị Tuyến",
+    "department": "Tuyển dụng",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2025-11-10"
+  },
+  {
+    "employee_code": "NV197",
+    "full_name": "Trần Thị Mão",
+    "department": "Dịch vụ",
+    "position": "Tạp vụ",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-01-02"
+  },
+  {
+    "employee_code": "NV204",
+    "full_name": "Nguyễn Ngọc Tuấn",
+    "department": "Dịch vụ",
+    "position": "Lái xe",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-01-23"
+  },
+  {
+    "employee_code": "NV205",
+    "full_name": "Nông Văn Hải",
+    "department": "Dịch vụ",
+    "position": "Lái xe",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-02-01"
+  },
+  {
+    "employee_code": "NV206",
+    "full_name": "Phạm Thị Quỳnh Dao",
+    "department": "Truyền thông",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2026-02-26"
+  },
+  {
+    "employee_code": "NV214",
+    "full_name": "Phan Thị Quỳnh Anh",
+    "department": "Tuyển dụng",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2026-03-02"
+  },
+  {
+    "employee_code": "NV216",
+    "full_name": "Nguyễn Huy Hoàng",
+    "department": "Quản lý",
+    "position": "Nhân viên",
+    "manager_name": "Nguyễn Trọng Đức",
+    "hire_date": "2026-03-02"
+  },
+  {
+    "employee_code": "NV217",
+    "full_name": "Hà Văn Dũng LX",
+    "department": "Dịch vụ",
+    "position": "Lái xe",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-03-02"
+  },
+  {
+    "employee_code": "NV219",
+    "full_name": "Trần Đức Trung",
+    "department": "Dịch vụ",
+    "position": "Lái xe",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-03-02"
+  },
+  {
+    "employee_code": "NV225",
+    "full_name": "Trần Thị Ngọc Ánh",
+    "department": "Kế toán",
+    "position": "Nhân viên",
+    "manager_name": "Vũ Thị Hồng Bé",
+    "hire_date": "2026-03-09"
+  },
+  {
+    "employee_code": "NV227",
+    "full_name": "Nông Văn Cường",
+    "department": "Dịch vụ",
+    "position": "Lái xe",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-03-10"
+  },
+  {
+    "employee_code": "NV231",
+    "full_name": "Trần Thanh",
+    "department": "Dịch vụ",
+    "position": "Nhân viên",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-03-20"
+  },
+  {
+    "employee_code": "NV232",
+    "full_name": "Hoàng Doãn Việt Quốc",
+    "department": "Truyền thông",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2026-03-23"
+  },
+  {
+    "employee_code": "NV237",
+    "full_name": "Lê Văn Bình",
+    "department": "Dịch vụ",
+    "position": "Lái xe",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-04-20"
+  },
+  {
+    "employee_code": "NV239",
+    "full_name": "Đặng Thị Thùy",
+    "department": "Tuyển dụng",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2026-05-08"
+  },
+  {
+    "employee_code": "NV241",
+    "full_name": "Nguyễn Thị Họa",
+    "department": "Dịch vụ",
+    "position": "Tạp vụ",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-05-11"
+  },
+  {
+    "employee_code": "NV243",
+    "full_name": "Khúc Thái Sơn",
+    "department": "Dịch vụ",
+    "position": "Bảo vệ",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-05-13"
+  },
+  {
+    "employee_code": "NV244",
+    "full_name": "Vi Văn Hữu",
+    "department": "Dịch vụ",
+    "position": "Lái xe",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-05-14"
+  },
+  {
+    "employee_code": "NV252",
+    "full_name": "Phương Thị Nhàn",
+    "department": "Dịch vụ",
+    "position": "Lễ tân",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-05-25"
+  },
+  {
+    "employee_code": "NV255",
+    "full_name": "Bàn Thị Trà My",
+    "department": "Tuyển dụng",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2026-05-26"
+  },
+  {
+    "employee_code": "NV257",
+    "full_name": "Đào Duy Tiến",
+    "department": "Dịch vụ",
+    "position": "Lái xe",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-06-03"
+  },
+  {
+    "employee_code": "NV259",
+    "full_name": "Đinh Trọng Tài",
+    "department": "Dịch vụ",
+    "position": "Lái xe",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-06-05"
+  },
+  {
+    "employee_code": "NV261",
+    "full_name": "Phù Thị Đê",
+    "department": "Dịch vụ",
+    "position": "Lễ tân",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-06-08"
+  },
+  {
+    "employee_code": "NV263",
+    "full_name": "Đỗ Văn Tân",
+    "department": "Dịch vụ",
+    "position": "Nhân viên",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-06-09"
+  },
+  {
+    "employee_code": "NV264",
+    "full_name": "Mông Đình Diện",
+    "department": "Dịch vụ",
+    "position": "Bảo vệ",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-06-09"
+  },
+  {
+    "employee_code": "NV270",
+    "full_name": "Phạm Thành Lợi",
+    "department": "Dịch vụ",
+    "position": "Lái xe",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-06-18"
+  },
+  {
+    "employee_code": "NV271",
+    "full_name": "Lương Thị Hương",
+    "department": "Dịch vụ",
+    "position": "Bảo vệ",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-06-18"
+  },
+  {
+    "employee_code": "NV277",
+    "full_name": "Nông Thị Tương",
+    "department": "Dịch vụ",
+    "position": "Tạp vụ",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-06-26"
+  },
+  {
+    "employee_code": "NV280",
+    "full_name": "Nông Đức Tụy",
+    "department": "Dịch vụ",
+    "position": "Bảo vệ",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-07-01"
+  },
+  {
+    "employee_code": "NV281",
+    "full_name": "Nguyễn Phương Thành",
+    "department": "Dịch vụ",
+    "position": "Lái xe",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-07-01"
+  },
+  {
+    "employee_code": "NV282",
+    "full_name": "Nguyễn Đức Chi",
+    "department": "Dịch vụ",
+    "position": "Bảo vệ",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-07-03"
+  },
+  {
+    "employee_code": "NV288",
+    "full_name": "Chu Hà Trang",
+    "department": "Tuyển dụng",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2026-07-07"
+  },
+  {
+    "employee_code": "NV289",
+    "full_name": "Mai Tùng Anh",
+    "department": "Truyền thông",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2026-07-07"
+  },
+  {
+    "employee_code": "NV290",
+    "full_name": "Nguyễn Thị Xoan",
+    "department": "Dịch vụ",
+    "position": "Tạp vụ",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-07-12"
+  },
+  {
+    "employee_code": "NV294",
+    "full_name": "Nguyễn Hồng Ngọc",
+    "department": "Kế toán",
+    "position": "Nhân viên",
+    "manager_name": "Vũ Thị Hồng Bé",
+    "hire_date": "2026-07-13"
+  },
+  {
+    "employee_code": "NV295",
+    "full_name": "Bùi Thị Sinh",
+    "department": "Tuyển dụng",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2026-07-14"
+  },
+  {
+    "employee_code": "NV298",
+    "full_name": "Nguyễn Thế Nghĩa",
+    "department": "Dịch vụ",
+    "position": "Bảo vệ",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-07-15"
+  },
+  {
+    "employee_code": "NV299",
+    "full_name": "Trần Thị Thúy Hằng",
+    "department": "Tuyển dụng",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2026-07-17"
+  },
+  {
+    "employee_code": "NV302",
+    "full_name": "Thạch Thị Thương Thương",
+    "department": "Tuyển dụng",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2026-07-21"
+  },
+  {
+    "employee_code": "NV303",
+    "full_name": "Phạm Thu Hương",
+    "department": "Tuyển dụng",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2026-07-21"
+  },
+  {
+    "employee_code": "NV304",
+    "full_name": "Nông Thị Gia",
+    "department": "Dịch vụ",
+    "position": "Tạp vụ",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-07-25"
+  },
+  {
+    "employee_code": "NV310",
+    "full_name": "Nguyễn Phú Cường",
+    "department": "Dịch vụ",
+    "position": "Lái xe",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-08-11"
+  },
+  {
+    "employee_code": "NV311",
+    "full_name": "Vi Văn Nguyện",
+    "department": "Dịch vụ",
+    "position": "Lái xe",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-08-12"
+  },
+  {
+    "employee_code": "NV315",
+    "full_name": "Lê Văn Giang",
+    "department": "Dịch vụ",
+    "position": "Lái xe",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-08-14"
+  },
+  {
+    "employee_code": "NV316",
+    "full_name": "Nguyễn Anh Tú",
+    "department": "IT",
+    "position": "Nhân viên",
+    "manager_name": "Nguyễn Quang Nghiêm",
+    "hire_date": "2026-08-24"
+  },
+  {
+    "employee_code": "NV317",
+    "full_name": "Phạm Thúy Hằng",
+    "department": "Tuyển dụng",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2026-08-24"
+  },
+  {
+    "employee_code": "NV318",
+    "full_name": "Nguyễn Văn Duy",
+    "department": "Truyền thông",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2026-08-24"
+  },
+  {
+    "employee_code": "NV319",
+    "full_name": "Nguyễn Sỹ Long",
+    "department": "Dịch vụ",
+    "position": "Lái xe",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-08-26"
+  },
+  {
+    "employee_code": "NV321",
+    "full_name": "Đỗ Minh Hoàng",
+    "department": "IT",
+    "position": "Nhân viên",
+    "manager_name": "Nguyễn Quang Nghiêm",
+    "hire_date": "2026-09-03"
+  },
+  {
+    "employee_code": "NV324",
+    "full_name": "Lô Thị Viết",
+    "department": "Dịch vụ",
+    "position": "Tạp vụ",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-09-05"
+  },
+  {
+    "employee_code": "NV325",
+    "full_name": "Nguyễn Tài Tuệ Minh",
+    "department": "Dịch vụ",
+    "position": "Lễ tân",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-09-06"
+  },
+  {
+    "employee_code": "NV326",
+    "full_name": "Trần Thị Mai Quỳnh",
+    "department": "Tuyển dụng",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2026-09-07"
+  },
+  {
+    "employee_code": "NV329",
+    "full_name": "Nông Văn Tuyển",
+    "department": "Dịch vụ",
+    "position": "Lái xe",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-09-08"
+  },
+  {
+    "employee_code": "NV330",
+    "full_name": "Hoàng Thị Nhàn",
+    "department": "Dịch vụ",
+    "position": "Tạp vụ",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-09-09"
+  },
+  {
+    "employee_code": "NV331",
+    "full_name": "Nông Thị Viên",
+    "department": "Dịch vụ",
+    "position": "Tạp vụ",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-09-12"
+  },
+  {
+    "employee_code": "NV332",
+    "full_name": "Phạm Đình Bắc",
+    "department": "Dịch vụ",
+    "position": "Nhân viên",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-09-15"
+  },
+  {
+    "employee_code": "NV333",
+    "full_name": "Hoàng Thị Lưu",
+    "department": "Dịch vụ",
+    "position": "Lễ tân",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-09-17"
+  },
+  {
+    "employee_code": "NV335",
+    "full_name": "Lăng Thị Huyền",
+    "department": "Dịch vụ",
+    "position": "Tạp vụ",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-09-19"
+  },
+  {
+    "employee_code": "NV080",
+    "full_name": "Nguyễn Thị Thoan",
+    "department": "Dịch vụ",
+    "position": "Tạp vụ",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-09-19"
+  },
+  {
+    "employee_code": "NV336",
+    "full_name": "Nguyễn Bá Toản",
+    "department": "Truyền thông",
+    "position": "Nhân viên",
+    "manager_name": "Đặng Tuấn Cương",
+    "hire_date": "2026-09-21"
+  },
+  {
+    "employee_code": "NV337",
+    "full_name": "Lèo Thi Nơi",
+    "department": "Dịch vụ",
+    "position": "Tạp vụ",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-09-25"
+  },
+  {
+    "employee_code": "NV338",
+    "full_name": "Lô Thị Nhình",
+    "department": "Dịch vụ",
+    "position": "Tạp vụ",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-09-30"
+  },
+  {
+    "employee_code": "NV339",
+    "full_name": "Vi Thị Thu Hà",
+    "department": "Dịch vụ",
+    "position": "Tạp vụ",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-09-30"
+  },
+  {
+    "employee_code": "NV341",
+    "full_name": "Nguyễn Thị Hân",
+    "department": "Kế toán",
+    "position": "Nhân viên",
+    "manager_name": "Vũ Thị Hồng Bé",
+    "hire_date": "2026-10-06"
+  },
+  {
+    "employee_code": "NV342",
+    "full_name": "Phạm Thị Viên",
+    "department": "Dịch vụ",
+    "position": "Tạp vụ",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-10-06"
+  },
+  {
+    "employee_code": "NV343",
+    "full_name": "Hoàng Thị Mương",
+    "department": "Dịch vụ",
+    "position": "Tạp vụ",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-10-14"
+  },
+  {
+    "employee_code": "NV344",
+    "full_name": "Triệu Thị Tâm",
+    "department": "Dịch vụ",
+    "position": "Tạp vụ",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-10-17"
+  },
+  {
+    "employee_code": "NV345",
+    "full_name": "Bế Thị Quy",
+    "department": "Dịch vụ",
+    "position": "Tạp vụ",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-10-17"
+  },
+  {
+    "employee_code": "NV346",
+    "full_name": "Trần Thị Hương",
+    "department": "Dịch vụ",
+    "position": "Tạp vụ",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-10-20"
+  },
+  {
+    "employee_code": "NV347",
+    "full_name": "Lô Thị Liệm",
+    "department": "Dịch vụ",
+    "position": "Tạp vụ",
+    "manager_name": "Đỗ Đình Thư",
+    "hire_date": "2026-10-20"
+  }
 ]

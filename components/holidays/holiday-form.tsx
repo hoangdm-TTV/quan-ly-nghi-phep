@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useState } from "react";
+import { useFormState, useFormStatus } from "react-dom";
 import {
   createHolidayAction,
   updateHolidayAction,
   HolidayActionState,
-} from '@/lib/holidays/actions';
-import { Calendar, AlertCircle, Loader2, Send, X } from 'lucide-react';
+} from "@/lib/holidays/actions";
+import { Calendar, AlertCircle, Loader2, Send, X } from "lucide-react";
 
 interface HolidayFormProps {
-  mode: 'create' | 'edit';
+  mode: "create" | "edit";
   holiday?: {
     id: string;
     name: string;
@@ -44,17 +44,19 @@ function SubmitButton({ label }: { label: string }) {
   );
 }
 
-export default function HolidayForm({ mode, holiday, onCancel }: HolidayFormProps) {
-  const action = mode === 'create' ? createHolidayAction : updateHolidayAction;
+export default function HolidayForm({
+  mode,
+  holiday,
+  onCancel,
+}: HolidayFormProps) {
+  const action = mode === "create" ? createHolidayAction : updateHolidayAction;
   const initialState: HolidayActionState = {};
   const [state, formAction] = useFormState(action, initialState);
 
-  const [name, setName] = useState(holiday?.name || '');
-  const [startDate, setStartDate] = useState(holiday?.start_date || '');
-  const [endDate, setEndDate] = useState(holiday?.end_date || '');
-  const [isActive, setIsActive] = useState(
-    holiday ? holiday.is_active : true
-  );
+  const [name, setName] = useState(holiday?.name || "");
+  const [startDate, setStartDate] = useState(holiday?.start_date || "");
+  const [endDate, setEndDate] = useState(holiday?.end_date || "");
+  const [isActive, setIsActive] = useState(holiday ? holiday.is_active : true);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
@@ -62,7 +64,7 @@ export default function HolidayForm({ mode, holiday, onCancel }: HolidayFormProp
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
           <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
             <Calendar className="w-4 h-4 text-blue-600" />
-            {mode === 'create' ? 'Thêm ngày lễ mới' : 'Chỉnh sửa ngày lễ'}
+            {mode === "create" ? "Thêm ngày lễ mới" : "Chỉnh sửa ngày lễ"}
           </h3>
           <button
             onClick={onCancel}
@@ -80,12 +82,15 @@ export default function HolidayForm({ mode, holiday, onCancel }: HolidayFormProp
             </div>
           )}
 
-          {mode === 'edit' && holiday && (
+          {mode === "edit" && holiday && (
             <input type="hidden" name="id" value={holiday.id} />
           )}
 
           <div>
-            <label htmlFor="name" className="block text-xs font-medium text-slate-700 mb-1">
+            <label
+              htmlFor="name"
+              className="block text-xs font-medium text-slate-700 mb-1"
+            >
               Tên ngày lễ
             </label>
             <input
@@ -102,7 +107,10 @@ export default function HolidayForm({ mode, holiday, onCancel }: HolidayFormProp
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="startDate" className="block text-xs font-medium text-slate-700 mb-1">
+              <label
+                htmlFor="startDate"
+                className="block text-xs font-medium text-slate-700 mb-1"
+              >
                 Từ ngày
               </label>
               <input
@@ -116,7 +124,10 @@ export default function HolidayForm({ mode, holiday, onCancel }: HolidayFormProp
               />
             </div>
             <div>
-              <label htmlFor="endDate" className="block text-xs font-medium text-slate-700 mb-1">
+              <label
+                htmlFor="endDate"
+                className="block text-xs font-medium text-slate-700 mb-1"
+              >
                 Đến ngày
               </label>
               <input
@@ -149,12 +160,20 @@ export default function HolidayForm({ mode, holiday, onCancel }: HolidayFormProp
           {startDate && endDate && endDate >= startDate && (
             <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg text-xs text-blue-800">
               {startDate === endDate ? (
-                <p>Ngày lễ 1 ngày: <span className="font-semibold">{startDate}</span></p>
+                <p>
+                  Ngày lễ 1 ngày:{" "}
+                  <span className="font-semibold">{startDate}</span>
+                </p>
               ) : (
                 <p>
-                  Ngày lễ từ <span className="font-semibold">{startDate}</span> đến{' '}
-                  <span className="font-semibold">{endDate}</span>
-                  {' '}({Math.round((new Date(endDate).getTime() - new Date(startDate).getTime()) / 86400000) + 1} ngày)
+                  Ngày lễ từ <span className="font-semibold">{startDate}</span>{" "}
+                  đến <span className="font-semibold">{endDate}</span> (
+                  {Math.round(
+                    (new Date(endDate).getTime() -
+                      new Date(startDate).getTime()) /
+                      86400000,
+                  ) + 1}{" "}
+                  ngày)
                 </p>
               )}
             </div>
@@ -168,7 +187,9 @@ export default function HolidayForm({ mode, holiday, onCancel }: HolidayFormProp
             >
               Hủy
             </button>
-            <SubmitButton label={mode === 'create' ? 'Thêm ngày lễ' : 'Lưu thay đổi'} />
+            <SubmitButton
+              label={mode === "create" ? "Thêm ngày lễ" : "Lưu thay đổi"}
+            />
           </div>
         </form>
       </div>

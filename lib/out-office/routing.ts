@@ -1,4 +1,4 @@
-import { query } from '@/lib/db/pool';
+import { query } from "@/lib/db/pool";
 
 export type OutOfficeRoutingAvailability = {
   hasTeamLead: boolean;

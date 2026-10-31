@@ -1,17 +1,35 @@
-import { requireAuth } from '@/lib/auth/permissions';
-import { getVisibleOutOfficeRequests, getScopedOutOfficeRequests, ScopedOutOfficeFilter } from '@/lib/out-office/queries';
-import { canSubmitPersonalRequests, canApproveWorkflowRequests, canViewRequestScope } from '@/lib/auth/roles';
-import { getUserDataScopeLabel } from '@/lib/auth/data-scope';
-import { getFilterOptionsInScope, getUsersInScope } from '@/lib/db/queries/users';
-import { redirect } from 'next/navigation';
-import OutOfficeStatusBadge from '@/components/out-office/out-office-status-badge';
-import ClickableRequestRow from '@/components/requests/clickable-request-row';
-import ScopeFilterForm from '@/components/requests/scope-filter-form';
-import Link from 'next/link';
-import { Plus, Clock, ArrowRight, Calendar, Briefcase, Download } from 'lucide-react';
+import { requireAuth } from "@/lib/auth/permissions";
+import {
+  getVisibleOutOfficeRequests,
+  getScopedOutOfficeRequests,
+  ScopedOutOfficeFilter,
+} from "@/lib/out-office/queries";
+import {
+  canSubmitPersonalRequests,
+  canApproveWorkflowRequests,
+  canViewRequestScope,
+} from "@/lib/auth/roles";
+import { getUserDataScopeLabel } from "@/lib/auth/data-scope";
+import {
+  getFilterOptionsInScope,
+  getUsersInScope,
+} from "@/lib/db/queries/users";
+import { redirect } from "next/navigation";
+import OutOfficeStatusBadge from "@/components/out-office/out-office-status-badge";
+import ClickableRequestRow from "@/components/requests/clickable-request-row";
+import ScopeFilterForm from "@/components/requests/scope-filter-form";
+import Link from "next/link";
+import {
+  Plus,
+  Clock,
+  ArrowRight,
+  Calendar,
+  Briefcase,
+  Download,
+} from "lucide-react";
 
 export const metadata = {
-  title: 'Đơn ra ngoài | Tri Thức Việt',
+  title: "Đơn ra ngoài | Tri Thức Việt",
 };
 
 function validDate(value?: string): string | undefined {
@@ -24,39 +42,58 @@ function validDate(value?: string): string | undefined {
 export default async function OutOfficeListPage({
   searchParams,
 }: {
-  searchParams: { status?: string; tab?: string; employeeId?: string; departmentId?: string; teamId?: string; from?: string; to?: string; page?: string };
+  searchParams: {
+    status?: string;
+    tab?: string;
+    employeeId?: string;
+    departmentId?: string;
+    teamId?: string;
+    from?: string;
+    to?: string;
+    page?: string;
+  };
 }) {
   const user = await requireAuth();
   const canSubmit = canSubmitPersonalRequests(user.role);
   const canTrackScope = canViewRequestScope(user.role);
   if (!canSubmit && !canTrackScope) {
-    redirect(canApproveWorkflowRequests(user.role) ? '/approvals/out-office' : '/');
+    redirect(
+      canApproveWorkflowRequests(user.role) ? "/approvals/out-office" : "/",
+    );
   }
 
-  const currentFilter = searchParams?.status || 'ALL';
+  const currentFilter = searchParams?.status || "ALL";
   const pageSize = 25;
-  const pageNumber = Math.max(1, Math.min(100000, Number(searchParams?.page) || 1));
+  const pageNumber = Math.max(
+    1,
+    Math.min(100000, Number(searchParams?.page) || 1),
+  );
   const pagination = { limit: pageSize, offset: (pageNumber - 1) * pageSize };
   const scopeLabel = getUserDataScopeLabel(user);
   const hasScope = canTrackScope;
   const activeTab = hasScope
-    ? (canSubmit && searchParams?.tab === 'mine' ? 'mine' : 'scope')
-    : 'mine';
+    ? canSubmit && searchParams?.tab === "mine"
+      ? "mine"
+      : "scope"
+    : "mine";
 
   const filters = [
-    { label: 'Tất cả đơn', value: 'ALL' },
-    { label: 'Chờ duyệt', value: 'PENDING' },
-    { label: 'Đang ra ngoài', value: 'APPROVED' },
-    { label: 'Đã hoàn tất', value: 'COMPLETED' },
-    { label: 'Đã từ chối', value: 'REJECTED' },
-    { label: 'Đã hủy', value: 'CANCELLED' },
+    { label: "Tất cả đơn", value: "ALL" },
+    { label: "Chờ duyệt", value: "PENDING" },
+    { label: "Đang ra ngoài", value: "APPROVED" },
+    { label: "Đã hoàn tất", value: "COMPLETED" },
+    { label: "Đã từ chối", value: "REJECTED" },
+    { label: "Đã hủy", value: "CANCELLED" },
   ];
 
   let requests;
   let scopedUsers: Awaited<ReturnType<typeof getUsersInScope>> = [];
-  let filterOptions: Awaited<ReturnType<typeof getFilterOptionsInScope>> = { departments: [], teams: [] };
+  let filterOptions: Awaited<ReturnType<typeof getFilterOptionsInScope>> = {
+    departments: [],
+    teams: [],
+  };
 
-  if (activeTab === 'scope' && hasScope) {
+  if (activeTab === "scope" && hasScope) {
     const filter: ScopedOutOfficeFilter = {
       status: currentFilter,
       employeeId: searchParams?.employeeId || undefined,
@@ -68,10 +105,18 @@ export default async function OutOfficeListPage({
     [requests, scopedUsers, filterOptions] = await Promise.all([
       getScopedOutOfficeRequests(user, filter, pagination),
       getUsersInScope(user, searchParams?.departmentId, searchParams?.teamId),
-      getFilterOptionsInScope(user, searchParams?.departmentId, searchParams?.teamId),
+      getFilterOptionsInScope(
+        user,
+        searchParams?.departmentId,
+        searchParams?.teamId,
+      ),
     ]);
   } else {
-    requests = await getVisibleOutOfficeRequests(user, currentFilter, pagination);
+    requests = await getVisibleOutOfficeRequests(
+      user,
+      currentFilter,
+      pagination,
+    );
   }
 
   const hasNextPage = requests.length > pageSize;
@@ -79,28 +124,39 @@ export default async function OutOfficeListPage({
 
   const buildTabUrl = (tab: string) => {
     const params = new URLSearchParams();
-    if (hasScope) params.set('tab', tab);
-    if (currentFilter !== 'ALL') params.set('status', currentFilter);
+    if (hasScope) params.set("tab", tab);
+    if (currentFilter !== "ALL") params.set("status", currentFilter);
     const qs = params.toString();
-    return qs ? `/out-office?${qs}` : '/out-office';
+    return qs ? `/out-office?${qs}` : "/out-office";
   };
 
   const buildFilterUrl = (status: string) => {
     const params = new URLSearchParams();
-    if (hasScope) params.set('tab', activeTab);
-    if (status !== 'ALL') params.set('status', status);
-    if (searchParams?.employeeId) params.set('employeeId', searchParams.employeeId);
-    if (searchParams?.departmentId) params.set('departmentId', searchParams.departmentId);
-    if (searchParams?.teamId) params.set('teamId', searchParams.teamId);
-    if (searchParams?.from) params.set('from', searchParams.from);
-    if (searchParams?.to) params.set('to', searchParams.to);
+    if (hasScope) params.set("tab", activeTab);
+    if (status !== "ALL") params.set("status", status);
+    if (searchParams?.employeeId)
+      params.set("employeeId", searchParams.employeeId);
+    if (searchParams?.departmentId)
+      params.set("departmentId", searchParams.departmentId);
+    if (searchParams?.teamId) params.set("teamId", searchParams.teamId);
+    if (searchParams?.from) params.set("from", searchParams.from);
+    if (searchParams?.to) params.set("to", searchParams.to);
     const qs = params.toString();
-    return qs ? `/out-office?${qs}` : '/out-office';
+    return qs ? `/out-office?${qs}` : "/out-office";
   };
-  const pageHref = (page: number) => `${buildFilterUrl(currentFilter)}${buildFilterUrl(currentFilter).includes('?') ? '&' : '?'}page=${page}`;
-  const exportParams = new URLSearchParams({ type: 'out-office' });
-  if (currentFilter !== 'ALL') exportParams.set('status', currentFilter);
-  if (activeTab === 'scope') for (const key of ['employeeId', 'departmentId', 'teamId', 'from', 'to'] as const) if (searchParams?.[key]) exportParams.set(key, searchParams[key]!);
+  const pageHref = (page: number) =>
+    `${buildFilterUrl(currentFilter)}${buildFilterUrl(currentFilter).includes("?") ? "&" : "?"}page=${page}`;
+  const exportParams = new URLSearchParams({ type: "out-office" });
+  if (currentFilter !== "ALL") exportParams.set("status", currentFilter);
+  if (activeTab === "scope")
+    for (const key of [
+      "employeeId",
+      "departmentId",
+      "teamId",
+      "from",
+      "to",
+    ] as const)
+      if (searchParams?.[key]) exportParams.set(key, searchParams[key]!);
 
   return (
     <div className="space-y-6">
@@ -116,13 +172,13 @@ export default async function OutOfficeListPage({
             </span>
           </div>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            {activeTab === 'scope'
+            {activeTab === "scope"
               ? `Đơn ra ngoài trong phạm vi: ${scopeLabel}`
-              : 'Theo dõi tiến trình và trạng thái các đơn ra ngoài do bạn tạo.'}
+              : "Theo dõi tiến trình và trạng thái các đơn ra ngoài do bạn tạo."}
           </p>
         </div>
 
-        {canSubmit && activeTab === 'mine' && (
+        {canSubmit && activeTab === "mine" && (
           <Link
             href="/out-office/new"
             className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl shadow-xs text-xs sm:text-sm font-bold text-white bg-[#005a3c] hover:bg-[#044e3f] transition-all"
@@ -138,31 +194,35 @@ export default async function OutOfficeListPage({
         <div className="flex items-center gap-2 bg-slate-200/60 p-1.5 rounded-xl w-fit">
           {canSubmit && (
             <Link
-              href={buildTabUrl('mine')}
+              href={buildTabUrl("mine")}
               className={`px-4 py-2 text-xs sm:text-sm font-bold rounded-lg transition-all ${
-                activeTab === 'mine'
-                  ? 'bg-white text-[#005a3c] shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
+                activeTab === "mine"
+                  ? "bg-white text-[#005a3c] shadow-xs"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
             >
               Đơn của tôi
             </Link>
           )}
           <Link
-            href={buildTabUrl('scope')}
+            href={buildTabUrl("scope")}
             className={`px-4 py-2 text-xs sm:text-sm font-bold rounded-lg transition-all ${
-              activeTab === 'scope'
-                ? 'bg-white text-[#005a3c] shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
+              activeTab === "scope"
+                ? "bg-white text-[#005a3c] shadow-xs"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            {user.role === 'MANAGER' ? 'Đơn phòng ban' : user.role === 'TEAM_LEAD' ? 'Đơn trong team' : 'Toàn bộ đơn công ty'}
+            {user.role === "MANAGER"
+              ? "Đơn phòng ban"
+              : user.role === "TEAM_LEAD"
+                ? "Đơn trong team"
+                : "Toàn bộ đơn công ty"}
           </Link>
         </div>
       )}
 
       {/* Scope Filter Bar */}
-      {activeTab === 'scope' && (
+      {activeTab === "scope" && (
         <ScopeFilterForm
           basePath="/out-office"
           status={currentFilter}
@@ -177,7 +237,15 @@ export default async function OutOfficeListPage({
         />
       )}
 
-      <div className="flex justify-end"><Link href={`/api/reports/export?${exportParams.toString()}`} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50"><Download className="h-4 w-4" />Xuất CSV (mở bằng Excel)</Link></div>
+      <div className="flex justify-end">
+        <Link
+          href={`/api/reports/export?${exportParams.toString()}`}
+          className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50"
+        >
+          <Download className="h-4 w-4" />
+          Xuất CSV (mở bằng Excel)
+        </Link>
+      </div>
 
       {/* Filter Status Pills */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1">
@@ -189,8 +257,8 @@ export default async function OutOfficeListPage({
               href={buildFilterUrl(f.value)}
               className={`px-3.5 py-1.5 text-xs font-bold rounded-xl whitespace-nowrap transition-all ${
                 isActive
-                  ? 'bg-[#005a3c] text-white shadow-xs'
-                  : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80'
+                  ? "bg-[#005a3c] text-white shadow-xs"
+                  : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80"
               }`}
             >
               {f.label}
@@ -205,15 +273,17 @@ export default async function OutOfficeListPage({
           <div className="w-12 h-12 rounded-xl bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
             <Clock className="w-6 h-6" />
           </div>
-          <h3 className="text-sm font-bold text-slate-800">Không có đơn xin ra ngoài nào</h3>
+          <h3 className="text-sm font-bold text-slate-800">
+            Không có đơn xin ra ngoài nào
+          </h3>
           <p className="text-xs text-slate-500 max-w-sm mx-auto">
-            {activeTab === 'scope'
-              ? 'Không có đơn nào phù hợp với bộ lọc hiện tại trong phạm vi của bạn.'
-              : currentFilter === 'ALL'
-              ? 'Bạn chưa tạo đơn ra ngoài nào trong hệ thống.'
-              : 'Không có đơn nào phù hợp với bộ lọc hiện tại.'}
+            {activeTab === "scope"
+              ? "Không có đơn nào phù hợp với bộ lọc hiện tại trong phạm vi của bạn."
+              : currentFilter === "ALL"
+                ? "Bạn chưa tạo đơn ra ngoài nào trong hệ thống."
+                : "Không có đơn nào phù hợp với bộ lọc hiện tại."}
           </p>
-          {activeTab === 'mine' && canSubmit && currentFilter === 'ALL' && (
+          {activeTab === "mine" && canSubmit && currentFilter === "ALL" && (
             <div className="pt-2">
               <Link
                 href="/out-office/new"
@@ -231,8 +301,12 @@ export default async function OutOfficeListPage({
             <table className="min-w-full divide-y divide-slate-200 text-left text-xs sm:text-sm">
               <thead className="bg-slate-50/90 text-slate-700 font-bold uppercase text-[11px] tracking-wider">
                 <tr>
-                  {activeTab === 'scope' && <th className="px-5 py-3.5">Nhân viên</th>}
-                  {activeTab === 'scope' && <th className="px-5 py-3.5">Phòng ban</th>}
+                  {activeTab === "scope" && (
+                    <th className="px-5 py-3.5">Nhân viên</th>
+                  )}
+                  {activeTab === "scope" && (
+                    <th className="px-5 py-3.5">Phòng ban</th>
+                  )}
                   <th className="px-5 py-3.5">Ngày ra ngoài</th>
                   <th className="px-5 py-3.5">Khung giờ</th>
                   <th className="px-5 py-3.5">Mục đích</th>
@@ -242,15 +316,20 @@ export default async function OutOfficeListPage({
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
                 {requests.map((r) => (
-                  <ClickableRequestRow key={r.id} href={`/out-office/${r.id}`} label={`Mở chi tiết đơn ra ngoài của ${r.employee_name || user.full_name}`} className="hover:bg-slate-50/80 transition-colors">
-                    {activeTab === 'scope' && (
+                  <ClickableRequestRow
+                    key={r.id}
+                    href={`/out-office/${r.id}`}
+                    label={`Mở chi tiết đơn ra ngoài của ${r.employee_name || user.full_name}`}
+                    className="hover:bg-slate-50/80 transition-colors"
+                  >
+                    {activeTab === "scope" && (
                       <td className="px-5 py-4 font-bold text-slate-900 whitespace-nowrap">
                         {r.employee_name}
                       </td>
                     )}
-                    {activeTab === 'scope' && (
+                    {activeTab === "scope" && (
                       <td className="px-5 py-4 text-slate-600 whitespace-nowrap font-medium">
-                        {r.department_name || '—'}
+                        {r.department_name || "—"}
                       </td>
                     )}
                     <td className="px-5 py-4 font-semibold text-slate-900 whitespace-nowrap">
@@ -262,14 +341,24 @@ export default async function OutOfficeListPage({
                     <td className="px-5 py-4 whitespace-nowrap font-medium text-slate-800">
                       <div className="flex items-center gap-1.5">
                         <Clock className="w-3.5 h-3.5 text-slate-400" />
-                        <span>{r.start_time} - {r.end_time}</span>
+                        <span>
+                          {r.start_time} - {r.end_time}
+                        </span>
                       </div>
                     </td>
-                    <td className="px-5 py-4 max-w-xs truncate text-slate-600 font-medium" title={r.reason || ''}>
+                    <td
+                      className="px-5 py-4 max-w-xs truncate text-slate-600 font-medium"
+                      title={r.reason || ""}
+                    >
                       <span className="inline-flex items-center gap-1">
                         <Briefcase className="w-3 h-3 text-slate-400 shrink-0" />
-                        <span className="font-semibold text-slate-700">{r.reason_type === 'WORK' ? 'Việc công' : 'Việc riêng'}:</span>
-                        <span className="truncate">{r.reason || '—'}</span>
+                        <span className="font-semibold text-slate-700">
+                          {r.reason_type === "WORK"
+                            ? "Việc công"
+                            : "Việc riêng"}
+                          :
+                        </span>
+                        <span className="truncate">{r.reason || "—"}</span>
                       </span>
                     </td>
                     <td className="px-5 py-4 whitespace-nowrap">
@@ -292,8 +381,27 @@ export default async function OutOfficeListPage({
         </div>
       )}
       <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs">
-        <span className="text-slate-600">Trang {pageNumber} · tối đa {pageSize} đơn mỗi trang</span>
-        <div className="flex gap-2">{pageNumber > 1 && <Link href={pageHref(pageNumber - 1)} className="rounded-lg border px-3 py-1.5 font-semibold text-slate-700">Trước</Link>}{hasNextPage && <Link href={pageHref(pageNumber + 1)} className="rounded-lg border px-3 py-1.5 font-semibold text-slate-700">Tiếp</Link>}</div>
+        <span className="text-slate-600">
+          Trang {pageNumber} · tối đa {pageSize} đơn mỗi trang
+        </span>
+        <div className="flex gap-2">
+          {pageNumber > 1 && (
+            <Link
+              href={pageHref(pageNumber - 1)}
+              className="rounded-lg border px-3 py-1.5 font-semibold text-slate-700"
+            >
+              Trước
+            </Link>
+          )}
+          {hasNextPage && (
+            <Link
+              href={pageHref(pageNumber + 1)}
+              className="rounded-lg border px-3 py-1.5 font-semibold text-slate-700"
+            >
+              Tiếp
+            </Link>
+          )}
+        </div>
       </div>
     </div>
   );

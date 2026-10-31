@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { X, CheckCircle2, Pencil } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { X, CheckCircle2, Pencil } from "lucide-react";
+import type { ReactNode } from "react";
 
 type ReviewItem = {
   label: string;
@@ -45,7 +45,10 @@ export default function RequestReviewModal({
               <CheckCircle2 className="h-5 w-5" />
             </div>
             <div>
-              <h2 id="request-review-title" className="text-lg font-bold text-slate-900">
+              <h2
+                id="request-review-title"
+                className="text-lg font-bold text-slate-900"
+              >
                 {title}
               </h2>
               <p className="mt-1 text-sm text-slate-600">{description}</p>
@@ -64,16 +67,24 @@ export default function RequestReviewModal({
         <div className="max-h-[60vh] overflow-y-auto px-5 py-5 sm:px-6">
           <div className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-slate-50/70">
             {items.map((item) => (
-              <div key={item.label} className="grid grid-cols-1 gap-1 px-4 py-3 sm:grid-cols-[minmax(140px,0.38fr)_1fr] sm:gap-4">
-                <dt className="text-xs font-bold uppercase tracking-wide text-slate-500">{item.label}</dt>
-                <dd className={`whitespace-pre-wrap break-words text-sm ${item.emphasis ? 'font-bold text-[#005a3c]' : 'font-medium text-slate-900'}`}>
-                  {item.value || '—'}
+              <div
+                key={item.label}
+                className="grid grid-cols-1 gap-1 px-4 py-3 sm:grid-cols-[minmax(140px,0.38fr)_1fr] sm:gap-4"
+              >
+                <dt className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                  {item.label}
+                </dt>
+                <dd
+                  className={`whitespace-pre-wrap break-words text-sm ${item.emphasis ? "font-bold text-[#005a3c]" : "font-medium text-slate-900"}`}
+                >
+                  {item.value || "—"}
                 </dd>
               </div>
             ))}
           </div>
           <p className="mt-4 rounded-lg bg-amber-50 px-3.5 py-3 text-xs font-medium text-amber-900">
-            Vui lòng kiểm tra kỹ các thông tin trên. Sau khi xác nhận, đơn sẽ được gửi đến người duyệt.
+            Vui lòng kiểm tra kỹ các thông tin trên. Sau khi xác nhận, đơn sẽ
+            được gửi đến người duyệt.
           </p>
         </div>
 

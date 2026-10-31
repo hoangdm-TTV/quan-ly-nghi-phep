@@ -1,4 +1,4 @@
-import { query } from '@/lib/db/pool';
+import { query } from "@/lib/db/pool";
 
 export interface Holiday {
   id: string;
@@ -29,7 +29,7 @@ export async function getAllHolidays(): Promise<Holiday[]> {
 
 export async function getActiveHolidaysInRange(
   startDate: string,
-  endDate: string
+  endDate: string,
 ): Promise<{ start_date: string; end_date: string }[]> {
   const sql = `
     SELECT 

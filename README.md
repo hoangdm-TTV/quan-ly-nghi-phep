@@ -24,14 +24,14 @@
 
 ## Vai trò và phạm vi
 
-| Vai trò      | Phạm vi dữ liệu                                              | Quyền chính                                                                                              |
-| ------------ | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
-| `STAFF`      | Đơn cá nhân                                                  | Tạo đơn; đơn nghỉ được Trưởng phòng duyệt; đơn ra ngoài do Trưởng nhóm cùng team duyệt                   |
-| `TEAM_LEAD`  | Đơn cá nhân và đơn trong team                                | Tạo đơn; đơn nghỉ do Trưởng phòng cùng phòng ban duyệt; đơn ra ngoài do Trưởng phòng duyệt               |
-| `MANAGER`    | Đơn cá nhân và trong phòng ban                               | Tạo đơn; duyệt nghỉ của nhân viên trong phòng ban; duyệt đơn ra ngoài theo cấp trực tiếp                 |
-| `ACCOUNTANT` | Toàn công ty khi tra cứu/báo cáo; chỉ đọc đơn của người khác | Tạo đơn cá nhân; đơn nghỉ do Trưởng phòng duyệt; đơn ra ngoài do Trưởng phòng duyệt                      |
+| Vai trò      | Phạm vi dữ liệu                                              | Quyền chính                                                                                                                      |
+| ------------ | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| `STAFF`      | Đơn cá nhân                                                  | Tạo đơn; đơn nghỉ được Trưởng phòng duyệt; đơn ra ngoài do Trưởng nhóm cùng team duyệt                                           |
+| `TEAM_LEAD`  | Đơn cá nhân và đơn trong team                                | Tạo đơn; đơn nghỉ do Trưởng phòng cùng phòng ban duyệt; đơn ra ngoài do Trưởng phòng duyệt                                       |
+| `MANAGER`    | Đơn cá nhân và trong phòng ban                               | Tạo đơn; duyệt nghỉ của nhân viên trong phòng ban; duyệt đơn ra ngoài theo cấp trực tiếp                                         |
+| `ACCOUNTANT` | Toàn công ty khi tra cứu/báo cáo; chỉ đọc đơn của người khác | Tạo đơn cá nhân; đơn nghỉ do Trưởng phòng duyệt; đơn ra ngoài do Trưởng phòng duyệt                                              |
 | `ADMIN`      | Quản trị nhân sự                                             | Chỉ tài khoản `admin@trithucvietbn.com` được vào trang quản trị và quản lý ngày lễ; không thể cấp quyền ADMIN cho tài khoản khác |
-| `DIRECTOR`   | Toàn công ty                                                 | Duyệt cấp cuối nghỉ phép và đơn của Trưởng phòng; duyệt đơn ra ngoài theo cấp trực tiếp |
+| `DIRECTOR`   | Toàn công ty                                                 | Duyệt cấp cuối nghỉ phép và đơn của Trưởng phòng; duyệt đơn ra ngoài theo cấp trực tiếp                                          |
 
 > Quyền duyệt được kiểm tra ở server. Không người dùng nào được tự duyệt đơn của mình. Với STAFF chưa được gán team, hệ thống sẽ chuyển theo cấp phòng ban nếu đủ dữ liệu; nếu không xác định được người duyệt thì cần cấu hình lại hồ sơ nhân sự.
 
@@ -99,16 +99,16 @@ Các lệnh có trong `package.json`: `npm run dev`, `npm run build`, `npm run s
 
 Migrations trong thư mục [`migrations/`](migrations) được chạy theo thứ tự `001` → `008`:
 
-| Tệp                           | Nội dung                                                                          |
-| ----------------------------- | --------------------------------------------------------------------------------- |
-| `001_initial_database.sql`    | Bảng người dùng, phòng ban, team, đơn, lịch sử duyệt, ngày lễ và dữ liệu khởi tạo |
-| `002_performance_indexes.sql` | Chỉ mục cho các truy vấn danh sách và dashboard                                   |
-| `003_push_notifications.sql`  | Lưu đăng ký Web Push                                                              |
-| `004_profile_avatars.sql`     | Lưu ảnh đại diện                                                                  |
-| `005_login_rate_limits.sql`   | Giới hạn thử đăng nhập theo email                                                 |
+| Tệp                                           | Nội dung                                                                                               |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `001_initial_database.sql`                    | Bảng người dùng, phòng ban, team, đơn, lịch sử duyệt, ngày lễ và dữ liệu khởi tạo                      |
+| `002_performance_indexes.sql`                 | Chỉ mục cho các truy vấn danh sách và dashboard                                                        |
+| `003_push_notifications.sql`                  | Lưu đăng ký Web Push                                                                                   |
+| `004_profile_avatars.sql`                     | Lưu ảnh đại diện                                                                                       |
+| `005_login_rate_limits.sql`                   | Giới hạn thử đăng nhập theo email                                                                      |
 | `006_leave_balance_history_and_reminders.sql` | Hạn mức phép, lịch sử sửa/hủy, trạng thái hủy, nhắc việc, vai trò ADMIN và tài khoản quản trị duy nhất |
-| `007_leave_and_employee_details.sql` | Buổi nghỉ, người thay thế, ghi chú bàn giao, trạng thái nhân sự và audit log |
-| `008_in_app_notifications.sql` | Thông báo nội bộ, trạng thái đã đọc/chưa đọc và chỉ mục tra cứu |
+| `007_leave_and_employee_details.sql`          | Buổi nghỉ, người thay thế, ghi chú bàn giao, trạng thái nhân sự và audit log                           |
+| `008_in_app_notifications.sql`                | Thông báo nội bộ, trạng thái đã đọc/chưa đọc và chỉ mục tra cứu                                        |
 
 Ứng dụng không tự chạy migration khi khởi động. Hãy áp dụng schema trước khi triển khai phiên bản tương ứng. Cơ sở dữ liệu phải có các bảng và cột mà migration/source yêu cầu; nếu đang dùng schema cũ, cần đối chiếu trước khi chạy.
 

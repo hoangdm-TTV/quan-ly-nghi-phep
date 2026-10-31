@@ -38,6 +38,7 @@ out_office_requests, sessions, approval_history
 **Database:** `lib/db/pool.ts` dùng `pg.Pool`, tối đa 10 kết nối; câu truy vấn phần lớn parameterized. Hai migrations tạo schema nghiệp vụ và bổ sung `password_hash`, `sessions`, `approval_history`, timestamps.
 
 **Routes chính:**
+
 - `/login`
 - `/` dashboard
 - `/leave`, `/leave/new`, `/leave/[id]`

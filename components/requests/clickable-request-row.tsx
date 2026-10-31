@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useRouter } from 'next/navigation';
-import type { KeyboardEvent, MouseEvent, ReactNode } from 'react';
+import { useRouter } from "next/navigation";
+import type { KeyboardEvent, MouseEvent, ReactNode } from "react";
 
 interface ClickableRequestRowProps {
   href: string;
@@ -11,10 +11,20 @@ interface ClickableRequestRowProps {
 }
 
 function isInteractiveTarget(target: EventTarget | null): boolean {
-  return target instanceof Element && Boolean(target.closest('a, button, input, select, textarea, [role="button"]'));
+  return (
+    target instanceof Element &&
+    Boolean(
+      target.closest('a, button, input, select, textarea, [role="button"]'),
+    )
+  );
 }
 
-export default function ClickableRequestRow({ href, children, className, label }: ClickableRequestRowProps) {
+export default function ClickableRequestRow({
+  href,
+  children,
+  className,
+  label,
+}: ClickableRequestRowProps) {
   const router = useRouter();
 
   function handleClick(event: MouseEvent<HTMLTableRowElement>) {
@@ -22,7 +32,10 @@ export default function ClickableRequestRow({ href, children, className, label }
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLTableRowElement>) {
-    if ((event.key === 'Enter' || event.key === ' ') && event.target === event.currentTarget) {
+    if (
+      (event.key === "Enter" || event.key === " ") &&
+      event.target === event.currentTarget
+    ) {
       event.preventDefault();
       router.push(href);
     }
@@ -30,7 +43,7 @@ export default function ClickableRequestRow({ href, children, className, label }
 
   return (
     <tr
-      className={`${className || ''} cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-600`}
+      className={`${className || ""} cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-600`}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       tabIndex={0}

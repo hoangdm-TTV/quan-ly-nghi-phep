@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { SafeUser } from '@/lib/types/user';
-import LogoutButton from '@/components/logout-button';
-import Link from 'next/link';
-import { Menu, Plus, Calendar, Clock, UserCheck } from 'lucide-react';
-import { canSubmitPersonalRequests } from '@/lib/auth/roles';
-import BrandLogo from '@/components/brand/brand-logo';
-import PushNotificationSetup from '@/components/notifications/push-notification-setup';
-import UserAvatar from '@/components/profile/user-avatar';
-import NotificationBell from '@/components/notifications/notification-bell';
+import { SafeUser } from "@/lib/types/user";
+import LogoutButton from "@/components/logout-button";
+import Link from "next/link";
+import { Menu, Plus, Calendar, Clock, UserCheck } from "lucide-react";
+import { canSubmitPersonalRequests } from "@/lib/auth/roles";
+import BrandLogo from "@/components/brand/brand-logo";
+import PushNotificationSetup from "@/components/notifications/push-notification-setup";
+import UserAvatar from "@/components/profile/user-avatar";
+import NotificationBell from "@/components/notifications/notification-bell";
 
 interface AppHeaderProps {
   user: SafeUser;
@@ -19,16 +19,20 @@ interface AppHeaderProps {
   onOpenSidebar: () => void;
 }
 
-export default function AppHeader({ user, approvalCounts, onOpenSidebar }: AppHeaderProps) {
+export default function AppHeader({
+  user,
+  approvalCounts,
+  onOpenSidebar,
+}: AppHeaderProps) {
   const canSubmit = canSubmitPersonalRequests(user.role);
 
   const roleBadgeColors: Record<string, string> = {
-    DIRECTOR: 'bg-teal-50 text-teal-800 border-teal-200',
-    MANAGER: 'bg-blue-50 text-blue-800 border-blue-200',
-    TEAM_LEAD: 'bg-emerald-50 text-emerald-800 border-emerald-200',
-    ACCOUNTANT: 'bg-amber-50 text-amber-800 border-amber-200',
-    ADMIN: 'bg-violet-50 text-violet-800 border-violet-200',
-    STAFF: 'bg-slate-100 text-slate-800 border-slate-200',
+    DIRECTOR: "bg-teal-50 text-teal-800 border-teal-200",
+    MANAGER: "bg-blue-50 text-blue-800 border-blue-200",
+    TEAM_LEAD: "bg-emerald-50 text-emerald-800 border-emerald-200",
+    ACCOUNTANT: "bg-amber-50 text-amber-800 border-amber-200",
+    ADMIN: "bg-violet-50 text-violet-800 border-violet-200",
+    STAFF: "bg-slate-100 text-slate-800 border-slate-200",
   };
 
   return (
@@ -86,7 +90,7 @@ export default function AppHeader({ user, approvalCounts, onOpenSidebar }: AppHe
         )}
 
         {/* User profile shortcut */}
-        {user.role !== 'ACCOUNTANT' && (
+        {user.role !== "ACCOUNTANT" && (
           <Link
             href="/profile"
             className="flex items-center gap-2.5 p-1.5 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-200 transition-all"
@@ -104,10 +108,11 @@ export default function AppHeader({ user, approvalCounts, onOpenSidebar }: AppHe
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span
                   className={`inline-block px-1.5 py-0.2 text-[9px] font-semibold rounded border ${
-                    roleBadgeColors[user.role] || 'bg-slate-100 text-slate-700 border-slate-200'
+                    roleBadgeColors[user.role] ||
+                    "bg-slate-100 text-slate-700 border-slate-200"
                   }`}
                 >
-                  {user.position || 'Chưa cập nhật chức vụ'}
+                  {user.position || "Chưa cập nhật chức vụ"}
                 </span>
                 {user.department_name && (
                   <span className="text-[11px] text-slate-500 truncate max-w-[130px]">

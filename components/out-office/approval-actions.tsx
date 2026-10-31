@@ -1,10 +1,20 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
-import { approveOutOfficeRequestAction, rejectOutOfficeRequestAction, OutOfficeActionState } from '@/lib/out-office/actions';
-import { OutOfficeStatus } from '@/lib/out-office/workflow';
-import { CheckCircle2, XCircle, AlertCircle, Loader2, CheckCheck } from 'lucide-react';
+import { useState } from "react";
+import { useFormState, useFormStatus } from "react-dom";
+import {
+  approveOutOfficeRequestAction,
+  rejectOutOfficeRequestAction,
+  OutOfficeActionState,
+} from "@/lib/out-office/actions";
+import { OutOfficeStatus } from "@/lib/out-office/workflow";
+import {
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  Loader2,
+  CheckCheck,
+} from "lucide-react";
 
 interface ApprovalActionsProps {
   requestId: string;
@@ -18,7 +28,9 @@ function ApproveBtn({ isCompleting }: { isCompleting: boolean }) {
       type="submit"
       disabled={pending}
       className={`inline-flex items-center px-4 py-2 text-xs font-semibold rounded-lg text-white disabled:opacity-50 transition-colors ${
-        isCompleting ? 'bg-teal-600 hover:bg-teal-700' : 'bg-emerald-600 hover:bg-emerald-700'
+        isCompleting
+          ? "bg-teal-600 hover:bg-teal-700"
+          : "bg-emerald-600 hover:bg-emerald-700"
       }`}
     >
       {pending ? (
@@ -64,16 +76,25 @@ function RejectBtn() {
   );
 }
 
-export default function OutOfficeApprovalActions({ requestId, currentStatus }: ApprovalActionsProps) {
-  const [mode, setMode] = useState<'idle' | 'approve' | 'reject'>('idle');
+export default function OutOfficeApprovalActions({
+  requestId,
+  currentStatus,
+}: ApprovalActionsProps) {
+  const [mode, setMode] = useState<"idle" | "approve" | "reject">("idle");
 
   const initialApproveState: OutOfficeActionState = {};
-  const [approveState, approveAction] = useFormState(approveOutOfficeRequestAction, initialApproveState);
+  const [approveState, approveAction] = useFormState(
+    approveOutOfficeRequestAction,
+    initialApproveState,
+  );
 
   const initialRejectState: OutOfficeActionState = {};
-  const [rejectState, rejectAction] = useFormState(rejectOutOfficeRequestAction, initialRejectState);
+  const [rejectState, rejectAction] = useFormState(
+    rejectOutOfficeRequestAction,
+    initialRejectState,
+  );
 
-  const isCompleting = currentStatus === 'APPROVED';
+  const isCompleting = currentStatus === "APPROVED";
 
   return (
     <div className="space-y-3">
@@ -90,19 +111,19 @@ export default function OutOfficeApprovalActions({ requestId, currentStatus }: A
         </div>
       )}
 
-      {mode === 'idle' && (
+      {mode === "idle" && (
         <div className="flex items-center gap-2">
-          {currentStatus === 'PENDING' && (
+          {currentStatus === "PENDING" && (
             <>
               <button
-                onClick={() => setMode('approve')}
+                onClick={() => setMode("approve")}
                 className="inline-flex items-center px-3.5 py-1.5 text-xs font-semibold rounded-lg text-emerald-700 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 transition-colors"
               >
                 <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
                 Duyệt cho đi
               </button>
               <button
-                onClick={() => setMode('reject')}
+                onClick={() => setMode("reject")}
                 className="inline-flex items-center px-3.5 py-1.5 text-xs font-semibold rounded-lg text-rose-700 bg-rose-50 border border-rose-200 hover:bg-rose-100 transition-colors"
               >
                 <XCircle className="w-3.5 h-3.5 mr-1.5" />
@@ -111,9 +132,9 @@ export default function OutOfficeApprovalActions({ requestId, currentStatus }: A
             </>
           )}
 
-          {currentStatus === 'APPROVED' && (
+          {currentStatus === "APPROVED" && (
             <button
-              onClick={() => setMode('approve')}
+              onClick={() => setMode("approve")}
               className="inline-flex items-center px-3.5 py-1.5 text-xs font-semibold rounded-lg text-teal-700 bg-teal-50 border border-teal-200 hover:bg-teal-100 transition-colors"
             >
               <CheckCheck className="w-3.5 h-3.5 mr-1.5" />
@@ -123,17 +144,26 @@ export default function OutOfficeApprovalActions({ requestId, currentStatus }: A
         </div>
       )}
 
-      {mode === 'approve' && (
-        <form action={approveAction} className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-2.5">
+      {mode === "approve" && (
+        <form
+          action={approveAction}
+          className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-2.5"
+        >
           <input type="hidden" name="requestId" value={requestId} />
           <div>
             <label className="block text-xs font-medium text-slate-800 mb-1">
-              {isCompleting ? 'Ghi chú xác nhận giờ về thực tế (tùy chọn):' : 'Ghi chú phê duyệt (tùy chọn):'}
+              {isCompleting
+                ? "Ghi chú xác nhận giờ về thực tế (tùy chọn):"
+                : "Ghi chú phê duyệt (tùy chọn):"}
             </label>
             <input
               type="text"
               name="comment"
-              placeholder={isCompleting ? 'VD: Về lúc 11:15, đã ký sổ...' : 'VD: Đồng ý cho đi công tác...'}
+              placeholder={
+                isCompleting
+                  ? "VD: Về lúc 11:15, đã ký sổ..."
+                  : "VD: Đồng ý cho đi công tác..."
+              }
               className="block w-full px-2.5 py-1.5 border border-slate-300 rounded-md text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
@@ -141,7 +171,7 @@ export default function OutOfficeApprovalActions({ requestId, currentStatus }: A
             <ApproveBtn isCompleting={isCompleting} />
             <button
               type="button"
-              onClick={() => setMode('idle')}
+              onClick={() => setMode("idle")}
               className="px-3 py-2 text-xs font-medium text-slate-600 hover:text-slate-800"
             >
               Hủy
@@ -150,8 +180,11 @@ export default function OutOfficeApprovalActions({ requestId, currentStatus }: A
         </form>
       )}
 
-      {mode === 'reject' && (
-        <form action={rejectAction} className="p-3 bg-rose-50/60 border border-rose-200 rounded-lg space-y-2.5">
+      {mode === "reject" && (
+        <form
+          action={rejectAction}
+          className="p-3 bg-rose-50/60 border border-rose-200 rounded-lg space-y-2.5"
+        >
           <input type="hidden" name="requestId" value={requestId} />
           <div>
             <label className="block text-xs font-medium text-rose-900 mb-1">
@@ -169,7 +202,7 @@ export default function OutOfficeApprovalActions({ requestId, currentStatus }: A
             <RejectBtn />
             <button
               type="button"
-              onClick={() => setMode('idle')}
+              onClick={() => setMode("idle")}
               className="px-3 py-2 text-xs font-medium text-slate-600 hover:text-slate-800"
             >
               Hủy

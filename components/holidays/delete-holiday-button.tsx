@@ -1,9 +1,12 @@
-'use client';
+"use client";
 
-import { useState, useTransition } from 'react';
-import { useFormState } from 'react-dom';
-import { deleteHolidayAction, HolidayActionState } from '@/lib/holidays/actions';
-import { Trash2, AlertCircle, Loader2 } from 'lucide-react';
+import { useState, useTransition } from "react";
+import { useFormState } from "react-dom";
+import {
+  deleteHolidayAction,
+  HolidayActionState,
+} from "@/lib/holidays/actions";
+import { Trash2, AlertCircle, Loader2 } from "lucide-react";
 
 interface DeleteHolidayButtonProps {
   holidayId: string;
@@ -43,7 +46,9 @@ export default function DeleteHolidayButton({
                 <AlertCircle className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-slate-900">Xác nhận xóa</h3>
+                <h3 className="text-sm font-bold text-slate-900">
+                  Xác nhận xóa
+                </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
                   Bạn có chắc muốn xóa ngày lễ &ldquo;{holidayName}&rdquo;?
                 </p>

@@ -1,8 +1,8 @@
-import { query } from '@/lib/db/pool';
-import { SafeUser } from '@/lib/types/user';
-import { canSubmitPersonalRequests } from '@/lib/auth/roles';
-import { buildReportDataScope } from '@/lib/auth/data-scope';
-import { LeaveStatus, ApprovalAction } from './workflow';
+import { query } from "@/lib/db/pool";
+import { SafeUser } from "@/lib/types/user";
+import { canSubmitPersonalRequests } from "@/lib/auth/roles";
+import { buildReportDataScope } from "@/lib/auth/data-scope";
+import { LeaveStatus, ApprovalAction } from "./workflow";
 
 export interface LeaveRequestDetail {
   id: string;
@@ -79,14 +79,17 @@ export async function getVisibleLeaveRequests(
 
   const params: any[] = [user.id];
 
-  if (statusFilter && statusFilter !== 'ALL') {
+  if (statusFilter && statusFilter !== "ALL") {
     params.push(statusFilter);
     sql += ` AND lr.status = $` + params.length;
   }
 
   sql += ` ORDER BY lr.created_at DESC`;
   if (pagination) {
-    params.push(Math.min(100, pagination.limit) + 1, Math.max(0, pagination.offset));
+    params.push(
+      Math.min(100, pagination.limit) + 1,
+      Math.max(0, pagination.offset),
+    );
     sql += ` LIMIT $${params.length - 1} OFFSET $${params.length}`;
   }
 
@@ -97,7 +100,9 @@ export async function getVisibleLeaveRequests(
 /**
  * Lấy chi tiết một đơn nghỉ phép theo ID
  */
-export async function getLeaveRequestById(id: string): Promise<LeaveRequestDetail | null> {
+export async function getLeaveRequestById(
+  id: string,
+): Promise<LeaveRequestDetail | null> {
   const sql = `
     SELECT 
       lr.id,
@@ -135,7 +140,9 @@ export async function getLeaveRequestById(id: string): Promise<LeaveRequestDetai
 /**
  * Lấy lịch sử phê duyệt của một đơn nghỉ phép
  */
-export async function getLeaveApprovalHistory(requestId: string): Promise<ApprovalHistoryRecord[]> {
+export async function getLeaveApprovalHistory(
+  requestId: string,
+): Promise<ApprovalHistoryRecord[]> {
   const sql = `
     SELECT 
       ah.id,
@@ -161,13 +168,15 @@ export interface LeaveDocumentMetadata {
   document_uploaded_at: Date;
 }
 
-export async function getLeaveDocumentMetadataById(id: string): Promise<LeaveDocumentMetadata | null> {
+export async function getLeaveDocumentMetadataById(
+  id: string,
+): Promise<LeaveDocumentMetadata | null> {
   const result = await query<LeaveDocumentMetadata>(
     `SELECT document_mime_type, document_file_name, document_uploaded_at
        FROM leave_requests
       WHERE id = $1 AND document_data IS NOT NULL
       LIMIT 1`,
-    [id]
+    [id],
   );
   return result.rows[0] || null;
 }
@@ -180,14 +189,14 @@ export async function getPendingLeaveRequestsForApprover(
   pagination?: { limit: number; offset: number },
 ): Promise<LeaveRequestDetail[]> {
   // Chỉ Manager và Director được duyệt nghỉ phép.
-  if (approver.role !== 'MANAGER' && approver.role !== 'DIRECTOR') {
+  if (approver.role !== "MANAGER" && approver.role !== "DIRECTOR") {
     return [];
   }
 
-  let whereClause = '';
+  let whereClause = "";
   const params: any[] = [approver.id];
 
-  if (approver.role === 'DIRECTOR') {
+  if (approver.role === "DIRECTOR") {
     // Cấp 2 sau Manager và đơn của Manager theo luồng hiện có.
     whereClause = `
       (
@@ -209,7 +218,7 @@ export async function getPendingLeaveRequestsForApprover(
         )
       )
     `;
-  } else if (approver.role === 'MANAGER') {
+  } else if (approver.role === "MANAGER") {
     if (!approver.department_id) return [];
     params.push(approver.department_id);
     // Trưởng phòng duyệt cấp 1 cho nhân viên cùng phòng ban.
@@ -250,21 +259,27 @@ export async function getPendingLeaveRequestsForApprover(
     WHERE lr.employee_id != $1
       AND ${whereClause}
     ORDER BY lr.created_at ASC
-    ${pagination ? `LIMIT $${params.length + 1} OFFSET $${params.length + 2}` : ''}
+    ${pagination ? `LIMIT $${params.length + 1} OFFSET $${params.length + 2}` : ""}
   `;
 
-  if (pagination) params.push(Math.min(100, pagination.limit) + 1, Math.max(0, pagination.offset));
+  if (pagination)
+    params.push(
+      Math.min(100, pagination.limit) + 1,
+      Math.max(0, pagination.offset),
+    );
 
   const res = await query<LeaveRequestDetail>(sql, params);
   return res.rows;
 }
 
 /** Đếm nhanh hàng đợi nghỉ phép để hiển thị badge, không tải toàn bộ chi tiết đơn. */
-export async function getPendingLeaveApprovalCount(approver: SafeUser): Promise<number> {
-  if (approver.role !== 'MANAGER' && approver.role !== 'DIRECTOR') return 0;
+export async function getPendingLeaveApprovalCount(
+  approver: SafeUser,
+): Promise<number> {
+  if (approver.role !== "MANAGER" && approver.role !== "DIRECTOR") return 0;
   const params: any[] = [approver.id];
   let whereClause: string;
-  if (approver.role === 'DIRECTOR') {
+  if (approver.role === "DIRECTOR") {
     whereClause = `(lr.status = 'APPROVED_BY_LEAD' OR (lr.status = 'PENDING' AND u.role = 'MANAGER') OR (lr.status = 'PENDING' AND u.role IN ('STAFF', 'TEAM_LEAD', 'ACCOUNTANT') AND (u.department_id IS NULL OR NOT EXISTS (SELECT 1 FROM users active_manager WHERE active_manager.department_id = u.department_id AND active_manager.role = 'MANAGER' AND active_manager.is_active = true))))`;
   } else {
     if (!approver.department_id) return 0;
@@ -273,23 +288,31 @@ export async function getPendingLeaveApprovalCount(approver: SafeUser): Promise<
   }
   const result = await query<{ count: number }>(
     `SELECT COUNT(*)::int AS count FROM leave_requests lr JOIN users u ON lr.employee_id = u.id WHERE lr.employee_id != $1 AND ${whereClause}`,
-    params
+    params,
   );
   return Number(result.rows[0]?.count || 0);
 }
 
-export async function getPendingLeaveApprovalSummary(approver: SafeUser): Promise<{ total: number; firstLevel: number; finalLevel: number }> {
-  if (approver.role !== 'MANAGER' && approver.role !== 'DIRECTOR') return { total: 0, firstLevel: 0, finalLevel: 0 };
+export async function getPendingLeaveApprovalSummary(
+  approver: SafeUser,
+): Promise<{ total: number; firstLevel: number; finalLevel: number }> {
+  if (approver.role !== "MANAGER" && approver.role !== "DIRECTOR")
+    return { total: 0, firstLevel: 0, finalLevel: 0 };
   const params: any[] = [approver.id];
   let scope: string;
-  if (approver.role === 'DIRECTOR') {
+  if (approver.role === "DIRECTOR") {
     scope = `(lr.status = 'APPROVED_BY_LEAD' OR (lr.status = 'PENDING' AND u.role = 'MANAGER') OR (lr.status = 'PENDING' AND u.role IN ('STAFF','TEAM_LEAD','ACCOUNTANT') AND (u.department_id IS NULL OR NOT EXISTS (SELECT 1 FROM users m WHERE m.department_id=u.department_id AND m.role='MANAGER' AND m.is_active=TRUE))))`;
   } else {
-    if (!approver.department_id) return { total: 0, firstLevel: 0, finalLevel: 0 };
+    if (!approver.department_id)
+      return { total: 0, firstLevel: 0, finalLevel: 0 };
     params.push(approver.department_id);
     scope = `lr.status = 'PENDING' AND u.department_id = $2 AND u.role IN ('STAFF','TEAM_LEAD','ACCOUNTANT')`;
   }
-  const result = await query<{ total: number; first_level: number; final_level: number }>(
+  const result = await query<{
+    total: number;
+    first_level: number;
+    final_level: number;
+  }>(
     `SELECT COUNT(*)::int AS total, COUNT(*) FILTER (WHERE lr.status='PENDING')::int AS first_level,
             COUNT(*) FILTER (WHERE lr.status='APPROVED_BY_LEAD')::int AS final_level
        FROM leave_requests lr JOIN users u ON u.id=lr.employee_id
@@ -297,7 +320,11 @@ export async function getPendingLeaveApprovalSummary(approver: SafeUser): Promis
     params,
   );
   const row = result.rows[0];
-  return { total: Number(row?.total || 0), firstLevel: Number(row?.first_level || 0), finalLevel: Number(row?.final_level || 0) };
+  return {
+    total: Number(row?.total || 0),
+    firstLevel: Number(row?.first_level || 0),
+    finalLevel: Number(row?.final_level || 0),
+  };
 }
 
 export interface ScopedLeaveFilter {
@@ -318,11 +345,11 @@ export async function getScopedLeaveRequests(
   filter: ScopedLeaveFilter = {},
   pagination?: { limit: number; offset: number },
 ): Promise<LeaveRequestDetail[]> {
-  const scope = buildReportDataScope(user, 'u');
+  const scope = buildReportDataScope(user, "u");
   const params: any[] = [...scope.params];
   const conditions: string[] = [scope.whereSql];
 
-  if (filter.status && filter.status !== 'ALL') {
+  if (filter.status && filter.status !== "ALL") {
     params.push(filter.status);
     conditions.push(`lr.status = $${params.length}`);
   }
@@ -374,12 +401,16 @@ export async function getScopedLeaveRequests(
     LEFT JOIN departments d ON u.department_id = d.id
     LEFT JOIN teams t ON u.team_id = t.id
     LEFT JOIN users app ON lr.approver_id = app.id
-    WHERE ${conditions.join(' AND ')}
+    WHERE ${conditions.join(" AND ")}
     ORDER BY lr.start_date DESC, lr.created_at DESC
-    ${pagination ? `LIMIT $${params.length + 1} OFFSET $${params.length + 2}` : ''}
+    ${pagination ? `LIMIT $${params.length + 1} OFFSET $${params.length + 2}` : ""}
   `;
 
-  if (pagination) params.push(Math.min(100, pagination.limit) + 1, Math.max(0, pagination.offset));
+  if (pagination)
+    params.push(
+      Math.min(100, pagination.limit) + 1,
+      Math.max(0, pagination.offset),
+    );
 
   const res = await query<LeaveRequestDetail>(sql, params);
   return res.rows;

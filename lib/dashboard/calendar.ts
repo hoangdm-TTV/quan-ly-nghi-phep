@@ -1,10 +1,10 @@
-import { query } from '@/lib/db/pool';
-import { SafeUser } from '@/lib/types/user';
-import { buildReportDataScope } from '@/lib/auth/data-scope';
+import { query } from "@/lib/db/pool";
+import { SafeUser } from "@/lib/types/user";
+import { buildReportDataScope } from "@/lib/auth/data-scope";
 
 export type AbsenceCalendarItem = {
   id: string;
-  type: 'LEAVE' | 'OUT_OFFICE';
+  type: "LEAVE" | "OUT_OFFICE";
   employeeName: string;
   departmentName: string | null;
   teamName: string | null;
@@ -18,11 +18,15 @@ export type AbsenceCalendarItem = {
   reason: string | null;
 };
 
-export async function getAbsenceCalendar(user: SafeUser, fromDate?: string, toDate?: string): Promise<AbsenceCalendarItem[]> {
-  const scope = buildReportDataScope(user, 'u');
+export async function getAbsenceCalendar(
+  user: SafeUser,
+  fromDate?: string,
+  toDate?: string,
+): Promise<AbsenceCalendarItem[]> {
+  const scope = buildReportDataScope(user, "u");
   const params = [...scope.params];
-  let leaveDateFilter = '';
-  let outOfficeDateFilter = '';
+  let leaveDateFilter = "";
+  let outOfficeDateFilter = "";
   if (fromDate) {
     params.push(fromDate);
     const fromParam = `$${params.length}`;

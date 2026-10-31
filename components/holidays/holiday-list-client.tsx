@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import HolidayForm from './holiday-form';
-import DeleteHolidayButton from './delete-holiday-button';
-import { Plus, Calendar, Pencil, FileText } from 'lucide-react';
+import { useState } from "react";
+import HolidayForm from "./holiday-form";
+import DeleteHolidayButton from "./delete-holiday-button";
+import { Plus, Calendar, Pencil, FileText } from "lucide-react";
 
 interface HolidayItem {
   id: string;
@@ -26,12 +26,15 @@ export default function HolidayListClient({
   const [editTarget, setEditTarget] = useState<HolidayItem | null>(null);
 
   const formatDate = (d: string) => {
-    const [y, m, day] = d.split('-');
+    const [y, m, day] = d.split("-");
     return `${day}/${m}/${y}`;
   };
 
   const dayCount = (start: string, end: string) => {
-    const diff = Math.round((new Date(end).getTime() - new Date(start).getTime()) / 86400000) + 1;
+    const diff =
+      Math.round(
+        (new Date(end).getTime() - new Date(start).getTime()) / 86400000,
+      ) + 1;
     return diff;
   };
 
@@ -54,7 +57,7 @@ export default function HolidayListClient({
 
       {showForm && (
         <HolidayForm
-          mode={editTarget ? 'edit' : 'create'}
+          mode={editTarget ? "edit" : "create"}
           holiday={editTarget || undefined}
           onCancel={() => {
             setShowForm(false);
@@ -68,7 +71,9 @@ export default function HolidayListClient({
           <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
             <Calendar className="w-6 h-6" />
           </div>
-          <h3 className="text-sm font-semibold text-slate-800">Chưa có ngày lễ nào</h3>
+          <h3 className="text-sm font-semibold text-slate-800">
+            Chưa có ngày lễ nào
+          </h3>
           <p className="text-xs text-slate-500 max-w-sm mx-auto">
             Thêm ngày lễ để hệ thống tự động trừ khi tính số ngày nghỉ phép.
           </p>
@@ -84,22 +89,34 @@ export default function HolidayListClient({
                   <th className="px-6 py-3.5">Đến ngày</th>
                   <th className="px-6 py-3.5">Số ngày</th>
                   <th className="px-6 py-3.5">Trạng thái</th>
-                  {canManage && <th className="px-6 py-3.5 text-right">Thao tác</th>}
+                  {canManage && (
+                    <th className="px-6 py-3.5 text-right">Thao tác</th>
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
                 {holidays.map((h) => (
-                  <tr key={h.id} className="hover:bg-slate-50/80 transition-colors">
+                  <tr
+                    key={h.id}
+                    className="hover:bg-slate-50/80 transition-colors"
+                  >
                     <td className="px-6 py-4 font-medium text-slate-900 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         <FileText className="w-3.5 h-3.5 text-slate-400" />
                         {h.name}
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-slate-700 whitespace-nowrap">{formatDate(h.start_date)}</td>
-                    <td className="px-6 py-4 text-slate-700 whitespace-nowrap">{formatDate(h.end_date)}</td>
+                    <td className="px-6 py-4 text-slate-700 whitespace-nowrap">
+                      {formatDate(h.start_date)}
+                    </td>
+                    <td className="px-6 py-4 text-slate-700 whitespace-nowrap">
+                      {formatDate(h.end_date)}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="font-semibold text-slate-800">{dayCount(h.start_date, h.end_date)}</span> ngày
+                      <span className="font-semibold text-slate-800">
+                        {dayCount(h.start_date, h.end_date)}
+                      </span>{" "}
+                      ngày
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {h.is_active ? (
@@ -124,7 +141,10 @@ export default function HolidayListClient({
                         >
                           <Pencil className="w-3.5 h-3.5" />
                         </button>
-                        <DeleteHolidayButton holidayId={h.id} holidayName={h.name} />
+                        <DeleteHolidayButton
+                          holidayId={h.id}
+                          holidayName={h.name}
+                        />
                       </td>
                     )}
                   </tr>

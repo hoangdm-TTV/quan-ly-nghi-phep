@@ -1,8 +1,8 @@
-import { NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth/permissions';
-import { query } from '@/lib/db/pool';
+import { NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth/permissions";
+import { query } from "@/lib/db/pool";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -20,10 +20,10 @@ export async function GET() {
 
   return new NextResponse(new Uint8Array(avatar.avatar_data), {
     headers: {
-      'Content-Type': avatar.avatar_mime_type,
-      'Content-Length': String(avatar.avatar_data.length),
-      'Cache-Control': 'private, no-store, max-age=0',
-      'X-Content-Type-Options': 'nosniff',
+      "Content-Type": avatar.avatar_mime_type,
+      "Content-Length": String(avatar.avatar_data.length),
+      "Cache-Control": "private, no-store, max-age=0",
+      "X-Content-Type-Options": "nosniff",
     },
   });
 }

@@ -1,36 +1,39 @@
-import { OutOfficeStatus } from '@/lib/out-office/workflow';
+import { OutOfficeStatus } from "@/lib/out-office/workflow";
 
 interface OutOfficeStatusBadgeProps {
   status: OutOfficeStatus;
 }
 
-export default function OutOfficeStatusBadge({ status }: OutOfficeStatusBadgeProps) {
-  const configs: Record<OutOfficeStatus, { label: string; className: string }> = {
-    PENDING: {
-      label: 'Chờ duyệt',
-      className: 'bg-amber-50 text-amber-700 border-amber-200',
-    },
-    APPROVED: {
-      label: 'Đã duyệt (Đang ra ngoài)',
-      className: 'bg-blue-50 text-blue-700 border-blue-200',
-    },
-    COMPLETED: {
-      label: 'Đã về & Hoàn tất',
-      className: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    },
-    REJECTED: {
-      label: 'Đã từ chối',
-      className: 'bg-rose-50 text-rose-700 border-rose-200',
-    },
-    CANCELLED: {
-      label: 'Đã hủy',
-      className: 'bg-slate-50 text-slate-700 border-slate-200',
-    },
-  };
+export default function OutOfficeStatusBadge({
+  status,
+}: OutOfficeStatusBadgeProps) {
+  const configs: Record<OutOfficeStatus, { label: string; className: string }> =
+    {
+      PENDING: {
+        label: "Chờ duyệt",
+        className: "bg-amber-50 text-amber-700 border-amber-200",
+      },
+      APPROVED: {
+        label: "Đã duyệt (Đang ra ngoài)",
+        className: "bg-blue-50 text-blue-700 border-blue-200",
+      },
+      COMPLETED: {
+        label: "Đã về & Hoàn tất",
+        className: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      },
+      REJECTED: {
+        label: "Đã từ chối",
+        className: "bg-rose-50 text-rose-700 border-rose-200",
+      },
+      CANCELLED: {
+        label: "Đã hủy",
+        className: "bg-slate-50 text-slate-700 border-slate-200",
+      },
+    };
 
   const current = configs[status] || {
     label: status,
-    className: 'bg-slate-50 text-slate-700 border-slate-200',
+    className: "bg-slate-50 text-slate-700 border-slate-200",
   };
 
   return (

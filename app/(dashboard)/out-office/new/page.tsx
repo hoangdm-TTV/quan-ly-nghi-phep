@@ -1,17 +1,22 @@
-import { requireAuth } from '@/lib/auth/permissions';
-import { canSubmitPersonalRequests, canApproveWorkflowRequests } from '@/lib/auth/roles';
-import { redirect } from 'next/navigation';
-import OutOfficeForm from '@/components/out-office/out-office-form';
+import { requireAuth } from "@/lib/auth/permissions";
+import {
+  canSubmitPersonalRequests,
+  canApproveWorkflowRequests,
+} from "@/lib/auth/roles";
+import { redirect } from "next/navigation";
+import OutOfficeForm from "@/components/out-office/out-office-form";
 
 export const metadata = {
-  title: 'Tạo đơn ra ngoài | Tri Thức Việt',
+  title: "Tạo đơn ra ngoài | Tri Thức Việt",
 };
 
 export default async function NewOutOfficePage() {
   const user = await requireAuth();
 
   if (!canSubmitPersonalRequests(user.role)) {
-    redirect(canApproveWorkflowRequests(user.role) ? '/approvals/out-office' : '/');
+    redirect(
+      canApproveWorkflowRequests(user.role) ? "/approvals/out-office" : "/",
+    );
   }
 
   return (
@@ -21,7 +26,8 @@ export default async function NewOutOfficePage() {
           Tạo đơn xin ra ngoài (Gate Pass)
         </h1>
         <p className="text-xs sm:text-sm text-slate-500 mt-1">
-          Đăng ký khung giờ và lý do ra ngoài trong ngày làm việc. Đơn sẽ được chuyển đến Trưởng phòng trực tiếp hoặc Giám đốc xem xét duyệt.
+          Đăng ký khung giờ và lý do ra ngoài trong ngày làm việc. Đơn sẽ được
+          chuyển đến Trưởng phòng trực tiếp hoặc Giám đốc xem xét duyệt.
         </p>
       </div>
 

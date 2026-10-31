@@ -1,13 +1,16 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
-let avatarBlobRequest: { userId: string; promise: Promise<Blob | null> } | null = null;
+let avatarBlobRequest: {
+  userId: string;
+  promise: Promise<Blob | null>;
+} | null = null;
 
 function loadAvatarBlob(userId: string): Promise<Blob | null> {
   if (!avatarBlobRequest || avatarBlobRequest.userId !== userId) {
-    const promise = fetch('/api/profile/avatar', { cache: 'no-store' })
-      .then((response) => response.ok ? response.blob() : null)
+    const promise = fetch("/api/profile/avatar", { cache: "no-store" })
+      .then((response) => (response.ok ? response.blob() : null))
       .catch(() => null);
     avatarBlobRequest = { userId, promise };
   }
@@ -17,7 +20,7 @@ function loadAvatarBlob(userId: string): Promise<Blob | null> {
 export default function UserAvatar({
   userId,
   name,
-  className = '',
+  className = "",
 }: {
   userId: string;
   name: string;
@@ -32,8 +35,9 @@ export default function UserAvatar({
       setImageSrc(null);
       setVersion(Date.now());
     };
-    window.addEventListener('profile-avatar-updated', refreshAvatar);
-    return () => window.removeEventListener('profile-avatar-updated', refreshAvatar);
+    window.addEventListener("profile-avatar-updated", refreshAvatar);
+    return () =>
+      window.removeEventListener("profile-avatar-updated", refreshAvatar);
   }, []);
 
   useEffect(() => {
@@ -56,9 +60,18 @@ export default function UserAvatar({
   }, [userId, version]);
 
   return (
-    <span className={`relative inline-flex shrink-0 items-center justify-center overflow-hidden ${className}`}>
+    <span
+      className={`relative inline-flex shrink-0 items-center justify-center overflow-hidden ${className}`}
+    >
       <span className="font-bold">{name.slice(0, 2).toUpperCase()}</span>
-      {imageSrc && <img src={imageSrc} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover" />}
+      {imageSrc && (
+        <img
+          src={imageSrc}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      )}
     </span>
   );
 }

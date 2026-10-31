@@ -1,8 +1,8 @@
-import Image from 'next/image';
-import Link from 'next/link';
+import Image from "next/image";
+import Link from "next/link";
 
 interface BrandLogoProps {
-  size?: 'sm' | 'md' | 'lg';
+  size?: "sm" | "md" | "lg";
   subtitle?: string;
   showBadge?: boolean;
   href?: string;
@@ -10,14 +10,14 @@ interface BrandLogoProps {
 }
 
 export default function BrandLogo({
-  size = 'md',
-  subtitle = 'Quản lý nghỉ phép & đơn ra ngoài',
+  size = "md",
+  subtitle = "Quản lý nghỉ phép & đơn ra ngoài",
   showBadge = true,
-  href = '/',
-  className = '',
+  href = "/",
+  className = "",
 }: BrandLogoProps) {
-  const isSm = size === 'sm';
-  const isLg = size === 'lg';
+  const isSm = size === "sm";
+  const isLg = size === "lg";
 
   const content = (
     <div className={`flex items-center gap-2.5 sm:gap-3 ${className}`}>
@@ -25,10 +25,10 @@ export default function BrandLogo({
       <div
         className={`relative bg-white rounded-xl sm:rounded-2xl border border-slate-200/90 shadow-xs flex items-center justify-center shrink-0 overflow-hidden ${
           isSm
-            ? 'w-10 h-10 p-1 rounded-lg'
+            ? "w-10 h-10 p-1 rounded-lg"
             : isLg
-            ? 'w-14 h-14 sm:w-16 sm:h-16 p-2 rounded-2xl'
-            : 'w-11 h-11 sm:w-12 sm:h-12 p-1.5'
+              ? "w-14 h-14 sm:w-16 sm:h-16 p-2 rounded-2xl"
+              : "w-11 h-11 sm:w-12 sm:h-12 p-1.5"
         }`}
       >
         <Image
@@ -46,14 +46,22 @@ export default function BrandLogo({
         <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
           <span
             className={`font-black tracking-tight leading-none text-[#005a3c] ${
-              isSm ? 'text-sm' : isLg ? 'text-xl sm:text-2xl' : 'text-base sm:text-lg'
+              isSm
+                ? "text-sm"
+                : isLg
+                  ? "text-xl sm:text-2xl"
+                  : "text-base sm:text-lg"
             }`}
           >
             TRI THỨC
           </span>
           <span
             className={`font-black tracking-tight leading-none text-[#991b1b] ${
-              isSm ? 'text-sm' : isLg ? 'text-xl sm:text-2xl' : 'text-base sm:text-lg'
+              isSm
+                ? "text-sm"
+                : isLg
+                  ? "text-xl sm:text-2xl"
+                  : "text-base sm:text-lg"
             }`}
           >
             VIỆT
@@ -67,7 +75,7 @@ export default function BrandLogo({
         {subtitle && (
           <p
             className={`text-slate-500 font-normal leading-normal truncate mt-0.5 sm:mt-1 ${
-              isSm ? 'text-[10px]' : isLg ? 'text-sm' : 'text-xs sm:text-[13px]'
+              isSm ? "text-[10px]" : isLg ? "text-sm" : "text-xs sm:text-[13px]"
             }`}
           >
             {subtitle}

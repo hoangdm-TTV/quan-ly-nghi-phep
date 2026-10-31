@@ -1,10 +1,14 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { X, Upload } from 'lucide-react';
-import LeaveDocumentForm from '@/components/leave/leave-document-form';
+import { useState } from "react";
+import { X, Upload } from "lucide-react";
+import LeaveDocumentForm from "@/components/leave/leave-document-form";
 
-export default function LeaveDocumentDialog({ requestId }: { requestId: string }) {
+export default function LeaveDocumentDialog({
+  requestId,
+}: {
+  requestId: string;
+}) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -33,10 +37,15 @@ export default function LeaveDocumentDialog({ requestId }: { requestId: string }
           >
             <div className="mb-4 flex items-start justify-between gap-4">
               <div>
-                <h2 id={`leave-document-title-${requestId}`} className="text-base font-bold text-slate-900">
+                <h2
+                  id={`leave-document-title-${requestId}`}
+                  className="text-base font-bold text-slate-900"
+                >
                   Nộp giấy nghỉ phép đã ký
                 </h2>
-                <p className="mt-1 text-xs text-slate-500">Chọn ảnh hoặc PDF để hoàn tất đơn nghỉ phép.</p>
+                <p className="mt-1 text-xs text-slate-500">
+                  Chọn ảnh hoặc PDF để hoàn tất đơn nghỉ phép.
+                </p>
               </div>
               <button
                 type="button"

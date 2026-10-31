@@ -1,5 +1,6 @@
-export type UserRole = 'STAFF' | 'TEAM_LEAD' | 'MANAGER' | 'ACCOUNTANT' | 'ADMIN' | 'DIRECTOR';
-export type EmploymentStatus = 'ACTIVE' | 'SUSPENDED' | 'TERMINATED';
+export type UserRole =
+  "STAFF" | "TEAM_LEAD" | "MANAGER" | "ACCOUNTANT" | "ADMIN" | "DIRECTOR";
+export type EmploymentStatus = "ACTIVE" | "SUSPENDED" | "TERMINATED";
 
 export interface User {
   id: string;

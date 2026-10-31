@@ -1,10 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth/permissions';
-import { query } from '@/lib/db/pool';
+import { NextRequest, NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth/permissions";
+import { query } from "@/lib/db/pool";
 
 export async function GET() {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!user)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const result = await query<{
     id: string;
     type: string;
@@ -27,14 +28,21 @@ export async function GET() {
 
 export async function PATCH(request: NextRequest) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!user)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const body = await request.json().catch(() => ({}));
   if (body?.all === true) {
-    await query('UPDATE notifications SET read_at = COALESCE(read_at, NOW()) WHERE user_id = $1', [user.id]);
-  } else if (typeof body?.id === 'string') {
-    await query('UPDATE notifications SET read_at = COALESCE(read_at, NOW()) WHERE id = $1 AND user_id = $2', [body.id, user.id]);
+    await query(
+      "UPDATE notifications SET read_at = COALESCE(read_at, NOW()) WHERE user_id = $1",
+      [user.id],
+    );
+  } else if (typeof body?.id === "string") {
+    await query(
+      "UPDATE notifications SET read_at = COALESCE(read_at, NOW()) WHERE id = $1 AND user_id = $2",
+      [body.id, user.id],
+    );
   } else {
-    return NextResponse.json({ error: 'Thiếu id thông báo.' }, { status: 400 });
+    return NextResponse.json({ error: "Thiếu id thông báo." }, { status: 400 });
   }
   return NextResponse.json({ success: true });
 }

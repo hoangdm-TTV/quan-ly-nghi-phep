@@ -1,8 +1,8 @@
-import { query } from '@/lib/db/pool';
-import { SafeUser } from '@/lib/types/user';
-import { canSubmitPersonalRequests } from '@/lib/auth/roles';
-import { buildReportDataScope } from '@/lib/auth/data-scope';
-import { OutOfficeStatus, OutOfficeReasonType } from './workflow';
+import { query } from "@/lib/db/pool";
+import { SafeUser } from "@/lib/types/user";
+import { canSubmitPersonalRequests } from "@/lib/auth/roles";
+import { buildReportDataScope } from "@/lib/auth/data-scope";
+import { OutOfficeStatus, OutOfficeReasonType } from "./workflow";
 
 export interface OutOfficeDetail {
   id: string;
@@ -77,14 +77,17 @@ export async function getVisibleOutOfficeRequests(
 
   const params: any[] = [user.id];
 
-  if (statusFilter && statusFilter !== 'ALL') {
+  if (statusFilter && statusFilter !== "ALL") {
     params.push(statusFilter);
     sql += ` AND oo.status = $` + params.length;
   }
 
   sql += ` ORDER BY oo.created_at DESC`;
   if (pagination) {
-    params.push(Math.min(100, pagination.limit) + 1, Math.max(0, pagination.offset));
+    params.push(
+      Math.min(100, pagination.limit) + 1,
+      Math.max(0, pagination.offset),
+    );
     sql += ` LIMIT $${params.length - 1} OFFSET $${params.length}`;
   }
 
@@ -95,7 +98,9 @@ export async function getVisibleOutOfficeRequests(
 /**
  * Lấy chi tiết đơn ra ngoài theo ID
  */
-export async function getOutOfficeRequestById(id: string): Promise<OutOfficeDetail | null> {
+export async function getOutOfficeRequestById(
+  id: string,
+): Promise<OutOfficeDetail | null> {
   const sql = `
     SELECT 
       oo.id,
@@ -132,7 +137,9 @@ export async function getOutOfficeRequestById(id: string): Promise<OutOfficeDeta
 /**
  * Lấy lịch sử phê duyệt của đơn ra ngoài
  */
-export async function getOutOfficeApprovalHistory(requestId: string): Promise<OutOfficeApprovalRecord[]> {
+export async function getOutOfficeApprovalHistory(
+  requestId: string,
+): Promise<OutOfficeApprovalRecord[]> {
   const sql = `
     SELECT 
       ah.id,
@@ -159,22 +166,22 @@ export async function getPendingOutOfficeRequestsForApprover(
   approver: SafeUser,
   pagination?: { limit: number; offset: number },
 ): Promise<OutOfficeDetail[]> {
-  if (!['TEAM_LEAD', 'MANAGER', 'DIRECTOR'].includes(approver.role)) {
+  if (!["TEAM_LEAD", "MANAGER", "DIRECTOR"].includes(approver.role)) {
     return [];
   }
 
   const params: any[] = [approver.id];
   let pendingScope: string;
-  if (approver.role === 'TEAM_LEAD') {
+  if (approver.role === "TEAM_LEAD") {
     if (!approver.team_id) return [];
     params.push(approver.team_id);
     pendingScope = `u.role = 'STAFF' AND u.team_id = $2::uuid`;
-	  } else if (approver.role === 'MANAGER') {
-	    if (!approver.department_id) return [];
-	    params.push(approver.department_id);
-	    pendingScope = `u.department_id = $2::uuid AND (u.role IN ('TEAM_LEAD', 'ACCOUNTANT') OR (u.role = 'STAFF' AND NOT EXISTS (SELECT 1 FROM users tl WHERE tl.role = 'TEAM_LEAD' AND tl.is_active = TRUE AND tl.employment_status = 'ACTIVE' AND tl.team_id = u.team_id)))`;
-	  } else {
-	    pendingScope = `(u.role = 'MANAGER' OR (u.role IN ('TEAM_LEAD', 'ACCOUNTANT') AND NOT EXISTS (SELECT 1 FROM users m WHERE m.role = 'MANAGER' AND m.is_active = TRUE AND m.employment_status = 'ACTIVE' AND m.department_id = u.department_id)) OR (u.role = 'STAFF' AND NOT EXISTS (SELECT 1 FROM users tl WHERE tl.role = 'TEAM_LEAD' AND tl.is_active = TRUE AND tl.employment_status = 'ACTIVE' AND tl.team_id = u.team_id) AND NOT EXISTS (SELECT 1 FROM users m WHERE m.role = 'MANAGER' AND m.is_active = TRUE AND m.employment_status = 'ACTIVE' AND m.department_id = u.department_id)))`;
+  } else if (approver.role === "MANAGER") {
+    if (!approver.department_id) return [];
+    params.push(approver.department_id);
+    pendingScope = `u.department_id = $2::uuid AND (u.role IN ('TEAM_LEAD', 'ACCOUNTANT') OR (u.role = 'STAFF' AND NOT EXISTS (SELECT 1 FROM users tl WHERE tl.role = 'TEAM_LEAD' AND tl.is_active = TRUE AND tl.employment_status = 'ACTIVE' AND tl.team_id = u.team_id)))`;
+  } else {
+    pendingScope = `(u.role = 'MANAGER' OR (u.role IN ('TEAM_LEAD', 'ACCOUNTANT') AND NOT EXISTS (SELECT 1 FROM users m WHERE m.role = 'MANAGER' AND m.is_active = TRUE AND m.employment_status = 'ACTIVE' AND m.department_id = u.department_id)) OR (u.role = 'STAFF' AND NOT EXISTS (SELECT 1 FROM users tl WHERE tl.role = 'TEAM_LEAD' AND tl.is_active = TRUE AND tl.employment_status = 'ACTIVE' AND tl.team_id = u.team_id) AND NOT EXISTS (SELECT 1 FROM users m WHERE m.role = 'MANAGER' AND m.is_active = TRUE AND m.employment_status = 'ACTIVE' AND m.department_id = u.department_id)))`;
   }
 
   const sql = `
@@ -210,50 +217,66 @@ export async function getPendingOutOfficeRequestsForApprover(
       CASE WHEN oo.status = 'PENDING' THEN 1 ELSE 2 END,
       oo.request_date ASC,
       oo.start_time ASC
-      ${pagination ? `LIMIT $${params.length + 1} OFFSET $${params.length + 2}` : ''}
+      ${pagination ? `LIMIT $${params.length + 1} OFFSET $${params.length + 2}` : ""}
   `;
 
-  if (pagination) params.push(Math.min(100, pagination.limit) + 1, Math.max(0, pagination.offset));
+  if (pagination)
+    params.push(
+      Math.min(100, pagination.limit) + 1,
+      Math.max(0, pagination.offset),
+    );
 
   const res = await query<OutOfficeDetail>(sql, params);
   return res.rows;
 }
 
 /** Đếm nhanh hàng đợi ra ngoài để hiển thị badge, không tải toàn bộ chi tiết đơn. */
-export async function getPendingOutOfficeApprovalCount(approver: SafeUser): Promise<number> {
-  if (!['TEAM_LEAD', 'MANAGER', 'DIRECTOR'].includes(approver.role)) return 0;
+export async function getPendingOutOfficeApprovalCount(
+  approver: SafeUser,
+): Promise<number> {
+  if (!["TEAM_LEAD", "MANAGER", "DIRECTOR"].includes(approver.role)) return 0;
   const params: string[] = [approver.id];
   let pendingScope: string;
-  if (approver.role === 'TEAM_LEAD') {
+  if (approver.role === "TEAM_LEAD") {
     if (!approver.team_id) return 0;
     params.push(approver.team_id);
     pendingScope = `u.role = 'STAFF' AND u.team_id = $2::uuid`;
-	  } else if (approver.role === 'MANAGER') {
-	    if (!approver.department_id) return 0;
-	    params.push(approver.department_id);
-	    pendingScope = `u.department_id = $2::uuid AND (u.role IN ('TEAM_LEAD', 'ACCOUNTANT') OR (u.role = 'STAFF' AND NOT EXISTS (SELECT 1 FROM users tl WHERE tl.role = 'TEAM_LEAD' AND tl.is_active = TRUE AND tl.employment_status = 'ACTIVE' AND tl.team_id = u.team_id)))`;
-	  } else {
-	    pendingScope = `(u.role = 'MANAGER' OR (u.role IN ('TEAM_LEAD', 'ACCOUNTANT') AND NOT EXISTS (SELECT 1 FROM users m WHERE m.role = 'MANAGER' AND m.is_active = TRUE AND m.employment_status = 'ACTIVE' AND m.department_id = u.department_id)) OR (u.role = 'STAFF' AND NOT EXISTS (SELECT 1 FROM users tl WHERE tl.role = 'TEAM_LEAD' AND tl.is_active = TRUE AND tl.employment_status = 'ACTIVE' AND tl.team_id = u.team_id) AND NOT EXISTS (SELECT 1 FROM users m WHERE m.role = 'MANAGER' AND m.is_active = TRUE AND m.employment_status = 'ACTIVE' AND m.department_id = u.department_id)))`;
+  } else if (approver.role === "MANAGER") {
+    if (!approver.department_id) return 0;
+    params.push(approver.department_id);
+    pendingScope = `u.department_id = $2::uuid AND (u.role IN ('TEAM_LEAD', 'ACCOUNTANT') OR (u.role = 'STAFF' AND NOT EXISTS (SELECT 1 FROM users tl WHERE tl.role = 'TEAM_LEAD' AND tl.is_active = TRUE AND tl.employment_status = 'ACTIVE' AND tl.team_id = u.team_id)))`;
+  } else {
+    pendingScope = `(u.role = 'MANAGER' OR (u.role IN ('TEAM_LEAD', 'ACCOUNTANT') AND NOT EXISTS (SELECT 1 FROM users m WHERE m.role = 'MANAGER' AND m.is_active = TRUE AND m.employment_status = 'ACTIVE' AND m.department_id = u.department_id)) OR (u.role = 'STAFF' AND NOT EXISTS (SELECT 1 FROM users tl WHERE tl.role = 'TEAM_LEAD' AND tl.is_active = TRUE AND tl.employment_status = 'ACTIVE' AND tl.team_id = u.team_id) AND NOT EXISTS (SELECT 1 FROM users m WHERE m.role = 'MANAGER' AND m.is_active = TRUE AND m.employment_status = 'ACTIVE' AND m.department_id = u.department_id)))`;
   }
   const result = await query<{ count: number }>(
     `SELECT COUNT(*)::int AS count FROM out_office_requests oo JOIN users u ON oo.employee_id = u.id WHERE oo.employee_id != $1 AND ((oo.status = 'PENDING' AND ${pendingScope}) OR (oo.status = 'APPROVED' AND oo.approver_id = $1))`,
-    params
+    params,
   );
   return Number(result.rows[0]?.count || 0);
 }
 
-export async function getPendingOutOfficeApprovalSummary(approver: SafeUser): Promise<{ total: number; pending: number; approved: number }> {
-  if (!['TEAM_LEAD','MANAGER','DIRECTOR'].includes(approver.role)) return { total: 0, pending: 0, approved: 0 };
+export async function getPendingOutOfficeApprovalSummary(
+  approver: SafeUser,
+): Promise<{ total: number; pending: number; approved: number }> {
+  if (!["TEAM_LEAD", "MANAGER", "DIRECTOR"].includes(approver.role))
+    return { total: 0, pending: 0, approved: 0 };
   const params: string[] = [approver.id];
   let scope: string;
-  if (approver.role === 'TEAM_LEAD') {
+  if (approver.role === "TEAM_LEAD") {
     if (!approver.team_id) return { total: 0, pending: 0, approved: 0 };
-    params.push(approver.team_id); scope = `u.role='STAFF' AND u.team_id=$2::uuid`;
-  } else if (approver.role === 'MANAGER') {
+    params.push(approver.team_id);
+    scope = `u.role='STAFF' AND u.team_id=$2::uuid`;
+  } else if (approver.role === "MANAGER") {
     if (!approver.department_id) return { total: 0, pending: 0, approved: 0 };
-    params.push(approver.department_id); scope = `u.department_id=$2::uuid AND (u.role IN ('TEAM_LEAD','ACCOUNTANT') OR (u.role='STAFF' AND NOT EXISTS (SELECT 1 FROM users tl WHERE tl.role='TEAM_LEAD' AND tl.is_active=TRUE AND tl.employment_status='ACTIVE' AND tl.team_id=u.team_id)))`;
-  } else scope = `(u.role='MANAGER' OR (u.role IN ('TEAM_LEAD','ACCOUNTANT') AND NOT EXISTS (SELECT 1 FROM users m WHERE m.role='MANAGER' AND m.is_active=TRUE AND m.employment_status='ACTIVE' AND m.department_id=u.department_id)) OR (u.role='STAFF' AND NOT EXISTS (SELECT 1 FROM users tl WHERE tl.role='TEAM_LEAD' AND tl.is_active=TRUE AND tl.employment_status='ACTIVE' AND tl.team_id=u.team_id) AND NOT EXISTS (SELECT 1 FROM users m WHERE m.role='MANAGER' AND m.is_active=TRUE AND m.employment_status='ACTIVE' AND m.department_id=u.department_id)))`;
-  const result = await query<{ total: number; pending: number; approved: number }>(
+    params.push(approver.department_id);
+    scope = `u.department_id=$2::uuid AND (u.role IN ('TEAM_LEAD','ACCOUNTANT') OR (u.role='STAFF' AND NOT EXISTS (SELECT 1 FROM users tl WHERE tl.role='TEAM_LEAD' AND tl.is_active=TRUE AND tl.employment_status='ACTIVE' AND tl.team_id=u.team_id)))`;
+  } else
+    scope = `(u.role='MANAGER' OR (u.role IN ('TEAM_LEAD','ACCOUNTANT') AND NOT EXISTS (SELECT 1 FROM users m WHERE m.role='MANAGER' AND m.is_active=TRUE AND m.employment_status='ACTIVE' AND m.department_id=u.department_id)) OR (u.role='STAFF' AND NOT EXISTS (SELECT 1 FROM users tl WHERE tl.role='TEAM_LEAD' AND tl.is_active=TRUE AND tl.employment_status='ACTIVE' AND tl.team_id=u.team_id) AND NOT EXISTS (SELECT 1 FROM users m WHERE m.role='MANAGER' AND m.is_active=TRUE AND m.employment_status='ACTIVE' AND m.department_id=u.department_id)))`;
+  const result = await query<{
+    total: number;
+    pending: number;
+    approved: number;
+  }>(
     `SELECT COUNT(*)::int AS total, COUNT(*) FILTER (WHERE oo.status='PENDING')::int AS pending,
             COUNT(*) FILTER (WHERE oo.status='APPROVED')::int AS approved
        FROM out_office_requests oo JOIN users u ON u.id=oo.employee_id
@@ -261,7 +284,11 @@ export async function getPendingOutOfficeApprovalSummary(approver: SafeUser): Pr
     params,
   );
   const row = result.rows[0];
-  return { total: Number(row?.total || 0), pending: Number(row?.pending || 0), approved: Number(row?.approved || 0) };
+  return {
+    total: Number(row?.total || 0),
+    pending: Number(row?.pending || 0),
+    approved: Number(row?.approved || 0),
+  };
 }
 
 export interface ScopedOutOfficeFilter {
@@ -282,11 +309,11 @@ export async function getScopedOutOfficeRequests(
   filter: ScopedOutOfficeFilter = {},
   pagination?: { limit: number; offset: number },
 ): Promise<OutOfficeDetail[]> {
-  const scope = buildReportDataScope(user, 'u');
+  const scope = buildReportDataScope(user, "u");
   const params: any[] = [...scope.params];
   const conditions: string[] = [scope.whereSql];
 
-  if (filter.status && filter.status !== 'ALL') {
+  if (filter.status && filter.status !== "ALL") {
     params.push(filter.status);
     conditions.push(`oo.status = $${params.length}`);
   }
@@ -337,12 +364,16 @@ export async function getScopedOutOfficeRequests(
     LEFT JOIN departments d ON u.department_id = d.id
     LEFT JOIN teams t ON u.team_id = t.id
     LEFT JOIN users app ON oo.approver_id = app.id
-    WHERE ${conditions.join(' AND ')}
+    WHERE ${conditions.join(" AND ")}
     ORDER BY oo.request_date DESC, oo.created_at DESC
-    ${pagination ? `LIMIT $${params.length + 1} OFFSET $${params.length + 2}` : ''}
+    ${pagination ? `LIMIT $${params.length + 1} OFFSET $${params.length + 2}` : ""}
   `;
 
-  if (pagination) params.push(Math.min(100, pagination.limit) + 1, Math.max(0, pagination.offset));
+  if (pagination)
+    params.push(
+      Math.min(100, pagination.limit) + 1,
+      Math.max(0, pagination.offset),
+    );
 
   const res = await query<OutOfficeDetail>(sql, params);
   return res.rows;

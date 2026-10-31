@@ -1,16 +1,16 @@
-import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth/permissions';
-import LoginForm from '@/components/login-form';
-import BrandLogo from '@/components/brand/brand-logo';
+import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/auth/permissions";
+import LoginForm from "@/components/login-form";
+import BrandLogo from "@/components/brand/brand-logo";
 
 export const metadata = {
-  title: 'Đăng nhập | TRI THỨC VIỆT - Quản lý Nghỉ phép & Đơn ra ngoài',
+  title: "Đăng nhập | TRI THỨC VIỆT - Quản lý Nghỉ phép & Đơn ra ngoài",
 };
 
 export default async function LoginPage() {
   const user = await getCurrentUser();
   if (user) {
-    redirect('/');
+    redirect("/");
   }
 
   return (
@@ -26,7 +26,8 @@ export default async function LoginPage() {
           />
         </div>
         <p className="text-sm text-slate-500 max-w-md leading-relaxed">
-          Cổng thông tin nội bộ dành cho cán bộ công nhân viên công ty Tri Thức Việt
+          Cổng thông tin nội bộ dành cho cán bộ công nhân viên công ty Tri Thức
+          Việt
         </p>
       </div>
 

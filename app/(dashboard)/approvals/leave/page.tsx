@@ -1,27 +1,50 @@
-import { requireAuth } from '@/lib/auth/permissions';
-import { canApproveWorkflowRequests, canSubmitPersonalRequests } from '@/lib/auth/roles';
-import { redirect } from 'next/navigation';
-import { getPendingLeaveRequestsForApprover, getPendingLeaveApprovalSummary } from '@/lib/leave/queries';
-import LeaveStatusBadge from '@/components/leave/leave-status-badge';
-import ApprovalActions from '@/components/leave/approval-actions';
-import Link from 'next/link';
-import { CheckSquare, Calendar, User, Clock, ArrowRight, ShieldCheck } from 'lucide-react';
+import { requireAuth } from "@/lib/auth/permissions";
+import {
+  canApproveWorkflowRequests,
+  canSubmitPersonalRequests,
+} from "@/lib/auth/roles";
+import { redirect } from "next/navigation";
+import {
+  getPendingLeaveRequestsForApprover,
+  getPendingLeaveApprovalSummary,
+} from "@/lib/leave/queries";
+import LeaveStatusBadge from "@/components/leave/leave-status-badge";
+import ApprovalActions from "@/components/leave/approval-actions";
+import Link from "next/link";
+import {
+  CheckSquare,
+  Calendar,
+  User,
+  Clock,
+  ArrowRight,
+  ShieldCheck,
+} from "lucide-react";
 
 export const metadata = {
-  title: 'Duyệt đơn nghỉ phép | Tri Thức Việt',
+  title: "Duyệt đơn nghỉ phép | Tri Thức Việt",
 };
 
-export default async function ApprovalsLeavePage({ searchParams }: { searchParams?: { page?: string } }) {
+export default async function ApprovalsLeavePage({
+  searchParams,
+}: {
+  searchParams?: { page?: string };
+}) {
   const user = await requireAuth();
 
   if (!canApproveWorkflowRequests(user.role)) {
-    redirect(canSubmitPersonalRequests(user.role) ? '/leave' : '/');
+    redirect(canSubmitPersonalRequests(user.role) ? "/leave" : "/");
   }
 
   const pageSize = 25;
-  const pageNumber = Math.max(1, Math.min(100000, Number(searchParams?.page) || 1));
+  const pageNumber = Math.max(
+    1,
+    Math.min(100000, Number(searchParams?.page) || 1),
+  );
   const [fetchedRequests, summary] = await Promise.all([
-    getPendingLeaveRequestsForApprover(user, { limit: pageSize, offset: (pageNumber - 1) * pageSize }),
+    getPendingLeaveRequestsForApprover(user, {
+      limit: pageSize,
+      offset: (pageNumber - 1) * pageSize,
+    }),
     getPendingLeaveApprovalSummary(user),
   ]);
   const hasNextPage = fetchedRequests.length > pageSize;
@@ -44,7 +67,8 @@ export default async function ApprovalsLeavePage({ searchParams }: { searchParam
             </span>
           </div>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Các đơn chưa được xử lý sẽ được ưu tiên hiển thị tại đây. Bạn chỉ nhìn thấy những đơn đang đến đúng bước duyệt của mình.
+            Các đơn chưa được xử lý sẽ được ưu tiên hiển thị tại đây. Bạn chỉ
+            nhìn thấy những đơn đang đến đúng bước duyệt của mình.
           </p>
         </div>
 
@@ -59,21 +83,42 @@ export default async function ApprovalsLeavePage({ searchParams }: { searchParam
       </div>
 
       {needsActionCount > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3" aria-live="polite">
+        <div
+          className="grid grid-cols-1 sm:grid-cols-3 gap-3"
+          aria-live="polite"
+        >
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
-            <p className="text-xs font-bold uppercase tracking-wide text-amber-800">Cần xử lý ngay</p>
-            <p className="mt-1 text-2xl font-black text-amber-950">{needsActionCount}</p>
-            <p className="text-xs font-medium text-amber-800">đơn đang chờ bạn xem</p>
+            <p className="text-xs font-bold uppercase tracking-wide text-amber-800">
+              Cần xử lý ngay
+            </p>
+            <p className="mt-1 text-2xl font-black text-amber-950">
+              {needsActionCount}
+            </p>
+            <p className="text-xs font-medium text-amber-800">
+              đơn đang chờ bạn xem
+            </p>
           </div>
           <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
-            <p className="text-xs font-bold uppercase tracking-wide text-blue-800">Chờ duyệt cấp 1</p>
-            <p className="mt-1 text-2xl font-black text-blue-950">{firstLevelCount}</p>
-            <p className="text-xs font-medium text-blue-800">đơn chưa được Trưởng phòng duyệt</p>
+            <p className="text-xs font-bold uppercase tracking-wide text-blue-800">
+              Chờ duyệt cấp 1
+            </p>
+            <p className="mt-1 text-2xl font-black text-blue-950">
+              {firstLevelCount}
+            </p>
+            <p className="text-xs font-medium text-blue-800">
+              đơn chưa được Trưởng phòng duyệt
+            </p>
           </div>
           <div className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3">
-            <p className="text-xs font-bold uppercase tracking-wide text-violet-800">Chờ duyệt cấp 2</p>
-            <p className="mt-1 text-2xl font-black text-violet-950">{finalLevelCount}</p>
-            <p className="text-xs font-medium text-violet-800">đơn đang chờ Giám đốc duyệt</p>
+            <p className="text-xs font-bold uppercase tracking-wide text-violet-800">
+              Chờ duyệt cấp 2
+            </p>
+            <p className="mt-1 text-2xl font-black text-violet-950">
+              {finalLevelCount}
+            </p>
+            <p className="text-xs font-medium text-violet-800">
+              đơn đang chờ Giám đốc duyệt
+            </p>
           </div>
         </div>
       )}
@@ -83,9 +128,12 @@ export default async function ApprovalsLeavePage({ searchParams }: { searchParam
           <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-[#005a3c] border border-emerald-200 mx-auto flex items-center justify-center">
             <CheckSquare className="w-7 h-7" />
           </div>
-              <h3 className="text-base font-bold text-slate-800">Không có đơn chưa duyệt</h3>
+          <h3 className="text-base font-bold text-slate-800">
+            Không có đơn chưa duyệt
+          </h3>
           <p className="text-xs sm:text-sm text-slate-500 max-w-sm mx-auto">
-            Tuyệt vời! Bạn đã hoàn tất tất cả các yêu cầu phê duyệt đơn nghỉ phép thuộc thẩm quyền của mình.
+            Tuyệt vời! Bạn đã hoàn tất tất cả các yêu cầu phê duyệt đơn nghỉ
+            phép thuộc thẩm quyền của mình.
           </p>
         </div>
       ) : (
@@ -94,7 +142,9 @@ export default async function ApprovalsLeavePage({ searchParams }: { searchParam
             <div
               key={req.id}
               className={`bg-white rounded-2xl border shadow-xs p-6 hover:shadow-md transition-all space-y-4 ${
-                req.status === 'PENDING' ? 'border-amber-300 ring-1 ring-amber-100' : 'border-violet-300 ring-1 ring-violet-100'
+                req.status === "PENDING"
+                  ? "border-amber-300 ring-1 ring-amber-100"
+                  : "border-violet-300 ring-1 ring-violet-100"
               }`}
             >
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 pb-4">
@@ -103,21 +153,30 @@ export default async function ApprovalsLeavePage({ searchParams }: { searchParam
                     {req.employee_name.slice(0, 2).toUpperCase()}
                   </div>
                   <div>
-                    <h3 className="text-base font-bold text-slate-900">{req.employee_name}</h3>
+                    <h3 className="text-base font-bold text-slate-900">
+                      {req.employee_name}
+                    </h3>
                     <p className="text-xs text-slate-500 font-medium">
-                      {req.employee_role} • {req.department_name || 'Chưa phân bổ'}{' '}
-                      {req.team_name ? `• ${req.team_name}` : ''}
+                      {req.employee_role} •{" "}
+                      {req.department_name || "Chưa phân bổ"}{" "}
+                      {req.team_name ? `• ${req.team_name}` : ""}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2.5">
-                  <span className={`px-2.5 py-1 rounded-lg text-[11px] font-black uppercase tracking-wide ${
-                    req.status === 'PENDING' ? 'bg-amber-100 text-amber-900' : 'bg-violet-100 text-violet-900'
-                  }`}>
-                    {req.status === 'PENDING'
-                      ? user.role === 'DIRECTOR' ? 'Chờ Giám đốc duyệt trực tiếp' : 'Chưa duyệt cấp 1'
-                      : 'Chưa duyệt cấp 2'}
+                  <span
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-black uppercase tracking-wide ${
+                      req.status === "PENDING"
+                        ? "bg-amber-100 text-amber-900"
+                        : "bg-violet-100 text-violet-900"
+                    }`}
+                  >
+                    {req.status === "PENDING"
+                      ? user.role === "DIRECTOR"
+                        ? "Chờ Giám đốc duyệt trực tiếp"
+                        : "Chưa duyệt cấp 1"
+                      : "Chưa duyệt cấp 2"}
                   </span>
                   <LeaveStatusBadge status={req.status} />
                   <Link
@@ -154,22 +213,24 @@ export default async function ApprovalsLeavePage({ searchParams }: { searchParam
                     Cấp duyệt hiện tại:
                   </span>
                   <span className="font-semibold text-slate-800">
-                    {req.status === 'PENDING'
-                      ? user.role === 'DIRECTOR' ? 'Giám đốc duyệt trực tiếp' : 'Duyệt Cấp 1 (Trưởng phòng)'
-                      : 'Duyệt Cấp 2 (Giám đốc)'}
+                    {req.status === "PENDING"
+                      ? user.role === "DIRECTOR"
+                        ? "Giám đốc duyệt trực tiếp"
+                        : "Duyệt Cấp 1 (Trưởng phòng)"
+                      : "Duyệt Cấp 2 (Giám đốc)"}
                   </span>
                 </div>
               </div>
 
               <div className="text-xs sm:text-sm text-slate-700 font-medium">
                 <span className="font-bold text-slate-900">Lý do nghỉ: </span>
-                {req.reason || '—'}
+                {req.reason || "—"}
               </div>
 
               {/* Khu vực thao tác Duyệt / Từ chối */}
               <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <span className="text-xs text-slate-400">
-                  Gửi lúc {new Date(req.created_at).toLocaleString('vi-VN')}
+                  Gửi lúc {new Date(req.created_at).toLocaleString("vi-VN")}
                 </span>
                 <ApprovalActions requestId={req.id} />
               </div>
@@ -178,8 +239,27 @@ export default async function ApprovalsLeavePage({ searchParams }: { searchParam
         </div>
       )}
       <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs">
-        <span className="text-slate-600">Trang {pageNumber} · {needsActionCount} đơn thuộc hàng đợi</span>
-        <div className="flex gap-2">{pageNumber > 1 && <Link href={`/approvals/leave?page=${pageNumber - 1}`} className="rounded-lg border px-3 py-1.5 font-semibold text-slate-700">Trước</Link>}{hasNextPage && <Link href={`/approvals/leave?page=${pageNumber + 1}`} className="rounded-lg border px-3 py-1.5 font-semibold text-slate-700">Tiếp</Link>}</div>
+        <span className="text-slate-600">
+          Trang {pageNumber} · {needsActionCount} đơn thuộc hàng đợi
+        </span>
+        <div className="flex gap-2">
+          {pageNumber > 1 && (
+            <Link
+              href={`/approvals/leave?page=${pageNumber - 1}`}
+              className="rounded-lg border px-3 py-1.5 font-semibold text-slate-700"
+            >
+              Trước
+            </Link>
+          )}
+          {hasNextPage && (
+            <Link
+              href={`/approvals/leave?page=${pageNumber + 1}`}
+              className="rounded-lg border px-3 py-1.5 font-semibold text-slate-700"
+            >
+              Tiếp
+            </Link>
+          )}
+        </div>
       </div>
     </div>
   );
