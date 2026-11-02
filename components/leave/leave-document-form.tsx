@@ -109,6 +109,7 @@ export default function LeaveDocumentForm({
       return;
     }
 
+    const form = event.currentTarget;
     const file = fileInputRef.current?.files?.[0];
     if (!file || file.type === "application/pdf") return;
 
@@ -137,7 +138,7 @@ export default function LeaveDocumentForm({
       setCompressing(false);
       if (shouldSubmit) {
         confirmedSubmitRef.current = true;
-        event.currentTarget.requestSubmit();
+        form.requestSubmit();
       }
     }
   }
