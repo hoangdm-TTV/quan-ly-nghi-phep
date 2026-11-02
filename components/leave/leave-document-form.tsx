@@ -9,36 +9,44 @@ import {
 } from "@/lib/leave/actions";
 
 const MAX_IMAGE_EDGE = 2200;
-const JPEG_QUALITY = 0.82;
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+const TARGET_IMAGE_SIZE = 4.5 * 1024 * 1024;
+const JPEG_QUALITIES = [0.82, 0.76, 0.7, 0.64, 0.58, 0.52];
 
 async function optimizeImage(file: File): Promise<File> {
   if (!file.type.startsWith("image/")) return file;
+  if (file.size <= TARGET_IMAGE_SIZE) return file;
 
   const bitmap = await createImageBitmap(file);
   try {
-    const scale = Math.min(
-      1,
-      MAX_IMAGE_EDGE / Math.max(bitmap.width, bitmap.height),
-    );
-    const canvas = document.createElement("canvas");
-    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
-    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    let smallestBlob: Blob | null = null;
+    for (const maxEdge of [MAX_IMAGE_EDGE, 2000, 1800, 1600, 1400]) {
+      const scale = Math.min(1, maxEdge / Math.max(bitmap.width, bitmap.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+      canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+      const context = canvas.getContext("2d");
+      if (!context) continue;
+      context.imageSmoothingEnabled = true;
+      context.imageSmoothingQuality = "high";
+      context.fillStyle = "#ffffff";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
 
-    const context = canvas.getContext("2d");
-    if (!context) return file;
-    context.imageSmoothingEnabled = true;
-    context.imageSmoothingQuality = "high";
-    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-
-    const compressedBlob = await new Promise<Blob | null>((resolve) => {
-      canvas.toBlob(resolve, "image/jpeg", JPEG_QUALITY);
-    });
-
-    if (!compressedBlob || compressedBlob.size >= file.size) return file;
-
+      for (const quality of JPEG_QUALITIES) {
+        const compressedBlob = await new Promise<Blob | null>((resolve) => {
+          canvas.toBlob(resolve, "image/jpeg", quality);
+        });
+        if (!compressedBlob) continue;
+        if (!smallestBlob || compressedBlob.size < smallestBlob.size) smallestBlob = compressedBlob;
+        if (compressedBlob.size <= TARGET_IMAGE_SIZE) break;
+      }
+      if (smallestBlob && smallestBlob.size <= TARGET_IMAGE_SIZE) break;
+    }
+    if (!smallestBlob || smallestBlob.size >= file.size) return file;
     const baseName =
       file.name.replace(/\.[^.]+$/, "") || "signed-leave-document";
-    return new File([compressedBlob], `${baseName}.jpg`, {
+    return new File([smallestBlob], `${baseName}.jpg`, {
       type: "image/jpeg",
       lastModified: Date.now(),
     });
@@ -90,6 +98,7 @@ export default function LeaveDocumentForm({
     initialState,
   );
   const [compressing, setCompressing] = useState(false);
+  const [localError, setLocalError] = useState("");
   const [selectedFileName, setSelectedFileName] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const confirmedSubmitRef = useRef(false);
@@ -105,18 +114,31 @@ export default function LeaveDocumentForm({
 
     event.preventDefault();
     setCompressing(true);
+    setLocalError("");
+    let shouldSubmit = false;
     try {
       const optimizedFile = await optimizeImage(file);
+      if (optimizedFile.size > MAX_IMAGE_SIZE) {
+        setLocalError("Ảnh không thể nén xuống dưới 5 MB. Vui lòng chọn ảnh có độ phân giải thấp hơn hoặc chụp lại giấy ở khoảng cách gần hơn.");
+        return;
+      }
       const dataTransfer = new DataTransfer();
       dataTransfer.items.add(optimizedFile);
       if (fileInputRef.current) fileInputRef.current.files = dataTransfer.files;
       setSelectedFileName(optimizedFile.name);
+      shouldSubmit = true;
     } catch {
-      // Nếu thiết bị không hỗ trợ nén, vẫn cho phép upload file gốc.
+      if (file.size > MAX_IMAGE_SIZE) {
+        setLocalError("Thiết bị không thể nén ảnh này xuống dưới 5 MB. Vui lòng chọn ảnh khác.");
+        return;
+      }
+      shouldSubmit = true;
     } finally {
       setCompressing(false);
-      confirmedSubmitRef.current = true;
-      event.currentTarget.requestSubmit();
+      if (shouldSubmit) {
+        confirmedSubmitRef.current = true;
+        event.currentTarget.requestSubmit();
+      }
     }
   }
 
@@ -153,8 +175,8 @@ export default function LeaveDocumentForm({
         />
         <p className="mt-1 flex items-center gap-1 text-[11px] text-slate-500">
           <Sparkles className="h-3 w-3 text-teal-600" />
-          Ảnh sẽ tự thu nhỏ và chuyển sang JPEG để upload nhanh hơn; tối đa 50
-          MB. PDF được giữ nguyên.
+          Ảnh sẽ tự thu nhỏ và chuyển sang JPEG; dung lượng sau nén tối đa 5 MB.
+          PDF được giữ nguyên và tối đa 50 MB.
         </p>
         {selectedFileName && (
           <p className="mt-1 truncate text-[11px] font-medium text-teal-700">
@@ -163,10 +185,10 @@ export default function LeaveDocumentForm({
         )}
       </div>
 
-      {state.error && (
+      {(state.error || localError) && (
         <div className="flex items-center rounded-lg border border-rose-200 bg-rose-50 p-2.5 text-xs text-rose-700">
           <AlertCircle className="mr-1.5 h-4 w-4 shrink-0" />
-          <span>{state.error}</span>
+          <span>{state.error || localError}</span>
         </div>
       )}
 

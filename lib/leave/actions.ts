@@ -85,7 +85,8 @@ export type LeaveActionState = {
   error?: string;
 };
 
-const MAX_LEAVE_DOCUMENT_SIZE = 50 * 1024 * 1024;
+const MAX_LEAVE_IMAGE_SIZE = 5 * 1024 * 1024;
+const MAX_LEAVE_PDF_SIZE = 50 * 1024 * 1024;
 
 /** Chủ đơn nộp giấy đã ký sau khi được duyệt; tệp và trạng thái được lưu cùng một transaction. */
 export async function uploadLeaveDocumentAction(
@@ -110,13 +111,16 @@ export async function uploadLeaveDocumentAction(
     return { error: "Vui lòng chọn ảnh hoặc PDF giấy nghỉ phép đã ký." };
   }
   const file = fileValue as File;
-  if (file.size <= 0 || file.size > MAX_LEAVE_DOCUMENT_SIZE) {
-    return {
-      error: "Tệp phải có dung lượng lớn hơn 0 và không vượt quá 50 MB.",
-    };
-  }
   if (!["application/pdf", "image/png", "image/jpeg"].includes(file.type)) {
     return { error: "Chỉ chấp nhận tệp PDF, PNG hoặc JPEG." };
+  }
+  const maxSize = file.type === "application/pdf" ? MAX_LEAVE_PDF_SIZE : MAX_LEAVE_IMAGE_SIZE;
+  if (file.size <= 0 || file.size > maxSize) {
+    return {
+      error: file.type === "application/pdf"
+        ? "Tệp PDF phải có dung lượng lớn hơn 0 và không vượt quá 50 MB."
+        : "Ảnh phải có dung lượng lớn hơn 0 và không vượt quá 5 MB sau khi nén.",
+    };
   }
 
   let documentBytes: Buffer;

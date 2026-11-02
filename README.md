@@ -13,7 +13,7 @@
 - Thông báo nội bộ trong ứng dụng cho người xin đơn/người duyệt; Web Push là tùy chọn bổ sung. Chuông thông báo có số chưa đọc, xem chi tiết và đánh dấu đã đọc; endpoint cron ghi cả nhắc hằng ngày cho đơn chờ xử lý quá 24 giờ.
 - Tạo và theo dõi đơn nghỉ phép. Số ngày được tính theo ngày làm việc từ thứ Hai đến thứ Bảy, bỏ Chủ Nhật và ngày lễ đang hoạt động.
 - Duyệt nghỉ phép theo cấp: đơn tối đa một ngày cần một cấp; đơn trên một ngày cần Trưởng phòng rồi Giám đốc. Đơn của Trưởng phòng do Giám đốc duyệt.
-- Sau khi được duyệt, chủ đơn tải giấy đã ký (PDF, PNG hoặc JPEG, tối đa 50 MB) để hoàn tất. Tệp lưu trong PostgreSQL và chỉ tải qua endpoint đã xác thực.
+- Sau khi được duyệt, chủ đơn tải giấy đã ký để hoàn tất. Ảnh PNG/JPEG được tự động resize và chuyển sang JPEG, dung lượng sau nén tối đa 5 MB; PDF giữ nguyên, tối đa 50 MB. Tệp lưu trong PostgreSQL và chỉ tải qua endpoint đã xác thực.
 - Tạo đơn ra ngoài theo ngày, giờ, mục đích và lý do. Hệ thống tự tính thời lượng, từ chối khoảng giờ không hợp lệ và phát hiện đơn bị trùng.
 - Người duyệt đơn ra ngoài xác nhận lúc nhân viên quay về để chuyển đơn sang hoàn tất.
 - Lịch sử phê duyệt, thông báo Web Push tùy chọn, hồ sơ cá nhân, đổi mật khẩu và ảnh đại diện.
