@@ -14,7 +14,7 @@ function encodeApplicationServerKey(key: string): ArrayBuffer {
   return bytes.buffer;
 }
 
-export default function PushNotificationSetup() {
+export default function PushNotificationSetup({ alwaysShowLabel = false }: { alwaysShowLabel?: boolean }) {
   const router = useRouter();
   const [supported, setSupported] = useState(false);
   const [enabled, setEnabled] = useState(false);
@@ -200,7 +200,7 @@ export default function PushNotificationSetup() {
         ) : (
           <Bell className="h-4 w-4" />
         )}
-        <span className="hidden lg:inline">
+        <span className={alwaysShowLabel ? "inline" : "hidden lg:inline"}>
           {enabled && soundReady
             ? "Đã bật thông báo"
             : enabled

@@ -158,7 +158,7 @@ export default async function LeaveListPage({
     <div className="space-y-6">
       {/* Page Header */}
       <div className="bg-white rounded-2xl p-6 shadow-xs border border-slate-200/90 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
+        <a href="#all-requests" className="block rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-emerald-500">
           <div className="flex items-center gap-2">
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
               Quản lý Đơn nghỉ phép
@@ -172,7 +172,7 @@ export default async function LeaveListPage({
               ? `Đơn nghỉ phép trong phạm vi: ${scopeLabel}`
               : "Theo dõi tiến trình và trạng thái các đơn nghỉ phép cá nhân của bạn."}
           </p>
-        </div>
+        </a>
 
         {canSubmit && activeTab === "mine" && (
           <Link
@@ -264,6 +264,7 @@ export default async function LeaveListPage({
       </div>
 
       {/* Main Request Table Card */}
+      <div id="all-requests" className="scroll-mt-20">
       {requests.length === 0 ? (
         <div className="bg-white p-12 text-center rounded-2xl border border-slate-200/90 shadow-xs space-y-3">
           <div className="w-12 h-12 rounded-xl bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
@@ -373,6 +374,7 @@ export default async function LeaveListPage({
           </div>
         </div>
       )}
+      </div>
       <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs">
         <span className="text-slate-600">
           Trang {pageNumber} · tối đa {pageSize} đơn mỗi trang

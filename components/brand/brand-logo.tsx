@@ -7,6 +7,7 @@ interface BrandLogoProps {
   showBadge?: boolean;
   href?: string;
   className?: string;
+  logoOnly?: boolean;
 }
 
 export default function BrandLogo({
@@ -15,6 +16,7 @@ export default function BrandLogo({
   showBadge = true,
   href = "/",
   className = "",
+  logoOnly = false,
 }: BrandLogoProps) {
   const isSm = size === "sm";
   const isLg = size === "lg";
@@ -42,7 +44,7 @@ export default function BrandLogo({
       </div>
 
       {/* Brand Name & Subtitle */}
-      <div className="flex flex-col min-w-0">
+      {!logoOnly && <div className="flex min-w-0 flex-col">
         <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
           <span
             className={`font-black tracking-tight leading-none text-[#005a3c] ${
@@ -81,7 +83,7 @@ export default function BrandLogo({
             {subtitle}
           </p>
         )}
-      </div>
+      </div>}
     </div>
   );
 
