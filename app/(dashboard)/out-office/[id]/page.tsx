@@ -11,6 +11,7 @@ import OutOfficeApprovalActions from "@/components/out-office/approval-actions";
 import PendingOutOfficeEditor from "@/components/out-office/pending-request-editor";
 import RequestChangeHistory from "@/components/requests/request-change-history";
 import { getRequestChangeHistory } from "@/lib/admin/queries";
+import { formatDateTimeVN } from "@/lib/date-time";
 import Link from "next/link";
 import {
   Calendar,
@@ -87,7 +88,7 @@ export default async function OutOfficeDetailPage({
               Đơn ra ngoài (Gate Pass) #{request.id.slice(0, 8)}
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Tạo lúc {new Date(request.created_at).toLocaleString("vi-VN")}
+              Tạo lúc {formatDateTimeVN(request.created_at)}
             </p>
           </div>
 
@@ -281,7 +282,7 @@ export default async function OutOfficeDetailPage({
                       {h.approver_name} ({h.approver_role})
                     </p>
                     <span className="text-[11px] text-slate-400">
-                      {new Date(h.created_at).toLocaleString("vi-VN")}
+                      {formatDateTimeVN(h.created_at)}
                     </span>
                   </div>
                   <p className="text-slate-600">

@@ -16,6 +16,7 @@ import ApprovalActions from "@/components/leave/approval-actions";
 import PendingLeaveEditor from "@/components/leave/pending-request-editor";
 import RequestChangeHistory from "@/components/requests/request-change-history";
 import { getRequestChangeHistory } from "@/lib/admin/queries";
+import { formatDateTimeVN, formatDateVN } from "@/lib/date-time";
 import Link from "next/link";
 import {
   Calendar,
@@ -102,7 +103,7 @@ export default async function LeaveDetailPage({
               Đơn xin nghỉ phép #{request.id.slice(0, 8)}
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Tạo lúc {new Date(request.created_at).toLocaleString("vi-VN")}
+              Tạo lúc {formatDateTimeVN(request.created_at)}
             </p>
           </div>
 
@@ -166,9 +167,7 @@ export default async function LeaveDetailPage({
               </p>
               <p className="mt-1 text-emerald-800">
                 {documentMetadata.document_file_name} ·{" "}
-                {new Date(documentMetadata.document_uploaded_at).toLocaleString(
-                  "vi-VN",
-                )}
+                {formatDateTimeVN(documentMetadata.document_uploaded_at)}
               </p>
             </div>
             <a
@@ -242,7 +241,7 @@ export default async function LeaveDetailPage({
               <div className="flex items-center justify-between">
                 <span className="text-slate-500">Cập nhật lần cuối:</span>
                 <span className="text-slate-700">
-                  {new Date(request.updated_at).toLocaleDateString("vi-VN")}
+                  {formatDateVN(request.updated_at)}
                 </span>
               </div>
             </div>
@@ -299,7 +298,7 @@ export default async function LeaveDetailPage({
                       {h.approver_name} ({h.approver_role})
                     </p>
                     <span className="text-[11px] text-slate-400">
-                      {new Date(h.created_at).toLocaleString("vi-VN")}
+                      {formatDateTimeVN(h.created_at)}
                     </span>
                   </div>
                   <p className="text-slate-600">

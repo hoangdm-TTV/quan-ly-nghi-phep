@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Bell, CheckCheck, Loader2 } from "lucide-react";
+import { VIETNAM_TIME_ZONE } from "@/lib/date-time";
 
 type NotificationItem = {
   id: string;
@@ -16,6 +17,7 @@ type NotificationItem = {
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("vi-VN", {
+    timeZone: VIETNAM_TIME_ZONE,
     day: "2-digit",
     month: "2-digit",
     hour: "2-digit",

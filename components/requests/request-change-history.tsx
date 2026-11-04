@@ -1,4 +1,5 @@
 import { History } from "lucide-react";
+import { formatDateTimeVN } from "@/lib/date-time";
 
 type HistoryEntry = {
   id: string;
@@ -79,7 +80,7 @@ export default function RequestChangeHistory({
                   · {entry.actor_name || "Người dùng"}
                 </span>
                 <time className="text-slate-500">
-                  {new Date(entry.created_at).toLocaleString("vi-VN")}
+                  {formatDateTimeVN(entry.created_at)}
                 </time>
               </div>
               {changedFields.length > 0 && (

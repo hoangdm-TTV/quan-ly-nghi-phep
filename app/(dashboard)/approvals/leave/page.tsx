@@ -10,6 +10,7 @@ import {
 } from "@/lib/leave/queries";
 import LeaveStatusBadge from "@/components/leave/leave-status-badge";
 import ApprovalActions from "@/components/leave/approval-actions";
+import { formatDateTimeVN } from "@/lib/date-time";
 import Link from "next/link";
 import {
   CheckSquare,
@@ -230,7 +231,7 @@ export default async function ApprovalsLeavePage({
               {/* Khu vực thao tác Duyệt / Từ chối */}
               <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <span className="text-xs text-slate-400">
-                  Gửi lúc {new Date(req.created_at).toLocaleString("vi-VN")}
+                  Gửi lúc {formatDateTimeVN(req.created_at)}
                 </span>
                 <ApprovalActions requestId={req.id} />
               </div>
