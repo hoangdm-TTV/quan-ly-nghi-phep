@@ -288,6 +288,11 @@ export interface HrAdvancedReport {
   pendingByLevel: Array<{ level: string; count: number }>;
   employeesWithoutEntitlement: number;
   lateOutOfficeReturns: number;
+  actualTracking: {
+    completedCount: number;
+    onTimeCount: number;
+    lateCount: number;
+  };
 }
 
 const emptyHrAdvancedReport: HrAdvancedReport = {
@@ -297,6 +302,7 @@ const emptyHrAdvancedReport: HrAdvancedReport = {
   pendingByLevel: [],
   employeesWithoutEntitlement: 0,
   lateOutOfficeReturns: 0,
+  actualTracking: { completedCount: 0, onTimeCount: 0, lateCount: 0 },
 };
 
 /** Báo cáo chuyên sâu cho HR/Director/Accountant trong đúng phạm vi dữ liệu. */
@@ -364,7 +370,7 @@ export async function getHrAdvancedReport(
     pendingLeave,
     pendingOut,
     noEntitlement,
-    lateReturns,
+    actualTracking,
   ] = await Promise.all([
     query(
       `SELECT TO_CHAR(DATE_TRUNC('month', lr.start_date), 'YYYY-MM') AS month, COUNT(*)::int AS requests, COALESCE(SUM(lr.duration_days) FILTER (WHERE lr.status IN ('WAITING_FOR_DOC','COMPLETED')), 0)::float AS approved_days FROM leave_requests lr JOIN users u ON u.id = lr.employee_id WHERE ${monthlyConditions.join(" AND ")} GROUP BY 1 ORDER BY 1`,
@@ -390,8 +396,12 @@ export async function getHrAdvancedReport(
       `SELECT COUNT(*)::int AS count FROM users u WHERE ${entitlementConditions.join(" AND ")} AND NOT EXISTS (SELECT 1 FROM leave_entitlements e WHERE e.user_id = u.id AND e.leave_year = $${entitlementParams.length})`,
       entitlementParams,
     ),
-    query<{ count: number }>(
-      `SELECT COUNT(*)::int AS count FROM out_office_requests oo JOIN users u ON u.id = oo.employee_id WHERE ${lateConditions.join(" AND ")} AND ((oo.updated_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date = oo.request_date) AND (oo.updated_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::time > oo.end_time`,
+    query<{ completed_count: number; on_time_count: number; late_count: number }>(
+      `SELECT COUNT(*)::int AS completed_count,
+              (COUNT(*) FILTER (WHERE (oo.updated_at AT TIME ZONE 'Asia/Ho_Chi_Minh') <= (oo.request_date + oo.end_time)))::int AS on_time_count,
+              (COUNT(*) FILTER (WHERE (oo.updated_at AT TIME ZONE 'Asia/Ho_Chi_Minh') > (oo.request_date + oo.end_time)))::int AS late_count
+         FROM out_office_requests oo JOIN users u ON u.id = oo.employee_id
+        WHERE ${lateConditions.join(" AND ")}`,
       lateParams,
     ),
   ]);
@@ -424,7 +434,12 @@ export async function getHrAdvancedReport(
       (row: any) => ({ level: row.level, count: Number(row.count) }),
     ),
     employeesWithoutEntitlement: Number(noEntitlement.rows[0]?.count || 0),
-    lateOutOfficeReturns: Number(lateReturns.rows[0]?.count || 0),
+    lateOutOfficeReturns: Number(actualTracking.rows[0]?.late_count || 0),
+    actualTracking: {
+      completedCount: Number(actualTracking.rows[0]?.completed_count || 0),
+      onTimeCount: Number(actualTracking.rows[0]?.on_time_count || 0),
+      lateCount: Number(actualTracking.rows[0]?.late_count || 0),
+    },
   };
 }
 
@@ -615,4 +630,62 @@ export async function getScopeActivityFeed(
     (a, b) => new Date(b.sortDate).getTime() - new Date(a.sortDate).getTime(),
   );
   return items.slice(0, limit);
+}
+
+
+export interface ApprovalMetricDetail {
+  id: string;
+  request_type: "LEAVE" | "OUT_OFFICE";
+  request_id: string;
+  employee_name: string;
+  department_name: string | null;
+  request_date: string;
+  action: string;
+  comment: string | null;
+  action_at: Date;
+  elapsed_hours: number;
+}
+
+export async function getApprovalMetricDetails(
+  user: SafeUser,
+  fromDate?: string,
+  toDate?: string,
+  pagination: { limit: number; offset: number } = { limit: 25, offset: 0 },
+): Promise<ApprovalMetricDetail[]> {
+  const scope = buildReportDataScope(user, "u");
+  const params: unknown[] = [...scope.params];
+  const conditions = [
+    scope.whereSql,
+    `ah.action IN ('APPROVED_LEAD', 'APPROVED_DIRECTOR', 'REJECTED')`,
+  ];
+  if (fromDate) {
+    params.push(fromDate);
+    conditions.push(`COALESCE(lr.start_date, oo.request_date) >= $${params.length}`);
+  }
+  if (toDate) {
+    params.push(toDate);
+    conditions.push(`COALESCE(lr.start_date, oo.request_date) <= $${params.length}`);
+  }
+  params.push(Math.min(100, Math.max(1, pagination.limit)) + 1);
+  const limitParam = params.length;
+  params.push(Math.max(0, pagination.offset));
+  const offsetParam = params.length;
+
+  const result = await query<ApprovalMetricDetail>(
+    `SELECT ah.id, ah.request_type, ah.request_id, u.full_name AS employee_name,
+            d.name AS department_name,
+            TO_CHAR(COALESCE(lr.start_date, oo.request_date), 'YYYY-MM-DD') AS request_date,
+            ah.action, ah.comment, ah.created_at AS action_at,
+            EXTRACT(EPOCH FROM (ah.created_at - COALESCE(lr.created_at, oo.created_at))) / 3600 AS elapsed_hours
+       FROM approval_history ah
+       LEFT JOIN leave_requests lr ON ah.request_type = 'LEAVE' AND lr.id = ah.request_id
+       LEFT JOIN out_office_requests oo ON ah.request_type = 'OUT_OFFICE' AND oo.id = ah.request_id
+       JOIN users u ON u.id = COALESCE(lr.employee_id, oo.employee_id)
+       LEFT JOIN departments d ON d.id = u.department_id
+      WHERE ${conditions.join(" AND ")}
+      ORDER BY ah.created_at DESC
+      LIMIT $${limitParam} OFFSET $${offsetParam}`,
+    params as any[],
+  );
+  return result.rows;
 }

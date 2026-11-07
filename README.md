@@ -1,116 +1,148 @@
 # Quản lý nghỉ phép & đơn ra ngoài
 
-Ứng dụng web nội bộ của Tri Thức Việt để tạo, theo dõi và phê duyệt đơn nghỉ phép, đơn xin ra ngoài, quản lý ngày lễ và đối soát theo phạm vi người dùng.
+Ứng dụng web nội bộ của Tri Thức Việt để quản lý hồ sơ nhân sự, đơn nghỉ phép, đơn ra ngoài, phê duyệt, ngày lễ và báo cáo theo phạm vi dữ liệu của người dùng.
 
-## Chức năng
+## Chức năng hiện có
 
-- Đăng nhập bằng tài khoản công ty; session lưu phía server.
-- Đổi mật khẩu từ hồ sơ cá nhân; mật khẩu mới tối thiểu 6 ký tự và các phiên khác bị thu hồi.
-- Quản lý hạn mức phép theo nhân viên/năm; đơn mới và đơn sửa được giữ chỗ số ngày khi chờ duyệt.
-- Người tạo có thể sửa hoặc hủy đơn nghỉ/ra ngoài khi còn `PENDING`; thay đổi được ghi lịch sử.
-- Tài khoản `admin@trithucvietbn.com` quản lý hồ sơ nhân sự, phòng ban, team, quản lý trực tiếp, hạn mức phép và ngày lễ; người duyệt được gán trực tiếp qua `users.manager_id`.
-- Danh sách có phân trang; có thể tải CSV UTF-8 tương thích Excel theo bộ lọc và quyền truy cập.
-- Thông báo nội bộ trong ứng dụng cho người xin đơn/người duyệt; Web Push là tùy chọn bổ sung. Chuông thông báo có số chưa đọc, xem chi tiết và đánh dấu đã đọc; endpoint cron ghi cả nhắc hằng ngày cho đơn chờ xử lý quá 24 giờ.
-- Tạo và theo dõi đơn nghỉ phép. Số ngày được tính theo ngày làm việc từ thứ Hai đến thứ Bảy, bỏ Chủ Nhật và ngày lễ đang hoạt động.
-- Duyệt nghỉ phép một cấp: mỗi đơn được chuyển trực tiếp cho người có `id = users.manager_id` của người tạo đơn; không còn cấp duyệt thứ hai.
-- Sau khi được duyệt, chủ đơn tải giấy đã ký để hoàn tất. Ảnh PNG/JPEG được tự động resize và chuyển sang JPEG, dung lượng sau nén tối đa 5 MB; PDF giữ nguyên, tối đa 50 MB. Tệp lưu trong PostgreSQL và chỉ tải qua endpoint đã xác thực.
-- Tạo đơn ra ngoài theo ngày, giờ, mục đích và lý do. Hệ thống tự tính thời lượng, từ chối khoảng giờ không hợp lệ và phát hiện đơn bị trùng.
-- Người duyệt đơn ra ngoài xác nhận lúc nhân viên quay về để chuyển đơn sang hoàn tất.
-- Lịch sử phê duyệt, thông báo Web Push tùy chọn, hồ sơ cá nhân, đổi mật khẩu và ảnh đại diện.
-- Quản lý ngày lễ (chỉ ADMIN), lọc danh sách và dashboard thống kê theo phạm vi quyền.
-- Báo cáo quản trị theo phạm vi quyền: tổng hợp ngày nghỉ theo phòng ban, tỷ trọng nghỉ theo tháng, top nhân viên nghỉ nhiều, thời gian xử lý trung bình, đơn chờ theo người duyệt, nhân viên chưa có hạn mức và đơn ra ngoài được xác nhận về muộn.
-- Báo cáo được hiển thị cho ADMIN (toàn công ty), TEAM_LEAD (trong team), MANAGER (trong phòng ban), ACCOUNTANT và DIRECTOR (toàn công ty). Hệ thống chưa ghi nhận giờ rời đi thực tế nên chưa thể kết luận chính xác tình trạng đi muộn.
-- Báo cáo có bộ lọc theo ngày với nút `Lọc` và `Xóa bộ lọc`; khi chưa lọc, lịch vắng mặt hiển thị toàn bộ đơn đã duyệt trong phạm vi quyền của người dùng.
+- Đăng nhập bằng email và mật khẩu; mật khẩu được lưu dưới dạng bcrypt hash. Session được lưu trong PostgreSQL, thời hạn 7 ngày, cookie `HttpOnly` và `SameSite=Lax`.
+- Tạo, xem và theo dõi đơn nghỉ phép; chọn nghỉ cả ngày hoặc nửa ngày, người thay thế và ghi chú bàn giao. Số ngày phép loại trừ Chủ Nhật và ngày lễ đang hoạt động; thứ Hai đến thứ Bảy được tính là ngày làm việc.
+- Quản lý hạn mức nghỉ theo nhân viên/năm; đơn đang chờ được tính vào ngày đã giữ chỗ. Nhân viên có thể sửa/hủy đơn khi còn ở trạng thái cho phép; thay đổi được ghi lịch sử.
+- Nộp ảnh/PDF giấy nghỉ phép đã ký cho đơn chờ giấy. Tệp được lưu riêng trong PostgreSQL và tải qua route có xác thực/phân quyền.
+- Tạo đơn ra ngoài theo ngày, giờ, mục đích và lý do. Hệ thống kiểm tra giờ hợp lệ, tính thời lượng dự kiến và phát hiện khoảng giờ bị trùng.
+- Người được ghi trong `users.manager_id` có thể xử lý đơn theo kiểm tra phía server. Với đơn ra ngoài, người đã duyệt có thể xác nhận hoàn tất khi nhân viên quay về.
+- Danh bạ nhân sự theo phạm vi tài khoản; hỗ trợ tìm kiếm, lọc phòng ban/team, trạng thái nhân sự, người chưa được phân bổ và nhân viên chưa có hạn mức phép.
+- Dashboard theo vai trò, các chỉ số có thể mở danh sách chi tiết; báo cáo được giới hạn theo scope người đăng nhập.
+- Theo dõi đơn ra ngoài đã hoàn tất: so sánh giờ kết thúc đăng ký với thời điểm người duyệt xác nhận hoàn tất, phân loại đúng/trước giờ hoặc muộn; hiển thị ghi chú xác nhận nếu có.
+- Thông báo nội bộ; Web Push là tùy chọn. Endpoint nhắc các đơn đang chờ quá 24 giờ có thể được gọi theo lịch bằng `CRON_SECRET`.
+- Quản lý nhân sự tại `/admin/hr` và ngày lễ tại `/holidays` theo quyền được kiểm tra phía server.
 
-## Vai trò và phạm vi
+> **Giới hạn dữ liệu theo dõi thực tế:** ứng dụng hiện dùng `out_office_requests.updated_at` của lượt `COMPLETED` làm thời điểm xác nhận hoàn tất. Đây là lúc người duyệt xác nhận trên hệ thống, không phải dữ liệu check-in/GPS hay giờ rời công ty được ghi nhận tự động. Ghi chú có thể chứa giờ nhân viên báo lại, nhưng chưa phải trường giờ đi/về riêng có cấu trúc.
 
-| Vai trò      | Phạm vi dữ liệu                                              | Quyền chính                                                                                                                      |
-| ------------ | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
-| `STAFF`      | Đơn cá nhân                                                  | Tạo đơn; đơn được người có `id = users.manager_id` duyệt                                                                    |
-| `TEAM_LEAD`  | Đơn cá nhân và đơn trong team                                | Tạo đơn; duyệt các đơn được gán trực tiếp qua `manager_id`                                                                  |
-| `MANAGER`    | Đơn cá nhân và trong phòng ban                               | Tạo đơn; xem trong phòng ban; duyệt các đơn được gán trực tiếp qua `manager_id`                                              |
-| `ACCOUNTANT` | Toàn công ty khi tra cứu/báo cáo; chỉ đọc đơn của người khác | Tạo đơn cá nhân; có thể duyệt nếu được gán qua `manager_id`                                                                  |
-| `ADMIN`      | Quản trị nhân sự                                             | Chỉ tài khoản `admin@trithucvietbn.com` được vào trang quản trị và quản lý ngày lễ; không thể cấp quyền ADMIN cho tài khoản khác |
-| `DIRECTOR`   | Toàn công ty                                                 | Xem toàn bộ dữ liệu; có thể duyệt nếu được gán qua `manager_id`                                                               |
+## Vai trò và phạm vi dữ liệu
 
-> Quyền xem và quyền duyệt là hai phần độc lập. Phạm vi xem của DIRECTOR vẫn là toàn công ty; MANAGER vẫn xem chính mình và phòng ban của mình. Quyền duyệt được kiểm tra ở server theo `applicant.manager_id = approver.id`; không người dùng nào được tự duyệt đơn của mình. Nhân viên chưa được gán `manager_id` không thể tạo đơn.
+| Vai trò | Phạm vi xem hiện tại | Tạo đơn cá nhân | Ghi chú quyền hiện tại |
+| --- | --- | --- | --- |
+| `STAFF` | Đơn cá nhân; danh bạ theo scope cá nhân | Có | Quyền duyệt phụ thuộc quan hệ `manager_id` như mô tả bên dưới. |
+| `TEAM_LEAD` | Đơn cá nhân và nhân sự/đơn trong team được gán | Có | Code hiện cho phép duyệt nếu được đặt làm `manager_id`. |
+| `MANAGER` | Đơn cá nhân và phòng ban | Có | Có thể duyệt khi là người được gán trực tiếp. |
+| `ACCOUNTANT` | Toàn công ty khi tra cứu/báo cáo; đọc danh sách đơn của người khác | Có | **Code hiện vẫn cho phép duyệt nếu được gán trong `manager_id`;** xem phần lưu ý đối chiếu chính sách. |
+| `DIRECTOR` | Toàn công ty | Không | Xem toàn bộ; phê duyệt theo quan hệ `manager_id` hiện có, không tự động bỏ qua bước gán. |
+| `ADMIN` | Chức năng quản trị được cấp | Không | Trang HR chỉ cho tài khoản `admin@trithucvietbn.com`; quyền quản lý ngày lễ kiểm tra role `ADMIN`. Không vào các module đơn nghiệp vụ. |
 
-### Luồng nghỉ phép
+Scope đọc được xây dựng phía server trong `lib/auth/data-scope.ts`; tham số lọc từ client không thay thế hoặc bỏ qua scope đó. Với tài khoản không được gán phòng/team, phạm vi mặc định là dữ liệu cá nhân.
 
-```text
-PENDING ── người được gán qua manager_id duyệt ──> WAITING_FOR_DOC ── nộp giấy ──> COMPLETED
+### Lưu ý quan trọng: quyền duyệt trong code và chính sách nghiệp vụ
 
-Ở bước chờ duyệt có thể chuyển sang REJECTED. Không còn trạng thái chờ cấp duyệt thứ hai trong nghiệp vụ mới.
-```
+Hiện tại, `canApproveWorkflowRequests()` và `canApproveOutOfficeRequests()` chỉ loại `ADMIN`; workflow sau đó xác thực người duyệt bằng `applicant.manager_id === approver.id`. Vì vậy, vai trò `STAFF`, `TEAM_LEAD` hoặc `ACCOUNTANT` vẫn có thể duyệt nếu dữ liệu `manager_id` gán đơn cho họ. Tương tự, `DIRECTOR` xem được toàn công ty nhưng không được tự động duyệt mọi đơn nếu không phải người được gán trực tiếp.
 
-Ngày nghỉ tính theo lịch làm việc hiện tại: thứ Hai–thứ Bảy là ngày làm việc, Chủ Nhật và ngày lễ đang hoạt động không tính. Đơn có thể chọn cả ngày, buổi sáng hoặc buổi chiều; nghỉ theo buổi tính 0,5 ngày.
-Hạn mức được quản lý theo năm bắt đầu của đơn; khi chưa thiết lập hạn mức cho nhân viên/năm, hệ thống vẫn cho gửi đơn.
+Nếu chính sách cần **chỉ MANAGER duyệt cấp phòng, DIRECTOR duyệt toàn công ty, TEAM_LEAD/STAFF/ACCOUNTANT không duyệt**, cần cập nhật permission và workflow server-side; README này ghi đúng hành vi code hiện tại, không xem đó là bảo đảm chính sách.
 
-### Luồng đơn ra ngoài
+### Luồng đơn đang được triển khai
+
+**Nghỉ phép:**
 
 ```text
-PENDING ── duyệt ──> APPROVED ── người đã duyệt xác nhận nhân viên về ──> COMPLETED
-   └── từ chối ──> REJECTED
+PENDING ── người được gán trực tiếp qua manager_id duyệt ──> WAITING_FOR_DOC
+   ├── từ chối ──> REJECTED
+   └── sau khi được duyệt: chủ đơn nộp giấy đã ký ──> COMPLETED
 ```
 
-Mỗi đơn áp dụng trong một ngày; giờ kết thúc phải sau giờ bắt đầu. Từ chối cần có lý do. Người duyệt là tài khoản có `id` bằng `users.manager_id` của người tạo đơn. Người đã duyệt sẽ xác nhận khi nhân viên quay về.
+Evaluator hiện tại chuyển đơn được duyệt sang `WAITING_FOR_DOC` bất kể số ngày nghỉ. `APPROVED_BY_LEAD` còn tồn tại trong kiểu trạng thái, migration và một số truy vấn để tương thích dữ liệu/hiển thị cũ, nhưng nhánh duyệt hiện tại không triển khai quy tắc tự động `Manager → Director` cho đơn từ 2 ngày.
 
-## Công nghệ
+**Đơn ra ngoài:**
 
-- Next.js 14 App Router, React 18, TypeScript
-- Tailwind CSS, Lucide React
-- PostgreSQL qua `pg`
-- bcryptjs cho xác minh mật khẩu; Zod cho xác thực dữ liệu
-- Server Actions và Route Handlers cho thao tác phía server
+```text
+PENDING ── người được gán duyệt ──> APPROVED
+APPROVED ── chính người đã duyệt xác nhận hoàn tất ──> COMPLETED
+PENDING hoặc APPROVED ── từ chối hợp lệ ──> REJECTED
+```
 
-## Chạy ở môi trường phát triển
+## Cài đặt và chạy ứng dụng
 
-Yêu cầu Node.js tương thích với Next.js 14 và PostgreSQL.
+### Yêu cầu
 
-1. Cài dependencies:
+- Node.js tương thích Next.js 14 (khuyến nghị Node.js 20 LTS).
+- PostgreSQL.
+- `psql` nếu áp dụng migration bằng dòng lệnh; có thể dùng DBeaver thay thế.
 
-   ```bash
-   npm install
-   ```
+### Cấu hình
 
-2. Tạo `.env.local` từ `.env.example`, sau đó điền kết nối PostgreSQL:
+```bash
+npm install
+```
 
-   ```env
-   DATABASE_URL=postgresql://app_user:your_password@localhost:5432/quan_ly_nghi_phep
-   ```
+Sao chép `.env.example` thành `.env.local`, sau đó sửa thông tin kết nối. Không commit `.env`, `.env.local` hoặc secrets vào Git.
 
-   Không commit `.env` hoặc `.env.local`.
+```env
+DATABASE_URL=postgresql://postgres:your_password@localhost:5432/quan_ly_nghi_phep
+CRON_SECRET=thay_bang_chuoi_ngau_nhien_dai_va_bao_mat
+```
 
-3. Áp dụng các migration theo thứ tự `001` → `008` lên đúng database. Có thể dùng DBeaver hoặc `psql`; sao lưu database và kiểm tra schema hiện có trước khi áp dụng trên môi trường đang có dữ liệu.
+`lib/db/pool.ts` cũng hỗ trợ cấu hình riêng `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD` nếu không đặt `DATABASE_URL`.
 
-4. Khởi động ứng dụng:
+### Tạo database và áp dụng migration
 
-   ```bash
-   npm run dev
-   ```
+PostgreSQL phải có database đích trước khi chạy migration. Ví dụ lỗi `database "quan_ly_nghi_phep" does not exist` xảy ra khi kết nối đến database chưa được tạo; tạo database từ một database quản trị có sẵn trước:
 
-   Mở [http://localhost:3000](http://localhost:3000).
+```sql
+CREATE DATABASE quan_ly_nghi_phep;
+```
 
-Các lệnh có trong `package.json`: `npm run dev`, `npm run build`, `npm run start`, `npm run lint`. Repo hiện chưa khai báo bộ kiểm thử tự động riêng.
+Sau đó kết nối **đúng database `quan_ly_nghi_phep`** và chạy từng file SQL theo thứ tự bên dưới. Có thể dùng DBeaver (chọn đúng connection/database và chạy bằng chế độ Execute Script) hoặc `psql`. Nếu dùng PowerShell, nạp URI vào biến môi trường của cửa sổ terminal hiện tại (thay bằng thông tin thật; không ghi mật khẩu thật vào README/Git):
 
-## Database và migrations
+```powershell
+$env:DATABASE_URL = "postgresql://postgres:your_password@localhost:5432/quan_ly_nghi_phep"
 
-Migrations trong thư mục [`migrations/`](migrations) được chạy theo thứ tự `001` → `008`:
+$files = @(
+  "migrations/001_initial_database.sql",
+  "migrations/002_performance_indexes.sql",
+  "migrations/003_push_notifications.sql",
+  "migrations/004_profile_avatars.sql",
+  "migrations/005_login_rate_limits.sql",
+  "migrations/006_leave_balance_history_and_reminders.sql",
+  "migrations/007_leave_and_employee_details.sql",
+  "migrations/008_in_app_notifications.sql"
+)
 
-| Tệp                                           | Nội dung                                                                                               |
-| --------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `001_initial_database.sql`                    | Bảng người dùng, phòng ban, team, đơn, lịch sử duyệt, ngày lễ và dữ liệu khởi tạo                      |
-| `002_performance_indexes.sql`                 | Chỉ mục cho các truy vấn danh sách và dashboard                                                        |
-| `003_push_notifications.sql`                  | Lưu đăng ký Web Push                                                                                   |
-| `004_profile_avatars.sql`                     | Lưu ảnh đại diện                                                                                       |
-| `005_login_rate_limits.sql`                   | Giới hạn thử đăng nhập theo email                                                                      |
-| `006_leave_balance_history_and_reminders.sql` | Hạn mức phép, lịch sử sửa/hủy, trạng thái hủy, nhắc việc, vai trò ADMIN và tài khoản quản trị duy nhất |
-| `007_leave_and_employee_details.sql`          | Buổi nghỉ, người thay thế, ghi chú bàn giao, trạng thái nhân sự và audit log                           |
-| `008_in_app_notifications.sql`                | Thông báo nội bộ, trạng thái đã đọc/chưa đọc và chỉ mục tra cứu                                        |
+foreach ($file in $files) {
+  psql $env:DATABASE_URL -v ON_ERROR_STOP=1 -f $file
+  if ($LASTEXITCODE -ne 0) { throw "Migration thất bại: $file" }
+}
+```
 
-Ứng dụng không tự chạy migration khi khởi động. Hãy áp dụng schema trước khi triển khai phiên bản tương ứng. Cơ sở dữ liệu phải có các bảng và cột mà migration/source yêu cầu; nếu đang dùng schema cũ, cần đối chiếu trước khi chạy.
+Chạy các file theo đúng thứ tự và chỉ một lần trên database mới. Trên database đã có dữ liệu, sao lưu trước, kiểm tra trạng thái schema và xác định migration nào đã áp dụng; không chạy lại cả bộ một cách mù quáng. Ứng dụng **không tự chạy migration khi khởi động**.
 
-## Thông báo Web Push (tùy chọn)
+Nếu PostgreSQL báo `25P02 current transaction is aborted`, đó thường là lỗi phát sinh sau một câu lệnh trước đó đã thất bại trong transaction. Tìm lỗi đầu tiên trong log, xử lý nguyên nhân rồi chạy lại migration phù hợp; không coi `25P02` là nguyên nhân gốc.
+
+| Migration | Nội dung chính |
+| --- | --- |
+| `001_initial_database.sql` | Schema nền: nhân viên, phòng ban, team, đơn nghỉ/ra ngoài, session, lịch sử duyệt, ngày lễ và dữ liệu khởi tạo. |
+| `002_performance_indexes.sql` | Chỉ mục phục vụ truy vấn. |
+| `003_push_notifications.sql` | Đăng ký Web Push. |
+| `004_profile_avatars.sql` | Ảnh đại diện hồ sơ. |
+| `005_login_rate_limits.sql` | Giới hạn thử đăng nhập. |
+| `006_leave_balance_history_and_reminders.sql` | Hạn mức phép, lịch sử sửa/hủy, nhắc việc và role `ADMIN`. |
+| `007_leave_and_employee_details.sql` | Buổi nghỉ, người thay thế, ghi chú bàn giao, trạng thái nhân sự và audit log. |
+| `008_in_app_notifications.sql` | Thông báo nội bộ và chỉ mục tra cứu. |
+
+### Chạy ở chế độ phát triển và production
+
+```bash
+npm run dev
+```
+
+Mở [http://localhost:3000](http://localhost:3000). Cấu hình `next.config.mjs` dùng `.next-dev` khi chạy development và `.next` khi build production để tách cache.
+
+Build và chạy production:
+
+```bash
+npm run build
+npm run start
+```
+
+Các lệnh được khai báo trong `package.json`: `npm run dev`, `npm run build`, `npm run start`, `npm run lint`, `npm run seed`. Checkout hiện chưa có ESLint binary/config nên `npm run lint` cần được cấu hình trước khi dùng; kiểm tra TypeScript bằng `npx tsc --noEmit`. Repo chưa khai báo bộ test tự động riêng.
+
+## Web Push và nhắc việc (tùy chọn)
 
 Tạo cặp VAPID key:
 
@@ -118,7 +150,7 @@ Tạo cặp VAPID key:
 npx web-push generate-vapid-keys
 ```
 
-Thêm vào môi trường server:
+Cấu hình ở môi trường server:
 
 ```env
 NEXT_PUBLIC_VAPID_PUBLIC_KEY=...
@@ -126,43 +158,48 @@ VAPID_PRIVATE_KEY=...
 VAPID_SUBJECT=mailto:admin@your-company.example
 ```
 
-Chạy migration `003_push_notifications.sql`, mở ứng dụng qua HTTPS (localhost dùng được khi phát triển), đăng nhập và bật thông báo trên từng trình duyệt/thiết bị. Không đưa `VAPID_PRIVATE_KEY` vào client hoặc commit vào Git. Nếu chưa cấu hình push, luồng tạo đơn vẫn sử dụng được nhưng không gửi thông báo đẩy.
+Không đưa `VAPID_PRIVATE_KEY` vào client hoặc Git. Web Push cần migration `003_push_notifications.sql` và người nhận bật thông báo trên thiết bị. Nếu không cấu hình VAPID, các luồng chính vẫn hoạt động nhưng không gửi push.
 
-Sau khi áp dụng migration `006`, có thể cấu hình lịch cron mỗi ngày gọi `GET /api/notifications/reminders` với header `Authorization: Bearer <CRON_SECRET>`. Endpoint nhắc đơn chờ quá 24 giờ tối đa một lần mỗi ngày. Đặt `CRON_SECRET` trong môi trường server; không đưa secret vào client. Push tới người xin đơn và nhắc người duyệt cần Web Push được cấu hình, migration `003` đã chạy, và người nhận đã bật thông báo trên thiết bị.
+Để nhắc các đơn chờ quá 24 giờ, cấu hình cron bên ngoài gọi `GET /api/notifications/reminders` mỗi ngày với header `Authorization: Bearer <CRON_SECRET>`. Endpoint cần migration `006_leave_balance_history_and_reminders.sql`; không công khai `CRON_SECRET` phía client.
 
-## Tài khoản demo
+## Dữ liệu kiểm thử
 
-`scripts/seed-auth-data.js` tạo tài khoản thử nghiệm với mật khẩu dùng chung. Script bị chặn trong production và chỉ chạy khi đặt rõ `ALLOW_DEMO_SEED=1`. Chỉ chạy trên database phát triển/thử nghiệm cô lập; không chạy trên dữ liệu công ty hoặc production.
+`npm run seed` chạy `scripts/seed-auth-data.js`, tạo/cập nhật tài khoản và dữ liệu demo dùng chung mật khẩu kiểm thử. Script từ chối chạy trong production và yêu cầu đặt `ALLOW_DEMO_SEED=1`. Chỉ chạy trong database phát triển/thử nghiệm cô lập; không chạy trên database nhân viên thật. Sau khi kiểm thử, xóa dữ liệu demo hoặc đổi mật khẩu.
 
-## Bảo mật và vận hành
+PowerShell:
 
-- Phân quyền và xác nhận trạng thái thực hiện ở phía server; dữ liệu định danh người tạo lấy từ session.
-- Mật khẩu được xác minh bằng bcrypt; session dùng token ngẫu nhiên, cookie `HttpOnly`, `SameSite=Lax` và `Secure` trong production.
-- Mật khẩu mới được giới hạn theo dung lượng UTF-8 để tránh giới hạn đầu vào của bcrypt.
-- Tệp giấy nghỉ phép lưu riêng tư trong PostgreSQL; endpoint tải yêu cầu đăng nhập và kiểm tra phạm vi truy cập.
-- Lỗi database/action trả thông báo chung cho người dùng; chi tiết kỹ thuật chỉ ghi phía server.
-- Giới hạn đăng nhập theo email cần migration `005_login_rate_limits.sql`.
-- Hạn mức phép, sửa/hủy đơn và nhắc việc cần migration `006_leave_balance_history_and_reminders.sql`.
-- Dùng tài khoản PostgreSQL quyền tối thiểu, bật HTTPS khi triển khai, quản lý secrets ngoài source và thiết lập backup/khôi phục định kỳ.
+```powershell
+$env:ALLOW_DEMO_SEED = "1"
+npm run seed
+Remove-Item Env:ALLOW_DEMO_SEED
+```
 
 ## Cấu trúc chính
 
 ```text
-app/                 Các trang, layout, API routes
-components/          Form và thành phần giao diện
-lib/auth/            Đăng nhập, session, quyền và vai trò
-lib/leave/           Đơn nghỉ phép, tính ngày, workflow
-lib/out-office/      Đơn ra ngoài, tính giờ, workflow
-lib/dashboard/       Truy vấn số liệu dashboard
-lib/holidays/        Quản lý ngày lễ
-lib/notifications/   Web Push
-migrations/          Thay đổi schema PostgreSQL
-scripts/             Seed và script kiểm tra thủ công
+app/                         App Router: trang, Server Actions và API routes
+  (dashboard)/employees/     Danh bạ nhân sự theo scope
+  (dashboard)/dashboard/     Chi tiết drill-down dashboard
+  (dashboard)/admin/hr/      Quản trị nhân sự
+  (dashboard)/leave/         Đơn nghỉ phép
+  (dashboard)/out-office/    Đơn ra ngoài
+components/                  Form và giao diện
+lib/auth/                    Đăng nhập, session, scope và quyền
+lib/admin/                   Truy vấn/quản trị nhân sự
+lib/dashboard/               Truy vấn chỉ số dashboard
+lib/employees/               Truy vấn danh bạ nhân sự
+lib/leave/                   Workflow, query và action nghỉ phép
+lib/out-office/              Workflow, query và action đơn ra ngoài
+lib/holidays/                Ngày lễ
+lib/notifications/           Thông báo và Web Push
+migrations/                  Migration PostgreSQL 001–008
+scripts/                     Seed dữ liệu kiểm thử
 ```
 
-## Các quy định cần doanh nghiệp xác nhận
+## Bảo mật và vận hành
 
-- Lịch làm việc thứ Hai–thứ Bảy và cách loại trừ ngày lễ có phù hợp chính sách công ty không.
-- Cách gán người duyệt trực tiếp qua `users.manager_id` có phù hợp với quy trình nội bộ không.
-- Có cần giới hạn đơn ra ngoài theo giờ làm việc, giới hạn thời lượng hoặc cho phép ngày quá khứ hay không.
-- Chính sách lưu trữ và thời hạn giữ giấy nghỉ phép, lịch sử phê duyệt và dữ liệu tài khoản.
+- Kiểm tra quyền và scope diễn ra ở server; không tin `user_id`, role hoặc scope do client gửi lên.
+- Mật khẩu dùng bcrypt. Session token ngẫu nhiên được lưu phía server; cookie production đặt `Secure`.
+- Giấy nghỉ phép lưu trong PostgreSQL, không phải URL công khai; tải giấy cần đăng nhập và quyền xem.
+- Dùng tài khoản PostgreSQL quyền tối thiểu, bật HTTPS khi triển khai, quản lý secrets ngoài source và sao lưu/khôi phục định kỳ.
+- Tài khoản seed, mật khẩu dùng chung và dữ liệu mẫu chỉ dành cho môi trường thử nghiệm.

@@ -24,6 +24,9 @@ export interface OutOfficeDetail {
   rejection_reason: string | null;
   created_at: Date;
   updated_at: Date;
+  actual_return_at?: string;
+  return_delta_minutes?: number;
+  completion_comment?: string | null;
 }
 
 export interface OutOfficeApprovalRecord {
@@ -254,6 +257,8 @@ export async function getPendingOutOfficeApprovalSummary(
 
 export interface ScopedOutOfficeFilter {
   status?: string;
+  lateReturn?: boolean;
+  actualTracking?: boolean;
   employeeId?: string;
   departmentId?: string;
   teamId?: string;
@@ -275,8 +280,20 @@ export async function getScopedOutOfficeRequests(
   const conditions: string[] = [scope.whereSql];
 
   if (filter.status && filter.status !== "ALL") {
-    params.push(filter.status);
-    conditions.push(`oo.status = $${params.length}`);
+    if (filter.status === "TRACKED") {
+      conditions.push(`oo.status IN ('APPROVED', 'COMPLETED')`);
+    } else {
+      params.push(filter.status);
+      conditions.push(`oo.status = $${params.length}`);
+    }
+  }
+  if (filter.lateReturn) {
+    conditions.push(
+      `oo.status = 'COMPLETED' AND (oo.updated_at AT TIME ZONE 'Asia/Ho_Chi_Minh') > (oo.request_date + oo.end_time)`,
+    );
+  }
+  if (filter.actualTracking) {
+    conditions.push("oo.status = 'COMPLETED'");
   }
   if (filter.employeeId) {
     params.push(filter.employeeId);
@@ -299,6 +316,21 @@ export async function getScopedOutOfficeRequests(
     conditions.push(`oo.request_date <= $${params.length}`);
   }
 
+  const trackingColumns = filter.actualTracking
+    ? `, TO_CHAR(oo.updated_at AT TIME ZONE 'Asia/Ho_Chi_Minh', 'YYYY-MM-DD HH24:MI') AS actual_return_at,
+         ROUND(EXTRACT(EPOCH FROM ((oo.updated_at AT TIME ZONE 'Asia/Ho_Chi_Minh') - (oo.request_date + oo.end_time))) / 60)::int AS return_delta_minutes,
+         tracking.comment AS completion_comment`
+    : "";
+  const trackingJoin = filter.actualTracking
+    ? `LEFT JOIN LATERAL (
+         SELECT ah.comment
+           FROM approval_history ah
+          WHERE ah.request_type = 'OUT_OFFICE' AND ah.request_id = oo.id
+          ORDER BY ah.created_at DESC
+          LIMIT 1
+       ) tracking ON TRUE`
+    : "";
+
   const sql = `
     SELECT 
       oo.id,
@@ -319,12 +351,13 @@ export async function getScopedOutOfficeRequests(
       app.full_name AS approver_name,
       oo.rejection_reason,
       oo.created_at,
-      oo.updated_at
+      oo.updated_at${trackingColumns}
     FROM out_office_requests oo
     JOIN users u ON oo.employee_id = u.id
     LEFT JOIN departments d ON u.department_id = d.id
     LEFT JOIN teams t ON u.team_id = t.id
     LEFT JOIN users app ON oo.approver_id = app.id
+    ${trackingJoin}
     WHERE ${conditions.join(" AND ")}
     ORDER BY oo.request_date DESC, oo.created_at DESC
     ${pagination ? `LIMIT $${params.length + 1} OFFSET $${params.length + 2}` : ""}

@@ -294,8 +294,14 @@ export async function getScopedLeaveRequests(
   const conditions: string[] = [scope.whereSql];
 
   if (filter.status && filter.status !== "ALL") {
-    params.push(filter.status);
-    conditions.push(`lr.status = $${params.length}`);
+    if (filter.status === "PENDING_GROUP") {
+      conditions.push(`lr.status IN ('PENDING', 'APPROVED_BY_LEAD')`);
+    } else if (filter.status === "APPROVED_GROUP") {
+      conditions.push(`lr.status IN ('WAITING_FOR_DOC', 'COMPLETED')`);
+    } else {
+      params.push(filter.status);
+      conditions.push(`lr.status = $${params.length}`);
+    }
   }
   if (filter.employeeId) {
     params.push(filter.employeeId);

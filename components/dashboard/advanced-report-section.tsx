@@ -1,4 +1,5 @@
 import { BarChart3, Clock3, FileWarning, UsersRound } from "lucide-react";
+import Link from "next/link";
 import type { HrAdvancedReport } from "@/lib/dashboard/queries";
 
 function formatNumber(value: number, digits = 1) {
@@ -7,9 +8,29 @@ function formatNumber(value: number, digits = 1) {
 
 export default function AdvancedReportSection({
   report,
+  reportFrom,
+  reportTo,
+  entitlementYear,
 }: {
   report: HrAdvancedReport;
+  reportFrom?: string;
+  reportTo?: string;
+  entitlementYear: number;
 }) {
+  const buildDetailsHref = (
+    type: string,
+    status?: string,
+    late = false,
+    actualTracking = false,
+  ) => {
+    const params = new URLSearchParams({ type, scope: "report" });
+    if (status) params.set("status", status);
+    if (late) params.set("late", "1");
+    if (actualTracking) params.set("actual", "1");
+    if (reportFrom) params.set("from", reportFrom);
+    if (reportTo) params.set("to", reportTo);
+    return `/dashboard/details?${params.toString()}`;
+  };
   return (
     <section className="space-y-4 rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs sm:p-6">
       <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
@@ -26,7 +47,7 @@ export default function AdvancedReportSection({
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="rounded-xl border border-violet-200 bg-violet-50 p-4">
+        <Link href={buildDetailsHref("approval")} className="rounded-xl border border-violet-200 bg-violet-50 p-4 transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-700">
           <p className="text-[11px] font-bold uppercase tracking-wide text-violet-800">
             Duyệt trung bình
           </p>
@@ -34,8 +55,9 @@ export default function AdvancedReportSection({
             {formatNumber(report.averageApprovalHours)}h
           </p>
           <p className="mt-1 text-xs text-slate-600">Từ lúc tạo đến xử lý</p>
-        </div>
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+          <p className="mt-2 text-[11px] font-semibold text-violet-800">Xem lịch sử xử lý →</p>
+        </Link>
+        <Link href={`/employees?missingEntitlementYear=${entitlementYear}`} className="rounded-xl border border-amber-200 bg-amber-50 p-4 transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700">
           <p className="text-[11px] font-bold uppercase tracking-wide text-amber-800">
             Chưa cấp hạn mức
           </p>
@@ -43,8 +65,9 @@ export default function AdvancedReportSection({
             {report.employeesWithoutEntitlement}
           </p>
           <p className="mt-1 text-xs text-slate-600">Nhân sự đang hoạt động</p>
-        </div>
-        <div className="rounded-xl border border-rose-200 bg-rose-50 p-4">
+          <p className="mt-2 text-[11px] font-semibold text-amber-800">Xem danh sách nhân sự →</p>
+        </Link>
+        <Link href={buildDetailsHref("out-office", "COMPLETED", true)} className="rounded-xl border border-rose-200 bg-rose-50 p-4 transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-700">
           <p className="text-[11px] font-bold uppercase tracking-wide text-rose-800">
             Về muộn
           </p>
@@ -54,16 +77,41 @@ export default function AdvancedReportSection({
           <p className="mt-1 text-xs text-slate-600">
             Theo lúc xác nhận hoàn tất
           </p>
-        </div>
-        <div className="rounded-xl border border-sky-200 bg-sky-50 p-4">
-          <p className="text-[11px] font-bold uppercase tracking-wide text-sky-800">
-            Theo dõi thực tế
+          <p className="mt-2 text-[11px] font-semibold text-rose-800">Xem các lượt về muộn →</p>
+        </Link>
+        <Link
+          href={buildDetailsHref("out-office", "COMPLETED", false, true)}
+          className="group rounded-xl border border-sky-200 bg-gradient-to-br from-sky-50 to-cyan-50 p-4 transition hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-700"
+        >
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[11px] font-bold uppercase tracking-wide text-sky-900">
+              Theo dõi thực tế
+            </p>
+            <span className="rounded-full bg-white/80 px-2 py-1 text-[10px] font-semibold text-sky-800 ring-1 ring-sky-200">
+              {report.actualTracking.completedCount} đã xác nhận
+            </span>
+          </div>
+          <div className="mt-2 flex items-baseline gap-2">
+            <p className="text-2xl font-black tabular-nums text-slate-900">
+              {report.actualTracking.completedCount}
+            </p>
+            <p className="text-xs text-slate-600">lượt hoàn tất</p>
+          </div>
+          <div className="mt-2 flex flex-wrap gap-1.5 text-[10px] font-semibold">
+            <span className="rounded-md bg-emerald-100 px-2 py-1 text-emerald-900">
+              Đúng/trước giờ: {report.actualTracking.onTimeCount}
+            </span>
+            <span className="rounded-md bg-rose-100 px-2 py-1 text-rose-900">
+              Muộn: {report.actualTracking.lateCount}
+            </span>
+          </div>
+          <p className="mt-2 text-[10px] leading-4 text-slate-600">
+            Giờ thực tế lấy từ lúc người duyệt xác nhận hoàn tất.
           </p>
-          <p className="mt-1 text-sm font-black text-slate-900">
-            Chưa đủ dữ liệu
+          <p className="mt-1 text-[11px] font-semibold text-sky-900 group-hover:underline">
+            Xem đối chiếu giờ hẹn và giờ xác nhận →
           </p>
-          <p className="mt-1 text-xs text-slate-600">Chưa lưu giờ đi thực tế</p>
-        </div>
+        </Link>
       </div>
 
       <div className="grid gap-5 lg:grid-cols-2">

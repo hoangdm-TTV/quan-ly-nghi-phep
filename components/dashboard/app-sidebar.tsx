@@ -184,6 +184,14 @@ export default function AppSidebar({
     },
     {
       kind: "leaf",
+      name: "Danh bạ nhân sự",
+      href: "/employees",
+      icon: UsersRound,
+      show: true,
+      exact: true,
+    },
+    {
+      kind: "leaf",
       name: "Quản trị nhân sự",
       href: "/admin/hr",
       icon: UsersRound,

@@ -82,6 +82,7 @@ const emptyAdvancedReport: HrAdvancedReport = {
   pendingByLevel: [],
   employeesWithoutEntitlement: 0,
   lateOutOfficeReturns: 0,
+  actualTracking: { completedCount: 0, onTimeCount: 0, lateCount: 0 },
 };
 
 const statusLabels: Record<string, { label: string; class: string }> = {
@@ -168,6 +169,12 @@ function ReportSection({
   showDepartmentBreakdown: boolean;
 }) {
   const { totals } = report;
+  const detailHref = (type: "leave" | "out-office", status: string) => {
+    const params = new URLSearchParams({ type, status, scope: "report" });
+    if (reportFrom) params.set("from", reportFrom);
+    if (reportTo) params.set("to", reportTo);
+    return `/dashboard/details?${params.toString()}`;
+  };
   return (
     <section className="bg-white rounded-2xl p-5 sm:p-6 shadow-xs border border-slate-200/90 space-y-5">
       <SectionHeading
@@ -206,7 +213,7 @@ function ReportSection({
 
       {/* Metric Cards Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <div className="bg-gradient-to-br from-emerald-50/80 to-emerald-100/40 p-4 rounded-xl border border-emerald-200/80">
+        <Link href={detailHref("leave", "ALL")} className="block rounded-xl border border-emerald-200/80 bg-gradient-to-br from-emerald-50/80 to-emerald-100/40 p-4 transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700">
           <p className="text-xs font-bold text-[#005a3c] uppercase tracking-wider">
             Tổng đơn nghỉ phép
           </p>
@@ -223,9 +230,10 @@ function ReportSection({
             </span>{" "}
             · {totals.leaveCancelled} hủy
           </p>
-        </div>
+          <p className="mt-2 text-[11px] font-semibold text-emerald-800">Xem danh sách chi tiết →</p>
+        </Link>
 
-        <div className="bg-gradient-to-br from-teal-50/80 to-teal-100/40 p-4 rounded-xl border border-teal-200/80">
+        <Link href={detailHref("leave", "APPROVED_GROUP")} className="block rounded-xl border border-teal-200/80 bg-gradient-to-br from-teal-50/80 to-teal-100/40 p-4 transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700">
           <p className="text-xs font-bold text-teal-800 uppercase tracking-wider">
             Tổng ngày nghỉ
           </p>
@@ -233,9 +241,10 @@ function ReportSection({
             {Number(totals.leaveDays.toFixed(1))}
           </p>
           <p className="mt-1 text-xs text-slate-600">Ngày làm việc</p>
-        </div>
+          <p className="mt-2 text-[11px] font-semibold text-teal-800">Xem các đơn đã duyệt →</p>
+        </Link>
 
-        <div className="bg-gradient-to-br from-blue-50/80 to-blue-100/40 p-4 rounded-xl border border-blue-200/80">
+        <Link href={detailHref("out-office", "ALL")} className="block rounded-xl border border-blue-200/80 bg-gradient-to-br from-blue-50/80 to-blue-100/40 p-4 transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700">
           <p className="text-xs font-bold text-blue-800 uppercase tracking-wider">
             Tổng đơn ra ngoài
           </p>
@@ -252,9 +261,10 @@ function ReportSection({
             </span>{" "}
             · {totals.outOfficeCancelled} hủy
           </p>
-        </div>
+          <p className="mt-2 text-[11px] font-semibold text-blue-800">Xem danh sách chi tiết →</p>
+        </Link>
 
-        <div className="bg-gradient-to-br from-cyan-50/80 to-cyan-100/40 p-4 rounded-xl border border-cyan-200/80">
+        <Link href={detailHref("out-office", "TRACKED")} className="block rounded-xl border border-cyan-200/80 bg-gradient-to-br from-cyan-50/80 to-cyan-100/40 p-4 transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700">
           <p className="text-xs font-bold text-cyan-800 uppercase tracking-wider">
             Tổng giờ ra ngoài
           </p>
@@ -262,7 +272,8 @@ function ReportSection({
             {Number(totals.outOfficeHours.toFixed(1))}h
           </p>
           <p className="mt-1 text-xs text-slate-600">Giờ thực tế</p>
-        </div>
+          <p className="mt-2 text-[11px] font-semibold text-cyan-800">Xem đơn đang thực hiện/hoàn tất →</p>
+        </Link>
       </div>
 
       {showDepartmentBreakdown && report.departments.length > 0 && (
@@ -347,7 +358,7 @@ function PersonalSummary({
       <div className="grid gap-4 sm:grid-cols-2">
         {/* KPI Card 1: Nghỉ phép */}
         <Link
-          href="/leave?tab=mine"
+          href="/dashboard/details?type=leave&scope=mine&status=ALL"
           className="group bg-white rounded-2xl p-5 shadow-xs border border-slate-200/90 hover:border-emerald-300 hover:shadow-md transition-all flex flex-col justify-between"
         >
           <div className="flex items-start justify-between">
@@ -384,7 +395,7 @@ function PersonalSummary({
 
         {/* KPI Card 2: Ra ngoài */}
         <Link
-          href="/out-office?tab=mine"
+          href="/dashboard/details?type=out-office&scope=mine&status=ALL"
           className="group bg-white rounded-2xl p-5 shadow-xs border border-slate-200/90 hover:border-blue-300 hover:shadow-md transition-all flex flex-col justify-between"
         >
           <div className="flex items-start justify-between">
@@ -681,6 +692,11 @@ export default async function DashboardPage({
   const needsReport =
     isAdmin || isTeamLead || isManager || isDirector || isAccountant;
   const scopeLabel = getUserDataScopeLabel(user);
+  const currentYearVN = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Ho_Chi_Minh",
+    year: "numeric",
+  }).format(new Date());
+  const entitlementYear = Number((reportFrom || currentYearVN).slice(0, 4));
 
   const [
     stats,
@@ -817,7 +833,14 @@ export default async function DashboardPage({
         />
       )}
 
-      {needsReport && <AdvancedReportSection report={advancedReport} />}
+      {needsReport && (
+        <AdvancedReportSection
+          report={advancedReport}
+          reportFrom={reportFrom}
+          reportTo={reportTo}
+          entitlementYear={entitlementYear}
+        />
+      )}
 
       <AbsenceCalendar items={absenceItems} />
 
