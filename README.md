@@ -8,17 +8,17 @@
 - Đổi mật khẩu từ hồ sơ cá nhân; mật khẩu mới tối thiểu 6 ký tự và các phiên khác bị thu hồi.
 - Quản lý hạn mức phép theo nhân viên/năm; đơn mới và đơn sửa được giữ chỗ số ngày khi chờ duyệt.
 - Người tạo có thể sửa hoặc hủy đơn nghỉ/ra ngoài khi còn `PENDING`; thay đổi được ghi lịch sử.
-- Tài khoản `admin@trithucvietbn.com` quản lý hồ sơ nhân sự, phòng ban, team, quản lý trực tiếp, hạn mức phép và ngày lễ; Giám đốc giữ các quyền duyệt đơn.
+- Tài khoản `admin@trithucvietbn.com` quản lý hồ sơ nhân sự, phòng ban, team, quản lý trực tiếp, hạn mức phép và ngày lễ; người duyệt được gán trực tiếp qua `users.manager_id`.
 - Danh sách có phân trang; có thể tải CSV UTF-8 tương thích Excel theo bộ lọc và quyền truy cập.
 - Thông báo nội bộ trong ứng dụng cho người xin đơn/người duyệt; Web Push là tùy chọn bổ sung. Chuông thông báo có số chưa đọc, xem chi tiết và đánh dấu đã đọc; endpoint cron ghi cả nhắc hằng ngày cho đơn chờ xử lý quá 24 giờ.
 - Tạo và theo dõi đơn nghỉ phép. Số ngày được tính theo ngày làm việc từ thứ Hai đến thứ Bảy, bỏ Chủ Nhật và ngày lễ đang hoạt động.
-- Duyệt nghỉ phép theo cấp: đơn tối đa một ngày cần một cấp; đơn trên một ngày cần Trưởng phòng rồi Giám đốc. Đơn của Trưởng phòng do Giám đốc duyệt.
+- Duyệt nghỉ phép một cấp: mỗi đơn được chuyển trực tiếp cho người có `id = users.manager_id` của người tạo đơn; không còn cấp duyệt thứ hai.
 - Sau khi được duyệt, chủ đơn tải giấy đã ký để hoàn tất. Ảnh PNG/JPEG được tự động resize và chuyển sang JPEG, dung lượng sau nén tối đa 5 MB; PDF giữ nguyên, tối đa 50 MB. Tệp lưu trong PostgreSQL và chỉ tải qua endpoint đã xác thực.
 - Tạo đơn ra ngoài theo ngày, giờ, mục đích và lý do. Hệ thống tự tính thời lượng, từ chối khoảng giờ không hợp lệ và phát hiện đơn bị trùng.
 - Người duyệt đơn ra ngoài xác nhận lúc nhân viên quay về để chuyển đơn sang hoàn tất.
 - Lịch sử phê duyệt, thông báo Web Push tùy chọn, hồ sơ cá nhân, đổi mật khẩu và ảnh đại diện.
 - Quản lý ngày lễ (chỉ ADMIN), lọc danh sách và dashboard thống kê theo phạm vi quyền.
-- Báo cáo quản trị theo phạm vi quyền: tổng hợp ngày nghỉ theo phòng ban, tỷ trọng nghỉ theo tháng, top nhân viên nghỉ nhiều, thời gian xử lý trung bình, đơn chờ theo cấp, nhân viên chưa có hạn mức và đơn ra ngoài được xác nhận về muộn.
+- Báo cáo quản trị theo phạm vi quyền: tổng hợp ngày nghỉ theo phòng ban, tỷ trọng nghỉ theo tháng, top nhân viên nghỉ nhiều, thời gian xử lý trung bình, đơn chờ theo người duyệt, nhân viên chưa có hạn mức và đơn ra ngoài được xác nhận về muộn.
 - Báo cáo được hiển thị cho ADMIN (toàn công ty), TEAM_LEAD (trong team), MANAGER (trong phòng ban), ACCOUNTANT và DIRECTOR (toàn công ty). Hệ thống chưa ghi nhận giờ rời đi thực tế nên chưa thể kết luận chính xác tình trạng đi muộn.
 - Báo cáo có bộ lọc theo ngày với nút `Lọc` và `Xóa bộ lọc`; khi chưa lọc, lịch vắng mặt hiển thị toàn bộ đơn đã duyệt trong phạm vi quyền của người dùng.
 
@@ -26,27 +26,25 @@
 
 | Vai trò      | Phạm vi dữ liệu                                              | Quyền chính                                                                                                                      |
 | ------------ | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
-| `STAFF`      | Đơn cá nhân                                                  | Tạo đơn; đơn nghỉ được Trưởng phòng duyệt; đơn ra ngoài do Trưởng nhóm cùng team duyệt                                           |
-| `TEAM_LEAD`  | Đơn cá nhân và đơn trong team                                | Tạo đơn; đơn nghỉ do Trưởng phòng cùng phòng ban duyệt; đơn ra ngoài do Trưởng phòng duyệt                                       |
-| `MANAGER`    | Đơn cá nhân và trong phòng ban                               | Tạo đơn; duyệt nghỉ của nhân viên trong phòng ban; duyệt đơn ra ngoài theo cấp trực tiếp                                         |
-| `ACCOUNTANT` | Toàn công ty khi tra cứu/báo cáo; chỉ đọc đơn của người khác | Tạo đơn cá nhân; đơn nghỉ do Trưởng phòng duyệt; đơn ra ngoài do Trưởng phòng duyệt                                              |
+| `STAFF`      | Đơn cá nhân                                                  | Tạo đơn; đơn được người có `id = users.manager_id` duyệt                                                                    |
+| `TEAM_LEAD`  | Đơn cá nhân và đơn trong team                                | Tạo đơn; duyệt các đơn được gán trực tiếp qua `manager_id`                                                                  |
+| `MANAGER`    | Đơn cá nhân và trong phòng ban                               | Tạo đơn; xem trong phòng ban; duyệt các đơn được gán trực tiếp qua `manager_id`                                              |
+| `ACCOUNTANT` | Toàn công ty khi tra cứu/báo cáo; chỉ đọc đơn của người khác | Tạo đơn cá nhân; có thể duyệt nếu được gán qua `manager_id`                                                                  |
 | `ADMIN`      | Quản trị nhân sự                                             | Chỉ tài khoản `admin@trithucvietbn.com` được vào trang quản trị và quản lý ngày lễ; không thể cấp quyền ADMIN cho tài khoản khác |
-| `DIRECTOR`   | Toàn công ty                                                 | Duyệt cấp cuối nghỉ phép và đơn của Trưởng phòng; duyệt đơn ra ngoài theo cấp trực tiếp                                          |
+| `DIRECTOR`   | Toàn công ty                                                 | Xem toàn bộ dữ liệu; có thể duyệt nếu được gán qua `manager_id`                                                               |
 
-> Quyền duyệt được kiểm tra ở server. Không người dùng nào được tự duyệt đơn của mình. Với STAFF chưa được gán team, hệ thống sẽ chuyển theo cấp phòng ban nếu đủ dữ liệu; nếu không xác định được người duyệt thì cần cấu hình lại hồ sơ nhân sự.
+> Quyền xem và quyền duyệt là hai phần độc lập. Phạm vi xem của DIRECTOR vẫn là toàn công ty; MANAGER vẫn xem chính mình và phòng ban của mình. Quyền duyệt được kiểm tra ở server theo `applicant.manager_id = approver.id`; không người dùng nào được tự duyệt đơn của mình. Nhân viên chưa được gán `manager_id` không thể tạo đơn.
 
 ### Luồng nghỉ phép
 
 ```text
-PENDING ── duyệt cấp 1, tối đa 1 ngày ──> WAITING_FOR_DOC ── nộp giấy ──> COMPLETED
-   │
-   └── duyệt cấp 1, trên 1 ngày ──> APPROVED_BY_LEAD ── Giám đốc duyệt ──> WAITING_FOR_DOC
+PENDING ── người được gán qua manager_id duyệt ──> WAITING_FOR_DOC ── nộp giấy ──> COMPLETED
 
-Ở bước chờ duyệt có thể chuyển sang REJECTED.
+Ở bước chờ duyệt có thể chuyển sang REJECTED. Không còn trạng thái chờ cấp duyệt thứ hai trong nghiệp vụ mới.
 ```
 
-Ngày nghỉ tính theo lịch làm việc hiện tại: thứ Hai–thứ Bảy là ngày làm việc, Chủ Nhật và ngày lễ đang hoạt động không tính. Chưa hỗ trợ nghỉ nửa ngày hoặc nghỉ theo giờ.
-Hạn mức được quản lý theo năm bắt đầu của đơn; khi chưa thiết lập hạn mức cho nhân viên/năm, hệ thống vẫn cho gửi đơn theo quy trình duyệt cũ.
+Ngày nghỉ tính theo lịch làm việc hiện tại: thứ Hai–thứ Bảy là ngày làm việc, Chủ Nhật và ngày lễ đang hoạt động không tính. Đơn có thể chọn cả ngày, buổi sáng hoặc buổi chiều; nghỉ theo buổi tính 0,5 ngày.
+Hạn mức được quản lý theo năm bắt đầu của đơn; khi chưa thiết lập hạn mức cho nhân viên/năm, hệ thống vẫn cho gửi đơn.
 
 ### Luồng đơn ra ngoài
 
@@ -55,7 +53,7 @@ PENDING ── duyệt ──> APPROVED ── người đã duyệt xác nhận
    └── từ chối ──> REJECTED
 ```
 
-Mỗi đơn áp dụng trong một ngày; giờ kết thúc phải sau giờ bắt đầu. Từ chối cần có lý do. Người duyệt trực tiếp: STAFF → TEAM_LEAD cùng team; nếu không có TEAM_LEAD thì → MANAGER cùng phòng; nếu không có cả TEAM_LEAD và MANAGER thì → DIRECTOR. TEAM_LEAD/ACCOUNTANT → MANAGER cùng phòng, nếu không có MANAGER thì → DIRECTOR; MANAGER → DIRECTOR.
+Mỗi đơn áp dụng trong một ngày; giờ kết thúc phải sau giờ bắt đầu. Từ chối cần có lý do. Người duyệt là tài khoản có `id` bằng `users.manager_id` của người tạo đơn. Người đã duyệt sẽ xác nhận khi nhân viên quay về.
 
 ## Công nghệ
 
@@ -165,6 +163,6 @@ scripts/             Seed và script kiểm tra thủ công
 ## Các quy định cần doanh nghiệp xác nhận
 
 - Lịch làm việc thứ Hai–thứ Bảy và cách loại trừ ngày lễ có phù hợp chính sách công ty không.
-- Cấp duyệt đơn ra ngoài theo team/phòng như mô tả trong luồng hiện tại có đúng thực tế không.
+- Cách gán người duyệt trực tiếp qua `users.manager_id` có phù hợp với quy trình nội bộ không.
 - Có cần giới hạn đơn ra ngoài theo giờ làm việc, giới hạn thời lượng hoặc cho phép ngày quá khứ hay không.
 - Chính sách lưu trữ và thời hạn giữ giấy nghỉ phép, lịch sử phê duyệt và dữ liệu tài khoản.
