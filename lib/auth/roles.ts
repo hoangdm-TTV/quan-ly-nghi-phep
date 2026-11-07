@@ -15,14 +15,14 @@ export function canSubmitPersonalRequests(role: UserRole): boolean {
   );
 }
 
-/** Chỉ Trưởng phòng và Giám đốc duyệt theo workflow hiện hành. Team Lead không duyệt. */
+/** Người được gán trong users.manager_id có thể duyệt đơn một cấp. */
 export function canApproveWorkflowRequests(role: UserRole): boolean {
-  return role === "MANAGER" || role === "DIRECTOR";
+  return role !== "ADMIN";
 }
 
-/** Team Lead, Manager và Director có thể duyệt đơn ra ngoài theo cấp trực tiếp. */
+/** Người được gán trong users.manager_id có thể duyệt đơn ra ngoài. */
 export function canApproveOutOfficeRequests(role: UserRole): boolean {
-  return role === "TEAM_LEAD" || role === "MANAGER" || role === "DIRECTOR";
+  return role !== "ADMIN";
 }
 
 /** Director và Accountant xem toàn công ty; Manager xem theo phòng ban riêng. */

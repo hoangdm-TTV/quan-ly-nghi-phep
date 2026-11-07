@@ -122,48 +122,25 @@ export async function sendPushToUsers(
 export async function notifyLeaveApprovers(requestId: string): Promise<void> {
   const requestResult = await query<{
     employee_id: string;
-    role: string;
-    department_id: string | null;
+    manager_id: string | null;
     status: string;
   }>(
-    `SELECT lr.employee_id, u.role, u.department_id, lr.status
+    `SELECT lr.employee_id, u.manager_id, lr.status
        FROM leave_requests lr JOIN users u ON u.id = lr.employee_id WHERE lr.id = $1`,
     [requestId],
   );
   const request = requestResult.rows[0];
   if (!request) return;
 
-  const approvers =
-    request.status === "APPROVED_BY_LEAD"
-      ? await query<{ id: string }>(
-          `SELECT id FROM users WHERE role = 'DIRECTOR' AND is_active = TRUE AND id <> $1`,
-          [request.employee_id],
-        )
-      : await query<{ id: string }>(
-          `SELECT id FROM users
-          WHERE is_active = TRUE AND employment_status = 'ACTIVE' AND id <> $1 AND (
-            (role = 'DIRECTOR' AND (
-              $2 = 'MANAGER' OR $3::uuid IS NULL OR NOT EXISTS (
-                SELECT 1 FROM users manager
-                 WHERE manager.role = 'MANAGER' AND manager.is_active = TRUE
-                   AND manager.department_id = $3::uuid
-              )
-            )) OR
-            (role = 'MANAGER' AND $3::uuid IS NOT NULL AND department_id = $3::uuid
-              AND $2 IN ('STAFF', 'TEAM_LEAD', 'ACCOUNTANT'))
-          )`,
-          [request.employee_id, request.role, request.department_id],
-        );
+  if (!request.manager_id || request.manager_id === request.employee_id) return;
+  const approvers = await query<{ id: string }>(
+    `SELECT id FROM users WHERE id = $1 AND is_active = TRUE AND employment_status = 'ACTIVE'`,
+    [request.manager_id],
+  );
   const recipientIds = approvers.rows.map(({ id }) => id);
   const notification = {
-    title:
-      request.status === "APPROVED_BY_LEAD"
-        ? "Đơn nghỉ phép cần Giám đốc duyệt"
-        : "Có đơn nghỉ phép cần duyệt",
-    body:
-      request.status === "APPROVED_BY_LEAD"
-        ? "Một đơn nghỉ phép đã qua cấp Trưởng phòng và đang chờ duyệt cấp cuối."
-        : "Một nhân viên vừa gửi đơn nghỉ phép mới.",
+    title: "Có đơn nghỉ phép cần duyệt",
+    body: "Một nhân viên vừa gửi đơn nghỉ phép mới.",
     url: `/leave/${requestId}`,
   };
   const [dispatch] = await Promise.all([
@@ -188,42 +165,24 @@ export async function notifyOutOfficeApprovers(
 ): Promise<void> {
   const requestResult = await query<{
     employee_id: string;
-    role: string;
-    department_id: string | null;
-    team_id: string | null;
+    manager_id: string | null;
   }>(
-    `SELECT oo.employee_id, u.role, u.department_id, u.team_id
+    `SELECT oo.employee_id, u.manager_id
        FROM out_office_requests oo JOIN users u ON u.id = oo.employee_id WHERE oo.id = $1`,
     [requestId],
   );
   const request = requestResult.rows[0];
   if (!request) return;
 
-  const roleRouting: Record<string, string> = {
-    STAFF: `(
-      (role = 'TEAM_LEAD' AND team_id = $3::uuid AND $3::uuid IS NOT NULL)
-      OR (role = 'MANAGER' AND department_id = $2::uuid AND $2::uuid IS NOT NULL AND NOT EXISTS (SELECT 1 FROM users tl WHERE tl.role = 'TEAM_LEAD' AND tl.is_active = TRUE AND tl.employment_status = 'ACTIVE' AND tl.team_id = $3::uuid))
-      OR (role = 'DIRECTOR' AND NOT EXISTS (SELECT 1 FROM users tl WHERE tl.role = 'TEAM_LEAD' AND tl.is_active = TRUE AND tl.employment_status = 'ACTIVE' AND tl.team_id = $3::uuid) AND NOT EXISTS (SELECT 1 FROM users m WHERE m.role = 'MANAGER' AND m.is_active = TRUE AND m.employment_status = 'ACTIVE' AND m.department_id = $2::uuid))
-    )`,
-    TEAM_LEAD: `((role = 'MANAGER' AND department_id = $2::uuid AND $2::uuid IS NOT NULL) OR (role = 'DIRECTOR' AND NOT EXISTS (SELECT 1 FROM users m WHERE m.role = 'MANAGER' AND m.is_active = TRUE AND m.employment_status = 'ACTIVE' AND m.department_id = $2::uuid)))`,
-    ACCOUNTANT: `((role = 'MANAGER' AND department_id = $2::uuid AND $2::uuid IS NOT NULL) OR (role = 'DIRECTOR' AND NOT EXISTS (SELECT 1 FROM users m WHERE m.role = 'MANAGER' AND m.is_active = TRUE AND m.employment_status = 'ACTIVE' AND m.department_id = $2::uuid)))`,
-    MANAGER: `role = 'DIRECTOR'`,
-  };
-  const routing = roleRouting[request.role];
-  if (!routing) return;
+  if (!request.manager_id || request.manager_id === request.employee_id) return;
   const approvers = await query<{ id: string }>(
-    `SELECT id FROM users WHERE is_active = TRUE AND employment_status = 'ACTIVE' AND id <> $1 AND ${routing}`,
-    [request.employee_id, request.department_id, request.team_id],
+    `SELECT id FROM users WHERE id = $1 AND is_active = TRUE AND employment_status = 'ACTIVE'`,
+    [request.manager_id],
   );
   if (!approvers.rows.length) {
     console.warn(
       "[Out Office Notification] Không tìm thấy người duyệt trực tiếp",
-      {
-        requestId,
-        applicantRole: request.role,
-        departmentId: request.department_id,
-        teamId: request.team_id,
-      },
+      { requestId, managerId: request.manager_id },
     );
   }
   const recipientIds = approvers.rows.map(({ id }) => id);

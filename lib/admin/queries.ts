@@ -122,7 +122,7 @@ export async function getHrAdminData(
     query<HrDepartment>("SELECT id, name FROM departments ORDER BY name"),
     query<HrTeam>("SELECT id, name, department_id FROM teams ORDER BY name"),
     query<Pick<HrUserRow, "id" | "full_name" | "role">>(
-      `SELECT id, full_name, role FROM users WHERE is_active = TRUE AND role IN ('TEAM_LEAD', 'MANAGER', 'DIRECTOR') ORDER BY full_name`,
+      `SELECT id, full_name, role FROM users WHERE is_active = TRUE AND employment_status = 'ACTIVE' AND role <> 'ADMIN' ORDER BY full_name`,
     ),
   ]);
   return {

@@ -12,7 +12,6 @@ import {
   evaluateOutOfficeRejection,
   OutOfficeStatus,
 } from "./workflow";
-import { getOutOfficeRoutingAvailability } from "./routing";
 import {
   notifyOutOfficeApprovers,
   notifyOutOfficeRequester,
@@ -85,6 +84,10 @@ export async function createOutOfficeRequestAction(
       error:
         "Tài khoản Giám đốc (DIRECTOR) không tạo đơn ra ngoài trên hệ thống.",
     };
+  }
+
+  if (!currentUser.manager_id) {
+    return { error: "Bạn chưa được gán người duyệt. Vui lòng liên hệ quản trị nhân sự." };
   }
 
   const rawDate = formData.get("requestDate");
@@ -231,16 +234,11 @@ export async function approveOutOfficeRequestAction(
       return { error: "Không tìm thấy thông tin nhân viên tạo đơn." };
     }
 
-    const routing = await getOutOfficeRoutingAvailability(
-      applicant.department_id,
-      applicant.team_id,
-    );
     const evaluation = evaluateOutOfficeApproval(
       currentUser,
       applicant,
       request.status as OutOfficeStatus,
       request.approver_id,
-      routing,
     );
 
     if (!evaluation.allowed || !evaluation.nextStatus || !evaluation.action) {
@@ -329,16 +327,11 @@ export async function rejectOutOfficeRequestAction(
       return { error: "Không tìm thấy thông tin nhân viên tạo đơn." };
     }
 
-    const routing = await getOutOfficeRoutingAvailability(
-      applicant.department_id,
-      applicant.team_id,
-    );
     const evaluation = evaluateOutOfficeRejection(
       currentUser,
       applicant,
       request.status as OutOfficeStatus,
       request.approver_id,
-      routing,
     );
 
     if (!evaluation.allowed) {

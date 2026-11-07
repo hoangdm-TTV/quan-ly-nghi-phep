@@ -17,7 +17,7 @@ export interface WorkflowEvaluation {
   action?: ApprovalAction;
 }
 
-/** Kiểm tra quyền và bước tiếp theo của workflow nghỉ phép. */
+/** Kiểm tra người duyệt được gán trực tiếp trong users.manager_id. */
 export function evaluateLeaveApproval(
   approver: SafeUser,
   applicant: SafeUser,
@@ -32,92 +32,21 @@ export function evaluateLeaveApproval(
     };
   }
 
-  if (currentStatus !== "PENDING" && currentStatus !== "APPROVED_BY_LEAD") {
+  if (currentStatus !== "PENDING") {
     return {
       allowed: false,
       reason: `Đơn đang ở trạng thái "${currentStatus}", không thể thực hiện phê duyệt tiếp.`,
     };
   }
 
-  // Đơn nhiều ngày đã qua cấp Trưởng phòng: chỉ Giám đốc duyệt cấp cuối.
-  if (currentStatus === "APPROVED_BY_LEAD") {
-    return approver.role === "DIRECTOR"
-      ? {
-          allowed: true,
-          nextStatus: "WAITING_FOR_DOC",
-          action: "APPROVED_DIRECTOR",
-        }
-      : {
-          allowed: false,
-          reason:
-            "Đơn đã được Trưởng phòng duyệt cấp 1; chỉ Giám đốc mới có quyền duyệt cấp 2.",
-        };
-  }
-
-  if (
-    directorDirectApproval &&
-    approver.role === "DIRECTOR" &&
-    currentStatus === "PENDING"
-  ) {
-    return {
-      allowed: true,
-      nextStatus: "WAITING_FOR_DOC",
-      action: "APPROVED_DIRECTOR",
-    };
-  }
-
-  if (
-    applicant.role === "STAFF" ||
-    applicant.role === "TEAM_LEAD" ||
-    applicant.role === "ACCOUNTANT"
-  ) {
-    // Trưởng phòng duyệt đơn của nhân viên trong cùng phòng ban.
-    const isDepartmentManager =
-      approver.role === "MANAGER" &&
-      Boolean(approver.department_id) &&
-      approver.department_id === applicant.department_id;
-
-    if (!isDepartmentManager) {
-      return {
-        allowed: false,
-        reason:
-          durationDays > 1
-            ? "Đơn nghỉ nhiều ngày phải được Trưởng phòng cùng phòng ban duyệt cấp 1 trước."
-            : "Đơn nghỉ phải do Trưởng phòng cùng phòng ban duyệt cấp 1.",
-      };
-    }
-
-    if (durationDays <= 1) {
-      return {
-        allowed: true,
-        nextStatus: "WAITING_FOR_DOC",
-        action: "APPROVED_LEAD",
-      };
-    }
-    return {
-      allowed: true,
-      nextStatus: "APPROVED_BY_LEAD",
-      action: "APPROVED_LEAD",
-    };
-  }
-
-  // Đơn của Manager được Director xử lý trực tiếp.
-  if (applicant.role === "MANAGER") {
-    return approver.role === "DIRECTOR"
-      ? {
-          allowed: true,
-          nextStatus: "WAITING_FOR_DOC",
-          action: "APPROVED_DIRECTOR",
-        }
-      : {
-          allowed: false,
-          reason: "Đơn của Trưởng phòng phải do Giám đốc duyệt trực tiếp.",
-        };
+  if (applicant.manager_id !== approver.id) {
+    return { allowed: false, reason: "Đơn này không được gán cho bạn phê duyệt." };
   }
 
   return {
-    allowed: false,
-    reason: "Không xác định được thẩm quyền phê duyệt.",
+    allowed: true,
+    nextStatus: "WAITING_FOR_DOC",
+    action: approver.role === "DIRECTOR" ? "APPROVED_DIRECTOR" : "APPROVED_LEAD",
   };
 }
 

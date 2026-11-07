@@ -257,6 +257,10 @@ export async function createLeaveRequestAction(
     };
   }
 
+  if (!currentUser.manager_id) {
+    return { error: "Bạn chưa được gán người duyệt. Vui lòng liên hệ quản trị nhân sự." };
+  }
+
   // 2. Validate dữ liệu đầu vào
   const rawStartDate = formData.get("startDate");
   const rawEndDate = formData.get("endDate");
