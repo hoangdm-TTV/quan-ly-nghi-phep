@@ -117,7 +117,7 @@ CRON_SECRET=thay_bang_chuoi_ngau_nhien_dai_va_bao_mat
 
 `lib/db/pool.ts` cũng hỗ trợ cấu hình riêng `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD` nếu không đặt `DATABASE_URL`.
 
-### Tạo database và áp dụng migration
+### Tạo database mới và khởi tạo một lần
 
 PostgreSQL phải có database đích trước khi chạy migration. Ví dụ lỗi `database "quan_ly_nghi_phep" does not exist` xảy ra khi kết nối đến database chưa được tạo; tạo database từ một database quản trị có sẵn trước:
 
@@ -125,42 +125,24 @@ PostgreSQL phải có database đích trước khi chạy migration. Ví dụ l�
 CREATE DATABASE quan_ly_nghi_phep;
 ```
 
-Sau đó kết nối **đúng database `quan_ly_nghi_phep`** và chạy từng file SQL theo thứ tự bên dưới. Có thể dùng DBeaver (chọn đúng connection/database và chạy bằng chế độ Execute Script) hoặc `psql`. Nếu dùng PowerShell, nạp URI vào biến môi trường của cửa sổ terminal hiện tại (thay bằng thông tin thật; không ghi mật khẩu thật vào README/Git):
+Sau đó kết nối **đúng database `quan_ly_nghi_phep`** và chạy duy nhất file [`migrations/000_initial_database.sql`](migrations/000_initial_database.sql). File này đã chứa toàn bộ schema, index, khóa ngoại, constraint và dữ liệu khởi tạo từ database local. Có thể dùng DBeaver (chọn đúng connection/database và chạy bằng chế độ **Execute SQL Script**) hoặc `psql`. Nếu dùng PowerShell, nạp URI vào biến môi trường của cửa sổ terminal hiện tại (thay bằng thông tin thật; không ghi mật khẩu thật vào README/Git):
 
 ```powershell
 $env:DATABASE_URL = "postgresql://postgres:your_password@localhost:5432/quan_ly_nghi_phep"
 
-$files = @(
-  "migrations/001_initial_database.sql",
-  "migrations/002_performance_indexes.sql",
-  "migrations/003_push_notifications.sql",
-  "migrations/004_profile_avatars.sql",
-  "migrations/005_login_rate_limits.sql",
-  "migrations/006_leave_balance_history_and_reminders.sql",
-  "migrations/007_leave_and_employee_details.sql",
-  "migrations/008_in_app_notifications.sql"
-)
-
-foreach ($file in $files) {
-  psql $env:DATABASE_URL -v ON_ERROR_STOP=1 -f $file
-  if ($LASTEXITCODE -ne 0) { throw "Migration thất bại: $file" }
-}
+psql $env:DATABASE_URL -v ON_ERROR_STOP=1 -f migrations/000_initial_database.sql
+if ($LASTEXITCODE -ne 0) { throw "Khởi tạo database thất bại" }
 ```
 
-Chạy các file theo đúng thứ tự và chỉ một lần trên database mới. Trên database đã có dữ liệu, sao lưu trước, kiểm tra trạng thái schema và xác định migration nào đã áp dụng; không chạy lại cả bộ một cách mù quáng. Ứng dụng **không tự chạy migration khi khởi động**.
+Chạy file này **một lần duy nhất trên database rỗng**. File có transaction và các câu `SELECT` kiểm tra cuối file để DBeaver hiển thị số bản ghi sau khi chạy. Không chạy lại file trên database đã có schema/dữ liệu; với database đang sử dụng cần backup và dùng migration bổ sung phù hợp. Ứng dụng **không tự chạy migration khi khởi động**.
 
 Nếu PostgreSQL báo `25P02 current transaction is aborted`, đó thường là lỗi phát sinh sau một câu lệnh trước đó đã thất bại trong transaction. Tìm lỗi đầu tiên trong log, xử lý nguyên nhân rồi chạy lại migration phù hợp; không coi `25P02` là nguyên nhân gốc.
 
-| Migration | Nội dung chính |
+| File | Nội dung chính |
 | --- | --- |
-| `001_initial_database.sql` | Schema nền: nhân viên, phòng ban, team, đơn nghỉ/ra ngoài, session, lịch sử duyệt, ngày lễ và dữ liệu khởi tạo. |
-| `002_performance_indexes.sql` | Chỉ mục phục vụ truy vấn. |
-| `003_push_notifications.sql` | Đăng ký Web Push. |
-| `004_profile_avatars.sql` | Ảnh đại diện hồ sơ. |
-| `005_login_rate_limits.sql` | Giới hạn thử đăng nhập. |
-| `006_leave_balance_history_and_reminders.sql` | Hạn mức phép, lịch sử sửa/hủy, nhắc việc và role `ADMIN`. |
-| `007_leave_and_employee_details.sql` | Buổi nghỉ, người thay thế, ghi chú bàn giao, trạng thái nhân sự và audit log. |
-| `008_in_app_notifications.sql` | Thông báo nội bộ và chỉ mục tra cứu. |
+| `000_initial_database.sql` | File khởi tạo đầy đủ: schema, dữ liệu nhân sự/phòng ban/team/ngày lễ, index, khóa ngoại, constraint, hạn mức, audit log, push và thông báo nội bộ. |
+
+Tám file `001`–`008` là lịch sử cấu thành schema cũ và được giữ lại để tham chiếu; không chạy đồng thời với `000_initial_database.sql` trên cùng database mới.
 
 ### Chạy ở chế độ phát triển và production
 
