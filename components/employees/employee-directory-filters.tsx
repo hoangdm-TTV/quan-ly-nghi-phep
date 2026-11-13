@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type {
   EmployeeDirectoryDepartment,
   EmployeeDirectoryTeam,
@@ -13,6 +13,7 @@ type Props = {
   unassignedOnly: boolean;
   employmentStatus: string;
   missingEntitlementYear?: number;
+  pageSize: number;
   departments: EmployeeDirectoryDepartment[];
   teams: EmployeeDirectoryTeam[];
 };
@@ -24,12 +25,15 @@ export default function EmployeeDirectoryFilters({
   unassignedOnly,
   employmentStatus,
   missingEntitlementYear,
+  pageSize,
   departments,
   teams,
 }: Props) {
   const formRef = useRef<HTMLFormElement>(null);
   const [selectedDepartment, setSelectedDepartment] = useState(departmentId);
   const [selectedTeam, setSelectedTeam] = useState(teamId);
+  const [search, setSearch] = useState(q);
+  const initialSearch = useRef(q);
   const availableTeams = selectedDepartment
     ? teams.filter((team) => team.department_id === selectedDepartment)
     : teams;
@@ -48,6 +52,12 @@ export default function EmployeeDirectoryFilters({
     window.setTimeout(() => formRef.current?.requestSubmit(), 0);
   };
 
+  useEffect(() => {
+    if (search === initialSearch.current) return;
+    const timeout = window.setTimeout(() => formRef.current?.requestSubmit(), 400);
+    return () => window.clearTimeout(timeout);
+  }, [search]);
+
   return (
     <form
       ref={formRef}
@@ -61,11 +71,13 @@ export default function EmployeeDirectoryFilters({
           value={missingEntitlementYear}
         />
       )}
+      <input type="hidden" name="pageSize" value={pageSize} />
       <label className="text-xs font-semibold text-slate-700">
         Tìm nhân viên
         <input
           name="q"
-          defaultValue={q}
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
           maxLength={100}
           placeholder="Tên, email, mã NV hoặc chức vụ"
           className={`${selectClass} mt-1`}
@@ -138,10 +150,7 @@ export default function EmployeeDirectoryFilters({
         Thiếu phòng ban hoặc team
       </label>
       <div className="flex gap-2 self-end">
-        <button className="flex-1 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white">
-          Lọc
-        </button>
-        {hasFilters && (
+          {hasFilters && (
           <a
             href="/employees"
             className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-center text-sm font-semibold text-slate-700"

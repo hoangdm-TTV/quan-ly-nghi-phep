@@ -16,6 +16,7 @@ export default async function HrAdminPage({
     team?: string;
     status?: string;
     page?: string;
+    pageSize?: string;
     section?: string;
   };
 }) {
@@ -35,6 +36,10 @@ export default async function HrAdminPage({
       ? requestedYear
       : currentYear;
   const pageNumber = Number(searchParams?.page);
+  const requestedPageSize = Number(searchParams?.pageSize);
+  const pageSize = [10, 20, 50].includes(requestedPageSize)
+    ? requestedPageSize
+    : 20;
   const [
     { users, departments, teams, managers, total, hasNext, page },
     entitlements,
@@ -45,6 +50,7 @@ export default async function HrAdminPage({
       teamId: searchParams?.team,
       status: searchParams?.status,
       page: Number.isInteger(pageNumber) && pageNumber > 0 ? pageNumber : 1,
+      pageSize,
     }),
     getLeaveEntitlements(year),
   ]);
@@ -89,6 +95,7 @@ export default async function HrAdminPage({
         total={total}
         hasNext={hasNext}
         page={page}
+        pageSize={pageSize}
         filters={{
           q: searchParams?.q || "",
           department: searchParams?.department || "",

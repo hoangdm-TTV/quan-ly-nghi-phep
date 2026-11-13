@@ -2,8 +2,6 @@ import Link from "next/link";
 import {
   Building2,
   Briefcase,
-  ChevronLeft,
-  ChevronRight,
   Mail,
   UsersRound,
 } from "lucide-react";
@@ -12,6 +10,7 @@ import { getEmployeeDirectory } from "@/lib/employees/queries";
 import { getUserDataScopeLabel } from "@/lib/auth/data-scope";
 import { canManageHr } from "@/lib/auth/admin-account";
 import EmployeeDirectoryFilters from "@/components/employees/employee-directory-filters";
+import PaginationControls from "@/components/shared/pagination-controls";
 
 export const metadata = {
   title: "Danh bạ nhân sự | Tri Thức Việt",
@@ -74,6 +73,7 @@ export default async function EmployeesPage({
   searchParams?: {
     q?: string;
     page?: string;
+    pageSize?: string;
     departmentId?: string;
     teamId?: string;
     unassignedOnly?: string;
@@ -85,6 +85,10 @@ export default async function EmployeesPage({
   const requestedPage = Number(searchParams?.page);
   const pageNumber =
     Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+  const requestedPageSize = Number(searchParams?.pageSize);
+  const pageSize = [10, 20, 50].includes(requestedPageSize)
+    ? requestedPageSize
+    : 20;
   const q = (searchParams?.q || "").trim().slice(0, 100);
   const requestedEntitlementYear = Number(searchParams?.missingEntitlementYear);
   const missingEntitlementYear =
@@ -118,6 +122,7 @@ export default async function EmployeesPage({
     employmentStatus,
     missingEntitlementYear,
     page: pageNumber,
+    pageSize,
   });
 
   const departmentId =
@@ -131,19 +136,6 @@ export default async function EmployeesPage({
       ? requestedTeamId
       : "";
   const scopeLabel = getUserDataScopeLabel(user);
-
-  const pageHref = (nextPage: number) => {
-    const params = new URLSearchParams();
-    if (q) params.set("q", q);
-    if (departmentId) params.set("departmentId", departmentId);
-    if (teamId) params.set("teamId", teamId);
-    if (unassignedOnly) params.set("unassignedOnly", "true");
-    if (employmentStatus) params.set("employmentStatus", employmentStatus);
-    if (missingEntitlementYear)
-      params.set("missingEntitlementYear", String(missingEntitlementYear));
-    params.set("page", String(nextPage));
-    return `/employees?${params.toString()}`;
-  };
 
   return (
     <main className="mx-auto max-w-7xl space-y-6">
@@ -192,6 +184,7 @@ export default async function EmployeesPage({
           unassignedOnly={unassignedOnly}
           employmentStatus={employmentStatus || ""}
           missingEntitlementYear={missingEntitlementYear}
+          pageSize={pageSize}
           departments={departments}
           teams={teams}
         />
@@ -331,21 +324,23 @@ export default async function EmployeesPage({
           </>
         )}
 
-        <footer className="flex flex-col gap-3 border-t border-slate-200 bg-slate-50/70 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-          <p className="text-xs text-slate-500">Kết quả được giới hạn theo quyền truy cập của bạn.</p>
-          <div className="flex gap-2">
-            {page > 1 && (
-              <Link href={pageHref(page - 1)} className="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100">
-                <ChevronLeft className="h-3.5 w-3.5" /> Trước
-              </Link>
-            )}
-            {hasNext && (
-              <Link href={pageHref(page + 1)} className="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100">
-                Tiếp <ChevronRight className="h-3.5 w-3.5" />
-              </Link>
-            )}
-          </div>
-        </footer>
+        <PaginationControls
+          basePath="/employees"
+          params={{
+            q,
+            departmentId,
+            teamId,
+            unassignedOnly: unassignedOnly ? "true" : undefined,
+            employmentStatus,
+            missingEntitlementYear: missingEntitlementYear
+              ? String(missingEntitlementYear)
+              : undefined,
+          }}
+          page={page}
+          pageSize={pageSize}
+          total={total}
+          hasNext={hasNext}
+        />
       </section>
     </main>
   );

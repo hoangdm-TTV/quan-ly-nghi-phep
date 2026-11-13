@@ -38,7 +38,9 @@ export async function getEmployeeDirectory(
     pageSize?: number;
   } = {},
 ) {
-  const pageSize = Math.min(50, Math.max(1, Math.trunc(filters.pageSize ?? 25)));
+  const pageSize = [10, 20, 50].includes(Math.trunc(filters.pageSize ?? 20))
+    ? Math.trunc(filters.pageSize ?? 20)
+    : 20;
   const page = Math.max(1, Math.min(100_000, Math.trunc(filters.page ?? 1)));
   const scope = buildReportDataScope(user, "u");
   const values: unknown[] = [...scope.params];

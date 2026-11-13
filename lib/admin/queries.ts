@@ -65,7 +65,9 @@ export async function getHrAdminData(
     pageSize?: number;
   } = {},
 ) {
-  const pageSize = Math.min(100, Math.max(1, filters.pageSize ?? 25));
+  const pageSize = [10, 20, 50].includes(Math.trunc(filters.pageSize ?? 20))
+    ? Math.trunc(filters.pageSize ?? 20)
+    : 20;
   const page = Math.max(1, Math.min(100_000, Math.trunc(filters.page ?? 1)));
   const values: unknown[] = [];
   const conditions: string[] = [];

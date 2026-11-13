@@ -19,6 +19,7 @@ import type {
   HrUserRow,
   HrLeaveEntitlement,
 } from "@/lib/admin/queries";
+import PaginationControls from "@/components/shared/pagination-controls";
 
 function Feedback({ state }: { state: { success?: string; error?: string } }) {
   if (state.error)
@@ -426,21 +427,28 @@ function EmployeeFilters({
   departments,
   teams,
   filters,
+  pageSize,
 }: {
   departments: HrDepartment[];
   teams: HrTeam[];
   filters: { q: string; department: string; team: string; status: string };
+  pageSize: number;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const teamSelectRef = useRef<HTMLSelectElement>(null);
   const [search, setSearch] = useState(filters.q);
+  const [selectedDepartment, setSelectedDepartment] = useState(filters.department);
+  const [selectedTeam, setSelectedTeam] = useState(filters.team);
   const lastSubmittedSearch = useRef(filters.q);
   const activeCount = [
     filters.q,
-    filters.department,
-    filters.team,
+    selectedDepartment,
+    selectedTeam,
     filters.status,
   ].filter(Boolean).length;
+  const availableTeams = selectedDepartment
+    ? teams.filter((team) => team.department_id === selectedDepartment)
+    : teams;
 
   useEffect(() => {
     if (search === lastSubmittedSearch.current) return;
@@ -483,6 +491,7 @@ function EmployeeFilters({
         className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-5"
       >
         <input type="hidden" name="section" value="employees" />
+        <input type="hidden" name="pageSize" value={pageSize} />
         <label className={labelClass}>
           Tìm nhân viên
           <input
@@ -497,9 +506,10 @@ function EmployeeFilters({
           Phòng ban
           <select
             name="department"
-            defaultValue={filters.department}
+            value={selectedDepartment}
             onChange={(event) => {
-              if (teamSelectRef.current) teamSelectRef.current.value = "";
+              setSelectedDepartment(event.target.value);
+              setSelectedTeam("");
               event.currentTarget.form?.requestSubmit();
             }}
             className={`${selectClass} mt-1 font-normal`}
@@ -517,16 +527,15 @@ function EmployeeFilters({
           <select
             ref={teamSelectRef}
             name="team"
-            defaultValue={filters.team}
-            onChange={(event) => event.currentTarget.form?.requestSubmit()}
+            value={selectedTeam}
+            onChange={(event) => {
+              setSelectedTeam(event.target.value);
+              event.currentTarget.form?.requestSubmit();
+            }}
             className={`${selectClass} mt-1 font-normal`}
           >
             <option value="">Tất cả team</option>
-            {teams
-              .filter(
-                (t) =>
-                  !filters.department || t.department_id === filters.department,
-              )
+            {availableTeams
               .map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.name}
@@ -571,6 +580,7 @@ export default function HrAdminPanel({
   total,
   hasNext,
   page,
+  pageSize,
   filters,
   section,
 }: {
@@ -583,15 +593,10 @@ export default function HrAdminPanel({
   total: number;
   hasNext: boolean;
   page: number;
+  pageSize: number;
   filters: { q: string; department: string; team: string; status: string };
   section: string;
 }) {
-  const linkParams = new URLSearchParams({
-    q: filters.q,
-    department: filters.department,
-    team: filters.team,
-    status: filters.status,
-  });
   const sectionLink = (value: string) => `/admin/hr?section=${value}`;
   const navClass = (value: string) =>
     `rounded-lg px-3 py-2 text-sm font-semibold ${section === value ? "bg-[#005a3c] text-white" : "border border-slate-200 bg-white text-slate-700"}`;
@@ -643,6 +648,7 @@ export default function HrAdminPanel({
               departments={departments}
               teams={teams}
               filters={filters}
+              pageSize={pageSize}
             />
           </div>
           <div className="divide-y divide-slate-100">
@@ -685,29 +691,20 @@ export default function HrAdminPanel({
               </p>
             )}
           </div>
-          <div className="flex items-center justify-between border-t border-slate-200 px-5 py-3 text-sm">
-            <span className="text-slate-500">
-              Trang {page} · Hiển thị {users.length} / {total}
-            </span>
-            <div className="flex gap-2">
-              {page > 1 && (
-                <a
-                  className="rounded-lg border px-3 py-1.5"
-                  href={`/admin/hr?${new URLSearchParams({ ...Object.fromEntries(linkParams), section: "employees", page: String(page - 1) })}`}
-                >
-                  Trước
-                </a>
-              )}
-              {hasNext && (
-                <a
-                  className="rounded-lg border px-3 py-1.5"
-                  href={`/admin/hr?${new URLSearchParams({ ...Object.fromEntries(linkParams), section: "employees", page: String(page + 1) })}`}
-                >
-                  Tiếp
-                </a>
-              )}
-            </div>
-          </div>
+          <PaginationControls
+            basePath="/admin/hr"
+            params={{
+              section: "employees",
+              q: filters.q,
+              department: filters.department,
+              team: filters.team,
+              status: filters.status,
+            }}
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            hasNext={hasNext}
+          />
         </section>
       )}
 
