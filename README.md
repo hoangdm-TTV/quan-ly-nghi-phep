@@ -100,7 +100,7 @@ flowchart TD
 
 - Node.js tương thích Next.js 14 (khuyến nghị Node.js 20 LTS).
 - PostgreSQL.
-- `psql` nếu áp dụng migration bằng dòng lệnh; có thể dùng DBeaver thay thế.
+- `psql` nếu khởi tạo database bằng dòng lệnh; có thể dùng DBeaver thay thế.
 
 ### Cấu hình
 
@@ -119,7 +119,7 @@ CRON_SECRET=thay_bang_chuoi_ngau_nhien_dai_va_bao_mat
 
 ### Tạo database mới và khởi tạo một lần
 
-PostgreSQL phải có database đích trước khi chạy migration. Ví dụ lỗi `database "quan_ly_nghi_phep" does not exist` xảy ra khi kết nối đến database chưa được tạo; tạo database từ một database quản trị có sẵn trước:
+PostgreSQL phải có database đích trước khi khởi tạo. Ví dụ lỗi `database "quan_ly_nghi_phep" does not exist` xảy ra khi kết nối đến database chưa được tạo; tạo database từ một database quản trị có sẵn trước:
 
 ```sql
 CREATE DATABASE quan_ly_nghi_phep;
@@ -134,15 +134,15 @@ psql $env:DATABASE_URL -v ON_ERROR_STOP=1 -f migrations/000_initial_database.sql
 if ($LASTEXITCODE -ne 0) { throw "Khởi tạo database thất bại" }
 ```
 
-Chạy file này **một lần duy nhất trên database rỗng**. File có transaction và các câu `SELECT` kiểm tra cuối file để DBeaver hiển thị số bản ghi sau khi chạy. Không chạy lại file trên database đã có schema/dữ liệu; với database đang sử dụng cần backup và dùng migration bổ sung phù hợp. Ứng dụng **không tự chạy migration khi khởi động**.
+Chạy file này **một lần duy nhất trên database rỗng**. File có transaction và các câu `SELECT` kiểm tra cuối file để DBeaver hiển thị số bản ghi sau khi chạy. Không chạy lại file trên database đã có schema/dữ liệu. Ứng dụng **không tự thay đổi schema database khi khởi động**.
 
-Nếu PostgreSQL báo `25P02 current transaction is aborted`, đó thường là lỗi phát sinh sau một câu lệnh trước đó đã thất bại trong transaction. Tìm lỗi đầu tiên trong log, xử lý nguyên nhân rồi chạy lại migration phù hợp; không coi `25P02` là nguyên nhân gốc.
+Nếu PostgreSQL báo `25P02 current transaction is aborted`, đó thường là lỗi phát sinh sau một câu lệnh trước đó đã thất bại trong transaction. Tìm lỗi đầu tiên trong log, xử lý nguyên nhân rồi chạy lại toàn bộ file trên database rỗng; không coi `25P02` là nguyên nhân gốc.
 
 | File | Nội dung chính |
 | --- | --- |
 | `000_initial_database.sql` | File khởi tạo đầy đủ: schema, dữ liệu nhân sự/phòng ban/team/ngày lễ, index, khóa ngoại, constraint, hạn mức, audit log, push và thông báo nội bộ. |
 
-Tám file `001`–`008` là lịch sử cấu thành schema cũ và được giữ lại để tham chiếu; không chạy đồng thời với `000_initial_database.sql` trên cùng database mới.
+Thư mục `migrations` hiện chỉ dùng một file khởi tạo duy nhất là `000_initial_database.sql`; không cần chạy thêm file SQL nào khác.
 
 ### Chạy ở chế độ phát triển và production
 
@@ -177,9 +177,9 @@ VAPID_PRIVATE_KEY=...
 VAPID_SUBJECT=mailto:admin@your-company.example
 ```
 
-Không đưa `VAPID_PRIVATE_KEY` vào client hoặc Git. Web Push cần migration `003_push_notifications.sql` và người nhận bật thông báo trên thiết bị. Nếu không cấu hình VAPID, các luồng chính vẫn hoạt động nhưng không gửi push.
+Không đưa `VAPID_PRIVATE_KEY` vào client hoặc Git. Web Push đã được tạo sẵn trong `000_initial_database.sql` và người nhận bật thông báo trên thiết bị. Nếu không cấu hình VAPID, các luồng chính vẫn hoạt động nhưng không gửi push.
 
-Để nhắc các đơn chờ quá 24 giờ, cấu hình cron bên ngoài gọi `GET /api/notifications/reminders` mỗi ngày với header `Authorization: Bearer <CRON_SECRET>`. Endpoint cần migration `006_leave_balance_history_and_reminders.sql`; không công khai `CRON_SECRET` phía client.
+Để nhắc các đơn chờ quá 24 giờ, cấu hình cron bên ngoài gọi `GET /api/notifications/reminders` mỗi ngày với header `Authorization: Bearer <CRON_SECRET>`. Endpoint sử dụng các bảng đã có trong `000_initial_database.sql`; không công khai `CRON_SECRET` phía client.
 
 ## Dữ liệu kiểm thử
 
@@ -211,7 +211,7 @@ lib/leave/                   Workflow, query và action nghỉ phép
 lib/out-office/              Workflow, query và action đơn ra ngoài
 lib/holidays/                Ngày lễ
 lib/notifications/           Thông báo và Web Push
-migrations/                  Migration PostgreSQL 001–008
+migrations/                  File khởi tạo PostgreSQL duy nhất
 scripts/                     Seed dữ liệu kiểm thử
 ```
 

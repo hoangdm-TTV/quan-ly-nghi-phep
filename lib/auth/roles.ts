@@ -21,9 +21,9 @@ export function canApproveWorkflowRequests(role: UserRole): boolean {
   return role === "MANAGER" || role === "DIRECTOR";
 }
 
-/** Người được gán trong users.manager_id có thể duyệt đơn ra ngoài. */
+/** Chỉ Manager và Director được mở hàng đợi duyệt; đơn vẫn phải được gán qua users.manager_id. */
 export function canApproveOutOfficeRequests(role: UserRole): boolean {
-  return role !== "ADMIN";
+  return role === "MANAGER" || role === "DIRECTOR";
 }
 
 /** Director và Accountant xem toàn công ty; Manager xem theo phòng ban riêng. */
