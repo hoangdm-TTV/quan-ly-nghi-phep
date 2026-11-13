@@ -101,13 +101,13 @@ export default async function ApprovalsLeavePage({
           </div>
           <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
             <p className="text-xs font-bold uppercase tracking-wide text-blue-800">
-              Chờ duyệt cấp 1
+              {user.role === "DIRECTOR" ? "Chờ duyệt trực tiếp" : "Chờ duyệt cấp 1"}
             </p>
             <p className="mt-1 text-2xl font-black text-blue-950">
               {firstLevelCount}
             </p>
             <p className="text-xs font-medium text-blue-800">
-              đơn chưa được Trưởng phòng duyệt
+              {user.role === "DIRECTOR" ? "đơn PENDING có thể được Giám đốc duyệt trực tiếp" : "đơn chưa được Trưởng phòng duyệt"}
             </p>
           </div>
           <div className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3">

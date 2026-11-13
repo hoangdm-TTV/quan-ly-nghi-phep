@@ -64,22 +64,6 @@ export interface RecentActivityItem {
 export async function getDashboardStats(
   user: SafeUser,
 ): Promise<DashboardStats> {
-  // Giám đốc không tạo đơn nên không có thống kê cá nhân.
-  if (user.role === "DIRECTOR") {
-    return {
-      myLeaveTotal: 0,
-      myLeavePending: 0,
-      myLeaveApproved: 0,
-      myLeaveRejected: 0,
-      myOutOfficeTotal: 0,
-      myOutOfficePending: 0,
-      myOutOfficeActive: 0,
-      myOutOfficeCompleted: 0,
-      pendingLeaveApprovals: 0,
-      pendingOutOfficeApprovals: 0,
-    };
-  }
-
   // 1. Thống kê đơn nghỉ phép cá nhân
   const leaveStatsQuery = `
     SELECT 
@@ -449,8 +433,6 @@ export async function getHrAdvancedReport(
 export async function getRecentActivities(
   user: SafeUser,
 ): Promise<RecentActivityItem[]> {
-  if (user.role === "DIRECTOR") return [];
-
   const leaveQuery = `
     SELECT 
       id,

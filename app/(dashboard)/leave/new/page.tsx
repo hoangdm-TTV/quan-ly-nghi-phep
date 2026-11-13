@@ -37,6 +37,12 @@ export default async function NewLeavePage() {
           ngày làm việc (trừ Chủ Nhật và ngày lễ) và phân bổ luồng duyệt phù
           hợp.
         </p>
+        {user.role === "DIRECTOR" && (
+          <p className="mt-2 text-xs font-medium text-emerald-800">
+            Đơn của Giám đốc được gửi người duyệt trong manager_id; một lần duyệt
+            là hoàn tất, kể cả đơn từ 2 ngày trở lên.
+          </p>
+        )}
       </div>
 
       <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-5">

@@ -233,9 +233,11 @@ export default async function LeaveDetailPage({
               <div className="flex items-center justify-between">
                 <span className="text-slate-500">Quy trình duyệt:</span>
                 <span className="text-slate-700">
-                  {request.duration_days <= 1
-                    ? "1 cấp duyệt"
-                    : "2 cấp duyệt (Cấp 1 + Giám đốc)"}
+                  {applicant.role === "DIRECTOR"
+                    ? "manager_id duyệt một lần; không có bước Giám đốc tự duyệt"
+                    : request.duration_days < 2
+                      ? "1 cấp: Trưởng phòng (Giám đốc có nhánh duyệt trực tiếp dự phòng)"
+                      : "Trưởng phòng → Giám đốc, hoặc Giám đốc duyệt trực tiếp để bỏ qua Trưởng phòng"}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -304,9 +306,11 @@ export default async function LeaveDetailPage({
                   <p className="text-slate-600">
                     <span className="font-medium">Hành động:</span>{" "}
                     {h.action === "APPROVED_LEAD"
-                      ? "Đã duyệt Cấp 1 (Trưởng phòng)"
+                      ? applicant.role === "DIRECTOR"
+                        ? "Người quản lý đã duyệt đơn của Giám đốc (hoàn tất luồng duyệt)"
+                        : "Đã duyệt Cấp 1 (Trưởng phòng)"
                       : h.action === "APPROVED_DIRECTOR"
-                        ? "Đã duyệt Cấp 2 (Giám đốc hoàn tất phê duyệt)"
+                        ? "Giám đốc đã duyệt (trực tiếp hoặc cấp cuối)"
                         : "Đã từ chối đơn"}
                   </p>
                   {h.comment && (

@@ -181,6 +181,27 @@ export async function getLeaveDocumentMetadataById(
   return result.rows[0] || null;
 }
 
+/** Điều kiện hàng đợi theo cấp duyệt; chỉ dùng với MANAGER/DIRECTOR. */
+function getLeaveApprovalQueueWhere(approver: SafeUser): string | null {
+  if (approver.role === "MANAGER") {
+    return `lr.status = 'PENDING' AND u.manager_id = $1`;
+  }
+  if (approver.role === "DIRECTOR") {
+    return `(
+      (lr.status = 'PENDING' AND lr.duration_days >= 2 AND u.role <> 'DIRECTOR')
+      OR (lr.status = 'PENDING' AND u.manager_id = $1
+        AND (u.role IN ('MANAGER', 'DIRECTOR') OR NOT EXISTS (
+          SELECT 1 FROM users m
+           WHERE m.department_id = u.department_id
+             AND m.role = 'MANAGER'
+             AND m.is_active = TRUE
+        )))
+      OR (lr.status = 'APPROVED_BY_LEAD' AND lr.duration_days >= 2 AND u.role <> 'DIRECTOR')
+    )`;
+  }
+  return null;
+}
+
 /**
  * Lấy danh sách các đơn nghỉ phép đang chờ người dùng hiện tại phê duyệt
  */
@@ -188,8 +209,10 @@ export async function getPendingLeaveRequestsForApprover(
   approver: SafeUser,
   pagination?: { limit: number; offset: number },
 ): Promise<LeaveRequestDetail[]> {
+  const whereClause = getLeaveApprovalQueueWhere(approver);
+  if (!whereClause) return [];
+
   const params: any[] = [approver.id];
-  const whereClause = `lr.status = 'PENDING' AND u.manager_id = $1`;
 
   const sql = `
     SELECT 
@@ -238,8 +261,10 @@ export async function getPendingLeaveRequestsForApprover(
 export async function getPendingLeaveApprovalCount(
   approver: SafeUser,
 ): Promise<number> {
+  const whereClause = getLeaveApprovalQueueWhere(approver);
+  if (!whereClause) return 0;
+
   const params: any[] = [approver.id];
-  const whereClause = `lr.status = 'PENDING' AND u.manager_id = $1`;
   const result = await query<{ count: number }>(
     `SELECT COUNT(*)::int AS count FROM leave_requests lr JOIN users u ON lr.employee_id = u.id WHERE lr.employee_id != $1 AND ${whereClause}`,
     params,
@@ -250,8 +275,10 @@ export async function getPendingLeaveApprovalCount(
 export async function getPendingLeaveApprovalSummary(
   approver: SafeUser,
 ): Promise<{ total: number; firstLevel: number; finalLevel: number }> {
+  const whereClause = getLeaveApprovalQueueWhere(approver);
+  if (!whereClause) return { total: 0, firstLevel: 0, finalLevel: 0 };
+
   const params: any[] = [approver.id];
-  const scope = `lr.status = 'PENDING' AND u.manager_id = $1`;
   const result = await query<{
     total: number;
     first_level: number;
@@ -260,14 +287,14 @@ export async function getPendingLeaveApprovalSummary(
     `SELECT COUNT(*)::int AS total, COUNT(*) FILTER (WHERE lr.status='PENDING')::int AS first_level,
             COUNT(*) FILTER (WHERE lr.status='APPROVED_BY_LEAD')::int AS final_level
        FROM leave_requests lr JOIN users u ON u.id=lr.employee_id
-      WHERE lr.employee_id <> $1 AND ${scope}`,
+      WHERE lr.employee_id <> $1 AND ${whereClause}`,
     params,
   );
   const row = result.rows[0];
   return {
     total: Number(row?.total || 0),
     firstLevel: Number(row?.first_level || 0),
-    finalLevel: 0,
+    finalLevel: Number(row?.final_level || 0),
   };
 }
 

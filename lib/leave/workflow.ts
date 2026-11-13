@@ -17,7 +17,12 @@ export interface WorkflowEvaluation {
   action?: ApprovalAction;
 }
 
-/** Kiểm tra người duyệt được gán trực tiếp trong users.manager_id. */
+/**
+ * Nghỉ dưới 2 ngày: Manager duyệt một cấp (Director chỉ có nhánh dự phòng).
+ * Nghỉ từ 2 ngày: Manager có thể duyệt cấp 1 rồi chuyển Director; Director
+ * cũng có thể duyệt trực tiếp PENDING và bỏ qua bước Manager. Đơn của chính
+ * Director do manager_id duyệt một lần để tránh yêu cầu Director tự duyệt.
+ */
 export function evaluateLeaveApproval(
   approver: SafeUser,
   applicant: SafeUser,
@@ -32,6 +37,26 @@ export function evaluateLeaveApproval(
     };
   }
 
+  if (currentStatus === "APPROVED_BY_LEAD") {
+    if (approver.role !== "DIRECTOR") {
+      return {
+        allowed: false,
+        reason: "Đơn đã qua cấp 1; chỉ Giám đốc được duyệt cấp cuối.",
+      };
+    }
+    if (durationDays < 2) {
+      return {
+        allowed: false,
+        reason: "Chỉ đơn nghỉ từ 2 ngày trở lên mới cần bước duyệt cấp 2.",
+      };
+    }
+    return {
+      allowed: true,
+      nextStatus: "WAITING_FOR_DOC",
+      action: "APPROVED_DIRECTOR",
+    };
+  }
+
   if (currentStatus !== "PENDING") {
     return {
       allowed: false,
@@ -39,14 +64,47 @@ export function evaluateLeaveApproval(
     };
   }
 
+  if (
+    approver.role === "DIRECTOR" &&
+    applicant.role !== "DIRECTOR" &&
+    durationDays >= 2
+  ) {
+    return {
+      allowed: true,
+      nextStatus: "WAITING_FOR_DOC",
+      action: "APPROVED_DIRECTOR",
+    };
+  }
+
   if (applicant.manager_id !== approver.id) {
     return { allowed: false, reason: "Đơn này không được gán cho bạn phê duyệt." };
   }
 
+  if (approver.role === "MANAGER") {
+    return {
+      allowed: true,
+      nextStatus:
+        applicant.role === "DIRECTOR" || durationDays < 2
+          ? "WAITING_FOR_DOC"
+          : "APPROVED_BY_LEAD",
+      action: "APPROVED_LEAD",
+    };
+  }
+
+  if (
+    approver.role === "DIRECTOR" &&
+    (directorDirectApproval || applicant.role === "MANAGER" || applicant.role === "DIRECTOR")
+  ) {
+    return {
+      allowed: true,
+      nextStatus: "WAITING_FOR_DOC",
+      action: "APPROVED_DIRECTOR",
+    };
+  }
+
   return {
-    allowed: true,
-    nextStatus: "WAITING_FOR_DOC",
-    action: approver.role === "DIRECTOR" ? "APPROVED_DIRECTOR" : "APPROVED_LEAD",
+    allowed: false,
+    reason: "Chỉ Trưởng phòng hoặc Giám đốc được xử lý đơn nghỉ phép ở bước hiện tại.",
   };
 }
 

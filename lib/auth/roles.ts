@@ -5,19 +5,20 @@ export function canAccessRequestModules(role: UserRole): boolean {
   return role !== "ADMIN";
 }
 
-/** Staff, Team Lead, Manager và Accountant có danh sách đơn cá nhân và được tạo đơn. */
+/** Các role nghiệp vụ, gồm Director, có danh sách đơn cá nhân và được tạo đơn. */
 export function canSubmitPersonalRequests(role: UserRole): boolean {
   return (
     role === "STAFF" ||
     role === "TEAM_LEAD" ||
     role === "MANAGER" ||
-    role === "ACCOUNTANT"
+    role === "ACCOUNTANT" ||
+    role === "DIRECTOR"
   );
 }
 
-/** Người được gán trong users.manager_id có thể duyệt đơn một cấp. */
+/** Chỉ Manager và Director tham gia workflow duyệt nghỉ phép. */
 export function canApproveWorkflowRequests(role: UserRole): boolean {
-  return role !== "ADMIN";
+  return role === "MANAGER" || role === "DIRECTOR";
 }
 
 /** Người được gán trong users.manager_id có thể duyệt đơn ra ngoài. */

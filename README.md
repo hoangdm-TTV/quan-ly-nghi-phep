@@ -9,7 +9,7 @@
 - Quản lý hạn mức nghỉ theo nhân viên/năm; đơn đang chờ được tính vào ngày đã giữ chỗ. Nhân viên có thể sửa/hủy đơn khi còn ở trạng thái cho phép; thay đổi được ghi lịch sử.
 - Nộp ảnh/PDF giấy nghỉ phép đã ký cho đơn chờ giấy. Tệp được lưu riêng trong PostgreSQL và tải qua route có xác thực/phân quyền.
 - Tạo đơn ra ngoài theo ngày, giờ, mục đích và lý do. Hệ thống kiểm tra giờ hợp lệ, tính thời lượng dự kiến và phát hiện khoảng giờ bị trùng.
-- Người được ghi trong `users.manager_id` có thể xử lý đơn theo kiểm tra phía server. Với đơn ra ngoài, người đã duyệt có thể xác nhận hoàn tất khi nhân viên quay về.
+- Nghỉ phép: Director cũng tạo được đơn cá nhân. Đơn từ 2 ngày của nhân viên có thể theo luồng Manager → Director hoặc Director duyệt trực tiếp khi còn `PENDING`; riêng đơn nghỉ của chính Director do `manager_id` duyệt một lần để tránh tự duyệt. Đơn ra ngoài của Director cũng chuyển tới `manager_id` theo luồng một cấp hiện tại.
 - Danh bạ nhân sự theo phạm vi tài khoản; hỗ trợ tìm kiếm, lọc phòng ban/team, trạng thái nhân sự, người chưa được phân bổ và nhân viên chưa có hạn mức phép.
 - Dashboard theo vai trò, các chỉ số có thể mở danh sách chi tiết; báo cáo được giới hạn theo scope người đăng nhập.
 - Theo dõi đơn ra ngoài đã hoàn tất: so sánh giờ kết thúc đăng ký với thời điểm người duyệt xác nhận hoàn tất, phân loại đúng/trước giờ hoặc muộn; hiển thị ghi chú xác nhận nếu có.
@@ -18,44 +18,81 @@
 
 > **Giới hạn dữ liệu theo dõi thực tế:** ứng dụng hiện dùng `out_office_requests.updated_at` của lượt `COMPLETED` làm thời điểm xác nhận hoàn tất. Đây là lúc người duyệt xác nhận trên hệ thống, không phải dữ liệu check-in/GPS hay giờ rời công ty được ghi nhận tự động. Ghi chú có thể chứa giờ nhân viên báo lại, nhưng chưa phải trường giờ đi/về riêng có cấu trúc.
 
-## Vai trò và phạm vi dữ liệu
+## Ma trận phân quyền
 
-| Vai trò | Phạm vi xem hiện tại | Tạo đơn cá nhân | Ghi chú quyền hiện tại |
-| --- | --- | --- | --- |
-| `STAFF` | Đơn cá nhân; danh bạ theo scope cá nhân | Có | Quyền duyệt phụ thuộc quan hệ `manager_id` như mô tả bên dưới. |
-| `TEAM_LEAD` | Đơn cá nhân và nhân sự/đơn trong team được gán | Có | Code hiện cho phép duyệt nếu được đặt làm `manager_id`. |
-| `MANAGER` | Đơn cá nhân và phòng ban | Có | Có thể duyệt khi là người được gán trực tiếp. |
-| `ACCOUNTANT` | Toàn công ty khi tra cứu/báo cáo; đọc danh sách đơn của người khác | Có | **Code hiện vẫn cho phép duyệt nếu được gán trong `manager_id`;** xem phần lưu ý đối chiếu chính sách. |
-| `DIRECTOR` | Toàn công ty | Không | Xem toàn bộ; phê duyệt theo quan hệ `manager_id` hiện có, không tự động bỏ qua bước gán. |
-| `ADMIN` | Chức năng quản trị được cấp | Không | Trang HR chỉ cho tài khoản `admin@trithucvietbn.com`; quyền quản lý ngày lễ kiểm tra role `ADMIN`. Không vào các module đơn nghiệp vụ. |
+Bảng dưới mô tả **quyền đang được code thực thi**, tách phạm vi xem khỏi người có thể xử lý đơn. Riêng đơn ra ngoài, người duyệt được xác định bằng `manager_id` của người xin; đây là workflow một cấp.
 
-Scope đọc được xây dựng phía server trong `lib/auth/data-scope.ts`; tham số lọc từ client không thay thế hoặc bỏ qua scope đó. Với tài khoản không được gán phòng/team, phạm vi mặc định là dữ liệu cá nhân.
+| Vai trò | Xem đơn / báo cáo | Danh bạ nhân sự | Tạo đơn cá nhân | Duyệt nghỉ phép | Duyệt đơn ra ngoài |
+| --- | --- | --- | --- | --- | --- |
+| `STAFF` | Đơn cá nhân | Cá nhân | Có | Không | Người này xử lý được nếu được gán làm `manager_id` |
+| `TEAM_LEAD` | Đơn cá nhân và đơn trong team nếu được gán team | Team | Có | Không | Người này xử lý được nếu được gán làm `manager_id` |
+| `MANAGER` | Đơn cá nhân và đơn trong phòng ban | Phòng ban | Có | Đơn `PENDING` có `manager_id` trỏ tới Manager; đơn từ 2 ngày chuyển Director, trừ đơn của Director | Người này xử lý được nếu được gán làm `manager_id` |
+| `ACCOUNTANT` | Toàn công ty (danh sách/báo cáo; trang chi tiết đơn người khác chỉ đọc) | Toàn công ty | Có | Không | Nếu được gán làm `manager_id`, queue hiện có thao tác; trang chi tiết ghi chỉ đọc |
+| `DIRECTOR` | Toàn công ty và đơn cá nhân | Toàn công ty | Có | Đơn cá nhân do `manager_id` duyệt một lần. Đơn người khác từ 2 ngày có thể duyệt trực tiếp hoặc duyệt cấp 2 | Người này xử lý đơn nếu được gán làm `manager_id`; không có bước duyệt Director tự động |
+| `ADMIN` | Không vào module đơn nghiệp vụ; toàn công ty trong khu vực quản trị | Khu vực quản trị | Không | Không | UI queue bị chặn; Server Action chưa chặn role nếu gọi trực tiếp và thỏa quan hệ ID |
 
-### Lưu ý quan trọng: quyền duyệt trong code và chính sách nghiệp vụ
+Scope đọc danh sách được tạo phía server trong `lib/auth/data-scope.ts`: `MANAGER` thấy phòng ban, `TEAM_LEAD` thấy team khi đã được gán `team_id`, `DIRECTOR` và `ACCOUNTANT` thấy toàn công ty; người không có scope chỉ thấy đơn cá nhân. Quyền duyệt nghỉ phép được giới hạn cho `MANAGER` và `DIRECTOR`. Lưu ý: queue và workflow nghỉ phép xác định Manager bằng `manager_id`; Server Action hiện **không kiểm tra thêm** `applicant.department_id === manager.department_id`. Vì vậy phạm vi danh sách của Manager là phòng ban, nhưng việc được phép duyệt hiện dựa trên liên kết `manager_id`, không phải kiểm tra phòng ban độc lập.
 
-Hiện tại, `canApproveWorkflowRequests()` và `canApproveOutOfficeRequests()` chỉ loại `ADMIN`; workflow sau đó xác thực người duyệt bằng `applicant.manager_id === approver.id`. Vì vậy, vai trò `STAFF`, `TEAM_LEAD` hoặc `ACCOUNTANT` vẫn có thể duyệt nếu dữ liệu `manager_id` gán đơn cho họ. Tương tự, `DIRECTOR` xem được toàn công ty nhưng không được tự động duyệt mọi đơn nếu không phải người được gán trực tiếp.
+> **Cách hiểu quyền duyệt đơn ra ngoài:** hệ thống dùng đúng một người duyệt theo `manager_id`; người duyệt này xác nhận đơn trước khi đi và cùng `approver_id` xác nhận khi người xin về. Server Action kiểm tra đăng nhập và quan hệ ID, không kiểm tra riêng role của người được gán. Vì vậy cần bảo đảm `manager_id` luôn trỏ tới tài khoản quản lý được chỉ định; UI queue hiện cho mọi role trừ `ADMIN`, còn Server Action chưa chặn role khi bị gọi trực tiếp. Đơn cá nhân của mọi role nghiệp vụ, gồm Director, yêu cầu có `manager_id` hợp lệ; `ADMIN` không được tạo đơn.
 
-Nếu chính sách cần **chỉ MANAGER duyệt cấp phòng, DIRECTOR duyệt toàn công ty, TEAM_LEAD/STAFF/ACCOUNTANT không duyệt**, cần cập nhật permission và workflow server-side; README này ghi đúng hành vi code hiện tại, không xem đó là bảo đảm chính sách.
+### Luồng nghỉ phép đang chạy
 
-### Luồng đơn đang được triển khai
+- Dưới 2 ngày: Manager được gán trong `manager_id` duyệt một cấp. Director chỉ duyệt trực tiếp trong các nhánh dự phòng của workflow: người xin là Manager/Director được gán Director, hoặc không có Manager đang hoạt động trong phòng ban và Director xử lý trực tiếp.
+- Từ 2 ngày trở lên, với người xin không phải Director: Manager có thể duyệt cấp 1, chuyển đơn sang `APPROVED_BY_LEAD` để Director duyệt cấp 2; hoặc Director có thể duyệt đơn đang `PENDING` trực tiếp, chuyển thẳng sang `WAITING_FOR_DOC` và bỏ qua Manager.
+- Ngoại lệ đơn của chính Director: người được gán trong `manager_id` duyệt một lần là hoàn tất kể cả đơn từ 2 ngày; Director không tự duyệt và đơn không chuyển sang `APPROVED_BY_LEAD`.
+- Khi Director duyệt trực tiếp đơn từ 2 ngày của người khác, đơn rời `PENDING` và không còn nằm trong queue Manager. Tất cả người dùng, gồm Director, vẫn cần `manager_id` hợp lệ khi tạo đơn.
+- Người có thẩm quyền ở cấp hiện tại có thể từ chối; từ chối chuyển đơn sang `REJECTED`. Khi đơn vào `WAITING_FOR_DOC`, chủ đơn nộp giấy đã ký để chuyển sang `COMPLETED`.
 
-**Nghỉ phép:**
-
-```text
-PENDING ── người được gán trực tiếp qua manager_id duyệt ──> WAITING_FOR_DOC
-   ├── từ chối ──> REJECTED
-   └── sau khi được duyệt: chủ đơn nộp giấy đã ký ──> COMPLETED
+```mermaid
+flowchart TD
+    A[Người dùng gửi đơn] --> B[PENDING]
+    B --> A2{Người xin là Director?}
+    A2 -- Có --> A3[manager_id duyệt một lần]
+    A3 -- Từ chối --> R[REJECTED]
+    A3 -- Duyệt --> W[WAITING_FOR_DOC]
+    A2 -- Không --> C{Số ngày nghỉ?}
+    C -- Dưới 2 ngày --> E{Ai được gán xử lý?}
+    E -- MANAGER --> P{MANAGER quyết định}
+    P -- Từ chối --> R[REJECTED]
+    P -- Duyệt --> W[WAITING_FOR_DOC]
+    E -- DIRECTOR theo nhánh dự phòng --> J[DIRECTOR duyệt trực tiếp]
+    J -- Từ chối --> R
+    J -- Duyệt --> W
+    C -- Từ 2 ngày trở lên --> Q{Ai duyệt khi đơn còn PENDING?}
+    Q -- MANAGER duyệt trước --> F{MANAGER duyệt cấp 1}
+    F -- Từ chối --> R
+    F -- Duyệt --> G[APPROVED_BY_LEAD]
+    G --> H[Hàng đợi DIRECTOR]
+    H --> I{DIRECTOR duyệt cấp 2}
+    I -- Từ chối --> R
+    I -- Duyệt --> W
+    Q -- DIRECTOR duyệt trước --> K[DIRECTOR duyệt trực tiếp; bỏ qua MANAGER]
+    K -- Từ chối --> R
+    K -- Duyệt --> W
+    W --> N[Chủ đơn nộp giấy đã ký]
+    N --> L[COMPLETED]
+    B --> M[Chủ đơn hủy khi trạng thái cho phép]
+    M --> O[CANCELLED]
 ```
 
-Evaluator hiện tại chuyển đơn được duyệt sang `WAITING_FOR_DOC` bất kể số ngày nghỉ. `APPROVED_BY_LEAD` còn tồn tại trong kiểu trạng thái, migration và một số truy vấn để tương thích dữ liệu/hiển thị cũ, nhưng nhánh duyệt hiện tại không triển khai quy tắc tự động `Manager → Director` cho đơn từ 2 ngày.
+Mốc chuyển cấp là `duration_days >= 2` (ngày phép đã tính theo lịch làm việc). Queue Manager lấy đơn `PENDING` có `users.manager_id` trùng tài khoản đó. Queue Director gồm đơn `PENDING` từ 2 ngày của người xin không phải Director, đơn `PENDING` có `manager_id` trùng Director và thỏa nhánh được gán/dự phòng, cùng đơn `APPROVED_BY_LEAD` từ 2 ngày. **Điểm cần biết:** evaluator cho Director duyệt trực tiếp đơn dưới 2 ngày khi phòng ban không có Manager đang hoạt động, nhưng query queue nhánh này vẫn yêu cầu `manager_id` trỏ tới Director; nếu không, đơn có thể không hiện trong queue dù Director có thể mở từ danh sách toàn công ty và xử lý ở trang chi tiết. Đơn của Director chỉ do người được gán trong `manager_id` xử lý. Lịch sử ghi `APPROVED_LEAD` khi Manager duyệt và `APPROVED_DIRECTOR` khi Director duyệt trực tiếp hoặc duyệt cấp hai.
 
-**Đơn ra ngoài:**
+### Luồng đơn ra ngoài đang triển khai
 
-```text
-PENDING ── người được gán duyệt ──> APPROVED
-APPROVED ── chính người đã duyệt xác nhận hoàn tất ──> COMPLETED
-PENDING hoặc APPROVED ── từ chối hợp lệ ──> REJECTED
+```mermaid
+flowchart TD
+    A[Người đủ điều kiện trên UI gửi đơn] --> B[PENDING]
+    B --> C{Người đăng nhập có id = manager_id?}
+    C -- Không --> X[Evaluator từ chối thao tác]
+    C -- Có / duyệt --> D[APPROVED]
+    C -- Có / từ chối --> R[REJECTED]
+    D --> E{Đúng approver_id đã duyệt?}
+    E -- Không --> X
+    E -- Có / xác nhận đã về --> F[COMPLETED]
+    E -- Có / từ chối --> R
 ```
+
+Đây là luồng **một cấp theo `manager_id`**, không tự chuyển Manager → Director. Queue lấy đơn `PENDING` có `manager_id` trùng tài khoản đang đăng nhập và đơn `APPROVED` có `approver_id` trùng tài khoản đó; cùng người đã duyệt mới được xác nhận hoàn tất khi người xin về. Giao diện queue cho mọi role trừ `ADMIN`; Server Action kiểm tra đăng nhập và quan hệ ID nhưng không xác thực riêng role. Component chỉ hiện nút xác nhận về ở trạng thái `APPROVED`, tuy nhiên Server Action từ chối vẫn chấp nhận trạng thái này nếu cùng người duyệt gọi.
 
 ## Cài đặt và chạy ứng dụng
 

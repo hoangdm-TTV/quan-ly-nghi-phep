@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import type { PoolClient } from "pg";
 import { pool } from "@/lib/db/pool";
 import { requireAuth } from "@/lib/auth/permissions";
+import { canSubmitPersonalRequests } from "@/lib/auth/roles";
 import {
   getSafeUserById,
   hasActiveManagerForDepartment,
@@ -94,7 +95,7 @@ export async function uploadLeaveDocumentAction(
   formData: FormData,
 ): Promise<LeaveActionState> {
   const currentUser = await requireAuth();
-  if (currentUser.role === "DIRECTOR") {
+  if (!canSubmitPersonalRequests(currentUser.role)) {
     return { error: "Tài khoản này không có quyền nộp giấy nghỉ phép." };
   }
 
@@ -248,17 +249,12 @@ export async function createLeaveRequestAction(
   formData: FormData,
 ): Promise<LeaveActionState> {
   const currentUser = await requireAuth();
-
-  // Giám đốc không tạo đơn nghỉ phép trên hệ thống
-  if (currentUser.role === "DIRECTOR") {
-    return {
-      error:
-        "Tài khoản Giám đốc (DIRECTOR) không tạo đơn nghỉ phép trên ứng dụng.",
-    };
+  if (!canSubmitPersonalRequests(currentUser.role)) {
+    return { error: "Tài khoản này không có quyền tạo đơn nghỉ phép." };
   }
 
-  if (!currentUser.manager_id) {
-    return { error: "Bạn chưa được gán người duyệt. Vui lòng liên hệ quản trị nhân sự." };
+  if (!currentUser.manager_id || currentUser.manager_id === currentUser.id) {
+    return { error: "Bạn chưa được gán người duyệt hợp lệ. Vui lòng liên hệ quản trị nhân sự." };
   }
 
   // 2. Validate dữ liệu đầu vào

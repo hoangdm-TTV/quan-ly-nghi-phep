@@ -27,7 +27,7 @@ export default async function NewOutOfficePage() {
         </h1>
         <p className="text-xs sm:text-sm text-slate-500 mt-1">
           Đăng ký khung giờ và lý do ra ngoài trong ngày làm việc. Đơn sẽ được
-          chuyển đến Trưởng phòng trực tiếp hoặc Giám đốc xem xét duyệt.
+          chuyển đến người quản lý được gán trong hồ sơ (manager_id) xem xét duyệt.
         </p>
       </div>
 

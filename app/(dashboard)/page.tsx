@@ -736,7 +736,7 @@ export default async function DashboardPage({
     : isAdmin
       ? "Quản trị tài khoản và hồ sơ nhân sự"
       : isDirector
-        ? "Hệ thống phê duyệt & Giám sát vận hành toàn công ty"
+        ? "Giám sát toàn công ty · Theo dõi và tạo đơn cá nhân"
         : isManager
           ? `Quản lý phê duyệt & Đơn phòng ban ${user.department_name || ""}`
           : "Cổng thông tin gửi đơn nghỉ phép & đơn ra ngoài cá nhân";

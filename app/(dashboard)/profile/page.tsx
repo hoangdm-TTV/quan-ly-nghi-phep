@@ -120,7 +120,7 @@ export default async function ProfilePage() {
                 <div>
                   <strong className="text-slate-900">Xem và tạo đơn: </strong>
                   {user.role === "DIRECTOR"
-                    ? "Giám sát và xem toàn bộ dữ liệu đơn của công ty."
+                    ? "Giám sát toàn bộ dữ liệu công ty và được tạo đơn cá nhân; đơn của bạn gửi người duyệt trong manager_id."
                     : "Được tạo và quản lý toàn bộ các đơn nghỉ phép và đơn ra ngoài cá nhân."}
                 </div>
               </div>
@@ -132,7 +132,7 @@ export default async function ProfilePage() {
                     Quyền phê duyệt đơn:{" "}
                   </strong>
                   {user.role === "DIRECTOR"
-                    ? "Có quyền duyệt đơn nghỉ phép và đơn ra ngoài toàn công ty; đơn nghỉ nhiều ngày theo luồng Manager → Director."
+                    ? "Duyệt đơn toàn công ty; riêng đơn của bạn do manager_id duyệt một lần, không tự duyệt cấp cuối."
                     : user.role === "MANAGER"
                       ? "Duyệt đơn nghỉ phép và đơn ra ngoài của Staff/Team Lead trong phòng ban; nghỉ nhiều ngày chuyển tiếp Giám đốc."
                       : user.role === "TEAM_LEAD"

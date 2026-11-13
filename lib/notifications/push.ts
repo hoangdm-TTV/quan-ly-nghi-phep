@@ -122,27 +122,81 @@ export async function sendPushToUsers(
 export async function notifyLeaveApprovers(requestId: string): Promise<void> {
   const requestResult = await query<{
     employee_id: string;
+    employee_role: string;
     manager_id: string | null;
     status: string;
+    duration_days: number;
   }>(
-    `SELECT lr.employee_id, u.manager_id, lr.status
+    `SELECT lr.employee_id, u.role AS employee_role, u.manager_id, lr.status,
+            lr.duration_days::float AS duration_days
        FROM leave_requests lr JOIN users u ON u.id = lr.employee_id WHERE lr.id = $1`,
     [requestId],
   );
   const request = requestResult.rows[0];
   if (!request) return;
 
-  if (!request.manager_id || request.manager_id === request.employee_id) return;
-  const approvers = await query<{ id: string }>(
-    `SELECT id FROM users WHERE id = $1 AND is_active = TRUE AND employment_status = 'ACTIVE'`,
-    [request.manager_id],
-  );
-  const recipientIds = approvers.rows.map(({ id }) => id);
-  const notification = {
-    title: "Có đơn nghỉ phép cần duyệt",
-    body: "Một nhân viên vừa gửi đơn nghỉ phép mới.",
-    url: `/leave/${requestId}`,
-  };
+  let recipientIds: string[] = [];
+  let notification: { title: string; body: string; url: string };
+  if (request.status === "APPROVED_BY_LEAD") {
+    const approvers = await query<{ id: string }>(
+      `SELECT id FROM users
+        WHERE role = 'DIRECTOR' AND is_active = TRUE
+          AND employment_status = 'ACTIVE'`,
+    );
+    notification = {
+      title: "Đơn nghỉ phép chờ Giám đốc duyệt",
+      body: "Trưởng phòng đã duyệt cấp 1; đơn nghỉ phép cần Giám đốc duyệt cấp cuối.",
+      url: `/leave/${requestId}`,
+    };
+    recipientIds = approvers.rows
+      .map(({ id }) => id)
+      .filter((id) => id !== request.employee_id);
+  } else {
+    const managerApprovers = request.manager_id && request.manager_id !== request.employee_id
+      ? await query<{ id: string }>(
+          `SELECT id FROM users WHERE id = $1 AND is_active = TRUE AND employment_status = 'ACTIVE'`,
+          [request.manager_id],
+        )
+      : { rows: [] as Array<{ id: string }> };
+    recipientIds = managerApprovers.rows.map(({ id }) => id);
+
+    if (
+      request.status === "PENDING" &&
+      request.duration_days >= 2 &&
+      request.employee_role !== "DIRECTOR"
+    ) {
+      const directors = await query<{ id: string }>(
+        `SELECT id FROM users
+          WHERE role = 'DIRECTOR' AND is_active = TRUE
+            AND employment_status = 'ACTIVE'`,
+      );
+      recipientIds = Array.from(
+        new Set([
+          ...recipientIds,
+          ...directors.rows
+            .map(({ id }) => id)
+            .filter((id) => id !== request.employee_id),
+        ]),
+      );
+      notification = {
+        title: "Đơn nghỉ phép từ 2 ngày đang chờ duyệt",
+        body: "Manager có thể duyệt cấp 1; Giám đốc cũng có thể duyệt trực tiếp để bỏ qua bước Manager.",
+        url: `/leave/${requestId}`,
+      };
+    } else if (request.status === "PENDING" && request.employee_role === "DIRECTOR") {
+      notification = {
+        title: "Đơn nghỉ phép của Giám đốc cần duyệt",
+        body: "Vui lòng xử lý đơn được gán trong manager_id; quyết định của bạn hoàn tất luồng duyệt.",
+        url: `/leave/${requestId}`,
+      };
+    } else {
+      notification = {
+        title: "Có đơn nghỉ phép cần duyệt",
+        body: "Một nhân viên vừa gửi đơn nghỉ phép mới.",
+        url: `/leave/${requestId}`,
+      };
+    }
+  }
   const [dispatch] = await Promise.all([
     sendPushToUsers(recipientIds, notification),
     createInAppNotifications(recipientIds, {
@@ -152,7 +206,7 @@ export async function notifyLeaveApprovers(requestId: string): Promise<void> {
   ]);
   console.info("[Leave Push Dispatch]", {
     requestId,
-    recipients: approvers.rows.length,
+    recipients: recipientIds.length,
     subscriptions: dispatch.subscriptions,
     sent: dispatch.sent,
     failureStatus: dispatch.failureStatus,

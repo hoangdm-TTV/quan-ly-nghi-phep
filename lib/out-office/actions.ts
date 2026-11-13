@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { pool } from "@/lib/db/pool";
 import { requireAuth } from "@/lib/auth/permissions";
+import { canSubmitPersonalRequests } from "@/lib/auth/roles";
 import { getSafeUserById } from "@/lib/db/queries/users";
 import { calculateEstimatedHours } from "./calculator";
 import {
@@ -77,17 +78,12 @@ export async function createOutOfficeRequestAction(
   formData: FormData,
 ): Promise<OutOfficeActionState> {
   const currentUser = await requireAuth();
-
-  // Giám đốc không tạo đơn xin ra ngoài trên hệ thống
-  if (currentUser.role === "DIRECTOR") {
-    return {
-      error:
-        "Tài khoản Giám đốc (DIRECTOR) không tạo đơn ra ngoài trên hệ thống.",
-    };
+  if (!canSubmitPersonalRequests(currentUser.role)) {
+    return { error: "Tài khoản này không có quyền tạo đơn ra ngoài." };
   }
 
-  if (!currentUser.manager_id) {
-    return { error: "Bạn chưa được gán người duyệt. Vui lòng liên hệ quản trị nhân sự." };
+  if (!currentUser.manager_id || currentUser.manager_id === currentUser.id) {
+    return { error: "Bạn chưa được gán người duyệt hợp lệ. Vui lòng liên hệ quản trị nhân sự." };
   }
 
   const rawDate = formData.get("requestDate");
