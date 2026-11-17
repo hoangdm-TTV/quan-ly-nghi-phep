@@ -84,20 +84,26 @@ export async function getFilterOptionsInScope(
 }
 
 /**
- * Tìm người dùng theo email (kèm password_hash để xác thực phía server)
- * Chỉ dùng trong module auth nội bộ, không bao giờ gửi password_hash ra client
+ * Tìm người dùng bằng tên đăng nhập tùy chọn hoặc email đầy đủ.
+ * Email trong DB luôn được giữ nguyên để liên hệ/thông báo.
+ * Chỉ dùng trong auth; không gửi password_hash ra client.
  */
-export async function getUserByEmail(
-  email: string,
+export async function getUserByLogin(
+  identifier: string,
 ): Promise<UserWithPassword | null> {
   const sql = `
-    SELECT id, email, full_name, role, position, department_id, team_id, manager_id, password_hash, is_active, employment_status, created_at, updated_at
+    SELECT id, email, login_username, full_name, role, position, department_id, team_id, manager_id, password_hash, is_active, employment_status, created_at, updated_at
     FROM users
     WHERE LOWER(email) = LOWER($1)
-    LIMIT 1
+       OR LOWER(BTRIM(login_username)) = LOWER(BTRIM($1))
+    LIMIT 2
   `;
-  const result = await query<UserWithPassword>(sql, [email.trim()]);
-  return result.rows[0] || null;
+  const result = await query<UserWithPassword>(sql, [identifier.trim()]);
+  const exactEmailMatch = result.rows.find(
+    (row) => row.email.toLowerCase() === identifier.trim().toLowerCase(),
+  );
+  if (exactEmailMatch) return exactEmailMatch;
+  return result.rows.length === 1 ? result.rows[0] : null;
 }
 
 /**

@@ -34,6 +34,7 @@ export interface SafeUser {
 }
 
 export interface UserWithPassword extends User {
+  login_username?: string | null;
   password_hash: string;
 }
 

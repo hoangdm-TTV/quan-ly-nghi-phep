@@ -3,8 +3,9 @@
 import { z } from "zod";
 import { createHash } from "crypto";
 import { redirect } from "next/navigation";
-import { getUserByEmail } from "@/lib/db/queries/users";
+import { getUserByLogin } from "@/lib/db/queries/users";
 import { query } from "@/lib/db/pool";
+import { UserWithPassword } from "@/lib/types/user";
 import { verifyPassword } from "./password";
 import {
   createSession,
@@ -15,10 +16,7 @@ import {
 } from "./session";
 
 const loginSchema = z.object({
-  email: z
-    .string()
-    .email("Địa chỉ email không hợp lệ")
-    .min(1, "Vui lòng nhập email"),
+  identifier: z.string().trim().min(1, "Vui lòng nhập tên đăng nhập").max(100),
   password: z
     .string()
     .min(6, "Mật khẩu phải từ 6 ký tự trở lên")
@@ -30,12 +28,14 @@ const loginSchema = z.object({
 const MAX_LOGIN_ATTEMPTS = 8;
 const LOGIN_WINDOW_MINUTES = 15;
 
-function loginRateKey(email: string): string {
-  return createHash("sha256").update(email.trim().toLowerCase()).digest("hex");
+function loginRateKey(identifier: string): string {
+  return createHash("sha256")
+    .update(identifier.trim().toLowerCase())
+    .digest("hex");
 }
 
 async function reserveLoginAttempt(key: string): Promise<number> {
-  // Keep abandoned email hashes from accumulating indefinitely.
+  // Keep abandoned login-identifier hashes from accumulating indefinitely.
   await query(
     `DELETE FROM login_rate_limits
       WHERE rate_key IN (
@@ -75,11 +75,11 @@ export async function loginAction(
   prevState: ActionState | null,
   formData: FormData,
 ): Promise<ActionState> {
-  const rawEmail = formData.get("email");
+  const rawIdentifier = formData.get("identifier");
   const rawPassword = formData.get("password");
 
   const validated = loginSchema.safeParse({
-    email: rawEmail,
+    identifier: rawIdentifier,
     password: rawPassword,
   });
 
@@ -90,23 +90,24 @@ export async function loginAction(
     };
   }
 
-  const { email, password } = validated.data;
-  const rateKey = loginRateKey(email);
+  const { identifier, password } = validated.data;
+  let user: UserWithPassword | null = null;
+  let rateKey = loginRateKey(identifier);
 
   try {
+    user = await getUserByLogin(identifier);
+    rateKey = loginRateKey(user?.login_username || identifier);
+
     const attemptCount = await reserveLoginAttempt(rateKey);
     if (attemptCount > MAX_LOGIN_ATTEMPTS) {
       return {
         error:
-          "Email hoặc mật khẩu không chính xác. Vui lòng thử lại sau 15 phút.",
+          "Tên đăng nhập hoặc mật khẩu không chính xác. Vui lòng thử lại sau 15 phút.",
       };
     }
-    // 1. Tìm người dùng theo email
-    const user = await getUserByEmail(email);
-
     // Không tìm thấy user hoặc chưa được thiết lập mật khẩu
     if (!user || !user.password_hash) {
-      return { error: "Email hoặc mật khẩu không chính xác" };
+      return { error: "Tên đăng nhập hoặc mật khẩu không chính xác" };
     }
 
     // 2. Kiểm tra tài khoản có bị vô hiệu hóa không
@@ -122,7 +123,7 @@ export async function loginAction(
     // 3. Xác minh mật khẩu băm
     const isPasswordValid = await verifyPassword(password, user.password_hash);
     if (!isPasswordValid) {
-      return { error: "Email hoặc mật khẩu không chính xác" };
+      return { error: "Tên đăng nhập hoặc mật khẩu không chính xác" };
     }
 
     await query("DELETE FROM login_rate_limits WHERE rate_key = $1", [rateKey]);

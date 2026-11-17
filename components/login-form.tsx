@@ -43,22 +43,22 @@ export default function LoginForm() {
 
       <div>
         <label
-          htmlFor="email"
+          htmlFor="identifier"
           className="block text-sm sm:text-xs font-bold text-slate-700 uppercase tracking-wider mb-2"
         >
-          Địa chỉ Email
+          Tên đăng nhập
         </label>
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
             <Mail className="w-5 h-5" />
           </div>
           <input
-            id="email"
-            name="email"
-            type="email"
-            autoComplete="email"
+            id="identifier"
+            name="identifier"
+            type="text"
+            autoComplete="username"
             required
-            placeholder="ten@trithucvietbn.com"
+            placeholder="Tên đăng nhập của bạn (ví dụ: hoangdm)"
             className="block w-full pl-12 pr-4 py-3.5 sm:py-3 border border-slate-300 rounded-2xl sm:rounded-xl text-base sm:text-sm font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#005a3c] focus:border-[#005a3c]"
           />
         </div>

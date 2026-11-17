@@ -4,7 +4,7 @@
 
 ## Chức năng hiện có
 
-- Đăng nhập bằng email và mật khẩu; mật khẩu được lưu dưới dạng bcrypt hash. Session được lưu trong PostgreSQL, thời hạn 7 ngày, cookie `HttpOnly` và `SameSite=Lax`.
+- Đăng nhập bằng `login_username` tùy chọn (có thể là chữ, số hoặc giá trị khác) hoặc email đầy đủ cùng mật khẩu; email đầy đủ vẫn được giữ trong database cho liên hệ/thông báo. Mật khẩu được lưu dưới dạng bcrypt hash. Session được lưu trong PostgreSQL, thời hạn 7 ngày, cookie `HttpOnly` và `SameSite=Lax`.
 - Tạo, xem và theo dõi đơn nghỉ phép; chọn nghỉ cả ngày hoặc nửa ngày, người thay thế và ghi chú bàn giao. Số ngày phép loại trừ Chủ Nhật và ngày lễ đang hoạt động; thứ Hai đến thứ Bảy được tính là ngày làm việc.
 - Quản lý hạn mức nghỉ theo nhân viên/năm; đơn đang chờ được tính vào ngày đã giữ chỗ. Nhân viên có thể sửa/hủy đơn khi còn ở trạng thái cho phép; thay đổi được ghi lịch sử.
 - Nộp ảnh/PDF giấy nghỉ phép đã ký cho đơn chờ giấy. Tệp được lưu riêng trong PostgreSQL và tải qua route có xác thực/phân quyền.
@@ -136,13 +136,16 @@ if ($LASTEXITCODE -ne 0) { throw "Khởi tạo database thất bại" }
 
 Chạy file này **một lần duy nhất trên database rỗng**. File có transaction và các câu `SELECT` kiểm tra cuối file để DBeaver hiển thị số bản ghi sau khi chạy. Không chạy lại file trên database đã có schema/dữ liệu. Ứng dụng **không tự thay đổi schema database khi khởi động**.
 
+Database đã khởi tạo trước đó: sao lưu database rồi chạy [`migrations/001_login_usernames.sql`](migrations/001_login_usernames.sql) một lần để thêm cột username. Database mới: chạy `000_initial_database.sql` trước, sau đó chạy `001_login_usernames.sql`. Migration lấy phần trước `@` làm username ban đầu cho email `@trithucvietbn.com`; sau đó có thể đổi riêng từng tên (kể cả giá trị số như `123456`) bằng SQL `UPDATE users SET login_username = '123456' WHERE email = 'email-day-du@trithucvietbn.com';`. Không xóa hoặc thay email liên hệ.
+
 Nếu PostgreSQL báo `25P02 current transaction is aborted`, đó thường là lỗi phát sinh sau một câu lệnh trước đó đã thất bại trong transaction. Tìm lỗi đầu tiên trong log, xử lý nguyên nhân rồi chạy lại toàn bộ file trên database rỗng; không coi `25P02` là nguyên nhân gốc.
 
 | File | Nội dung chính |
 | --- | --- |
 | `000_initial_database.sql` | File khởi tạo đầy đủ: schema, dữ liệu nhân sự/phòng ban/team/ngày lễ, index, khóa ngoại, constraint, hạn mức, audit log, push và thông báo nội bộ. |
+| `001_login_usernames.sql` | Migration bổ sung username đăng nhập riêng; không thay đổi email liên hệ. |
 
-Thư mục `migrations` hiện chỉ dùng một file khởi tạo duy nhất là `000_initial_database.sql`; không cần chạy thêm file SQL nào khác.
+Với database cũ đã chạy `000_initial_database.sql`, chỉ chạy migration mới `001_login_usernames.sql`; không chạy lại file khởi tạo.
 
 ### Chạy ở chế độ phát triển và production
 
