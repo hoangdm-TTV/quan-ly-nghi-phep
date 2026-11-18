@@ -300,6 +300,8 @@ export async function getPendingLeaveApprovalSummary(
 
 export interface ScopedLeaveFilter {
   status?: string;
+  requestId?: string;
+  durationOverTwoDays?: boolean;
   employeeId?: string;
   departmentId?: string;
   teamId?: string;
@@ -330,11 +332,21 @@ export async function getScopedLeaveRequests(
       conditions.push(`lr.status = $${params.length}`);
     }
   }
+  if (filter.durationOverTwoDays) {
+    conditions.push(`lr.duration_days > 2`);
+    conditions.push(`lr.status IN ('WAITING_FOR_DOC', 'COMPLETED')`);
+  }
+  if (filter.requestId) {
+    params.push(filter.requestId);
+    conditions.push(`lr.id = $${params.length}`);
+  }
   if (filter.employeeId) {
     params.push(filter.employeeId);
     conditions.push(`lr.employee_id = $${params.length}`);
   }
-  if (filter.departmentId) {
+  if (filter.departmentId === "none") {
+    conditions.push(`u.department_id IS NULL`);
+  } else if (filter.departmentId) {
     params.push(filter.departmentId);
     conditions.push(`u.department_id = $${params.length}`);
   }
@@ -344,7 +356,7 @@ export async function getScopedLeaveRequests(
   }
   if (filter.fromDate) {
     params.push(filter.fromDate);
-    conditions.push(`lr.start_date >= $${params.length}`);
+    conditions.push(`lr.end_date >= $${params.length}`);
   }
   if (filter.toDate) {
     params.push(filter.toDate);

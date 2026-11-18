@@ -255,6 +255,7 @@ export async function getPendingOutOfficeApprovalSummary(
 
 export interface ScopedOutOfficeFilter {
   status?: string;
+  requestId?: string;
   lateReturn?: boolean;
   actualTracking?: boolean;
   employeeId?: string;
@@ -298,9 +299,15 @@ export async function getScopedOutOfficeRequests(
     params.push(filter.employeeId);
     conditions.push(`oo.employee_id = $${params.length}`);
   }
-  if (filter.departmentId) {
+  if (filter.departmentId === "none") {
+    conditions.push(`u.department_id IS NULL`);
+  } else if (filter.departmentId) {
     params.push(filter.departmentId);
     conditions.push(`u.department_id = $${params.length}`);
+  }
+  if (filter.requestId) {
+    params.push(filter.requestId);
+    conditions.push(`oo.id = $${params.length}`);
   }
   if (filter.teamId) {
     params.push(filter.teamId);

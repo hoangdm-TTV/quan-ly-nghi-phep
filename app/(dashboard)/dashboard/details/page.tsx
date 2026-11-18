@@ -15,6 +15,12 @@ function validDate(value?: string): string | undefined {
     : undefined;
 }
 
+function validUuid(value?: string): string | undefined {
+  return value && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+    ? value
+    : undefined;
+}
+
 const leaveLabels: Record<string, string> = {
   ALL: "Tất cả đơn nghỉ phép",
   PENDING_GROUP: "Đơn nghỉ phép đang chờ xử lý",
@@ -44,6 +50,10 @@ export default async function DashboardDetailsPage({
     to?: string;
     late?: string;
     actual?: string;
+    long?: string;
+    employeeId?: string;
+    departmentId?: string;
+    requestId?: string;
     page?: string;
   };
 }) {
@@ -135,19 +145,38 @@ export default async function DashboardDetailsPage({
   }
 
   const labels = type === "leave" ? leaveLabels : outOfficeLabels;
-  const status = searchParams?.status && labels[searchParams.status]
+  const longLeaveOnly = type === "leave" && searchParams?.long === "1";
+  const status = longLeaveOnly
+    ? "APPROVED_GROUP"
+    : searchParams?.status && labels[searchParams.status]
     ? searchParams.status
     : "ALL";
-  const title = labels[status];
+  const requestId = validUuid(searchParams?.requestId);
+  const title = requestId
+    ? type === "leave"
+      ? "Chi tiết đơn nghỉ phép"
+      : "Chi tiết đơn ra ngoài"
+    : longLeaveOnly
+      ? "Đơn nghỉ phép trên 2 ngày"
+      : labels[status];
   const lateReturn = type === "out-office" && searchParams?.late === "1";
   const actualTracking = type === "out-office" && searchParams?.actual === "1";
-  const employeeId = scope === "mine" ? user.id : undefined;
+  const employeeId =
+    scope === "mine" ? user.id : validUuid(searchParams?.employeeId);
+  const departmentId =
+    searchParams?.departmentId === "none"
+      ? "none"
+      : validUuid(searchParams?.departmentId);
   const listHref = (nextPage: number) => {
     const params = new URLSearchParams({ type, status, scope });
     if (fromDate) params.set("from", fromDate);
     if (toDate) params.set("to", toDate);
     if (lateReturn) params.set("late", "1");
     if (actualTracking) params.set("actual", "1");
+    if (longLeaveOnly) params.set("long", "1");
+    if (scope !== "mine" && employeeId) params.set("employeeId", employeeId);
+    if (departmentId) params.set("departmentId", departmentId);
+    if (requestId) params.set("requestId", requestId);
     if (nextPage > 1) params.set("page", String(nextPage));
     return `/dashboard/details?${params.toString()}`;
   };
@@ -155,7 +184,15 @@ export default async function DashboardDetailsPage({
   if (type === "leave") {
     const rows = await getScopedLeaveRequests(
       user,
-      { status, employeeId, fromDate, toDate },
+      {
+        status,
+        requestId,
+        employeeId,
+        departmentId,
+        fromDate,
+        toDate,
+        durationOverTwoDays: longLeaveOnly,
+      },
       pagination,
     );
     const hasNext = rows.length > 25;
@@ -173,6 +210,7 @@ export default async function DashboardDetailsPage({
               <thead className="bg-slate-50 text-xs font-bold uppercase text-slate-600">
                 <tr>
                   {scope !== "mine" && <th className="px-4 py-3">Nhân viên</th>}
+                  {scope !== "mine" && <th className="px-4 py-3">Phòng ban</th>}
                   <th className="px-4 py-3">Thời gian nghỉ</th>
                   <th className="px-4 py-3">Số ngày</th>
                   <th className="px-4 py-3">Lý do</th>
@@ -184,6 +222,7 @@ export default async function DashboardDetailsPage({
                 {requests.map((row) => (
                   <tr key={row.id} className="hover:bg-slate-50">
                     {scope !== "mine" && <td className="px-4 py-3 font-semibold text-slate-900">{row.employee_name}</td>}
+                    {scope !== "mine" && <td className="px-4 py-3">{row.department_name || "Chưa phân bổ"}</td>}
                     <td className="whitespace-nowrap px-4 py-3">{row.start_date} → {row.end_date}</td>
                     <td className="px-4 py-3">{row.duration_days} ngày</td>
                     <td className="max-w-xs truncate px-4 py-3" title={row.reason || ""}>{row.reason || "—"}</td>
@@ -191,7 +230,7 @@ export default async function DashboardDetailsPage({
                     {user.role !== "ADMIN" && <td className="px-4 py-3"><Link href={`/leave/${row.id}`} className="font-semibold text-emerald-800 hover:underline">Mở đơn →</Link></td>}
                   </tr>
                 ))}
-                {requests.length === 0 && <tr><td colSpan={(scope === "mine" ? 4 : 5) + (user.role !== "ADMIN" ? 1 : 0)} className="px-4 py-10 text-center text-sm text-slate-500">Không có đơn phù hợp với thống kê này.</td></tr>}
+                {requests.length === 0 && <tr><td colSpan={(scope === "mine" ? 4 : 6) + (user.role !== "ADMIN" ? 1 : 0)} className="px-4 py-10 text-center text-sm text-slate-500">Không có đơn phù hợp với thống kê này.</td></tr>}
               </tbody>
             </table>
           </div>
@@ -206,7 +245,16 @@ export default async function DashboardDetailsPage({
 
   const rows = await getScopedOutOfficeRequests(
     user,
-    { status, lateReturn, actualTracking, employeeId, fromDate, toDate },
+    {
+      status,
+      lateReturn,
+      actualTracking,
+      requestId,
+      employeeId,
+      departmentId,
+      fromDate,
+      toDate,
+    },
     pagination,
   );
   const hasNext = rows.length > 25;
@@ -215,7 +263,7 @@ export default async function DashboardDetailsPage({
     <main className="mx-auto max-w-6xl space-y-5">
       <header className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs sm:p-6">
         <Link href="/" className="text-xs font-semibold text-emerald-800 hover:underline">← Quay lại tổng quan</Link>
-        <h1 className="mt-2 text-2xl font-black text-slate-900">{actualTracking ? "Theo dõi thực tế đơn ra ngoài" : lateReturn ? "Chi tiết lượt ra ngoài về muộn" : title}</h1>
+        <h1 className="mt-2 text-2xl font-black text-slate-900">{requestId ? title : actualTracking ? "Theo dõi thực tế đơn ra ngoài" : lateReturn ? "Chi tiết lượt ra ngoài về muộn" : title}</h1>
         <p className="mt-1 text-sm text-slate-600">Phạm vi: {scope === "mine" ? "Đơn cá nhân của tôi" : getUserDataScopeLabel(user)}{dateDescription}</p>
         {actualTracking && <p className="mt-2 rounded-lg bg-sky-50 px-3 py-2 text-xs leading-5 text-sky-900">Thời điểm thực tế là lúc nhân viên tải giấy xác nhận đã về lên hệ thống; giờ hẹn được lấy từ đơn đăng ký.</p>}
       </header>
@@ -225,6 +273,7 @@ export default async function DashboardDetailsPage({
             <thead className="bg-slate-50 text-xs font-bold uppercase text-slate-600">
               <tr>
                 {scope !== "mine" && <th className="px-4 py-3">Nhân viên</th>}
+                {scope !== "mine" && <th className="px-4 py-3">Phòng ban</th>}
                 <th className="px-4 py-3">Ngày</th>
                 <th className="px-4 py-3">Giờ đăng ký</th>
                 {(lateReturn || actualTracking) && <th className="px-4 py-3">Thời điểm nộp giấy / giờ về</th>}
@@ -239,6 +288,7 @@ export default async function DashboardDetailsPage({
               {requests.map((row) => (
                 <tr key={row.id} className="hover:bg-slate-50">
                   {scope !== "mine" && <td className="px-4 py-3 font-semibold text-slate-900">{row.employee_name}</td>}
+                  {scope !== "mine" && <td className="px-4 py-3">{row.department_name || "Chưa phân bổ"}</td>}
                   <td className="whitespace-nowrap px-4 py-3">{row.request_date}</td>
                   <td className="whitespace-nowrap px-4 py-3">{row.start_time}–{row.end_time}</td>
                   {(lateReturn || actualTracking) && <td className="whitespace-nowrap px-4 py-3">{row.actual_return_at || "—"}</td>}
@@ -249,7 +299,7 @@ export default async function DashboardDetailsPage({
                   {user.role !== "ADMIN" && <td className="px-4 py-3"><Link href={`/out-office/${row.id}`} className="font-semibold text-emerald-800 hover:underline">Mở đơn →</Link></td>}
                 </tr>
               ))}
-              {requests.length === 0 && <tr><td colSpan={(scope === "mine" ? 4 : 5) + (lateReturn || actualTracking ? 1 : 0) + (actualTracking ? 2 : 0) + (user.role !== "ADMIN" ? 1 : 0)} className="px-4 py-10 text-center text-sm text-slate-500">Chưa có đơn đã xác nhận hoàn tất trong phạm vi và kỳ lọc này.</td></tr>}
+              {requests.length === 0 && <tr><td colSpan={(scope === "mine" ? 4 : 6) + (lateReturn || actualTracking ? 1 : 0) + (actualTracking ? 2 : 0) + (user.role !== "ADMIN" ? 1 : 0)} className="px-4 py-10 text-center text-sm text-slate-500">Không có đơn phù hợp với thống kê này.</td></tr>}
             </tbody>
           </table>
         </div>

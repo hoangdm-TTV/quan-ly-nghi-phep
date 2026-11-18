@@ -4,12 +4,13 @@ import {
   getRecentActivities,
   getScopeReport,
   getHrAdvancedReport,
-  getScopeActivityFeed,
+  getAbsenceTrend,
   type DashboardStats,
   type ScopeReport,
-  type ScopeActivityItem,
   type RecentActivityItem,
   type HrAdvancedReport,
+  type AbsenceTrendItem,
+  type AbsenceTrendGrouping,
 } from "@/lib/dashboard/queries";
 import { getUserDataScopeLabel } from "@/lib/auth/data-scope";
 import { getPendingLeaveRequestsForApprover } from "@/lib/leave/queries";
@@ -26,14 +27,8 @@ import {
   ArrowRight,
   Clock,
   CalendarDays,
-  FileText,
   Plus,
-  UserCheck,
   AlertCircle,
-  CheckCircle2,
-  TrendingUp,
-  Building2,
-  CalendarCheck2,
 } from "lucide-react";
 
 function validDateFilter(value?: string): string | undefined {
@@ -41,6 +36,16 @@ function validDateFilter(value?: string): string | undefined {
   const parsed = new Date(`${value}T00:00:00.000Z`);
   if (Number.isNaN(parsed.getTime())) return undefined;
   return parsed.toISOString().slice(0, 10) === value ? value : undefined;
+}
+
+function getVietnamDateParts() {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Ho_Chi_Minh",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  return Object.fromEntries(parts.map(({ type, value }) => [type, value]));
 }
 
 const emptyStats: DashboardStats = {
@@ -52,20 +57,20 @@ const emptyStats: DashboardStats = {
   myOutOfficePending: 0,
   myOutOfficeActive: 0,
   myOutOfficeCompleted: 0,
-  pendingLeaveApprovals: 0,
-  pendingOutOfficeApprovals: 0,
 };
 
 const emptyReport: ScopeReport = {
   departments: [],
   totals: {
     leaveTotal: 0,
+    leaveEmployees: 0,
     leavePending: 0,
     leaveApproved: 0,
     leaveRejected: 0,
     leaveCancelled: 0,
     leaveDays: 0,
     outOfficeTotal: 0,
+    outOfficeEmployees: 0,
     outOfficePending: 0,
     outOfficeApproved: 0,
     outOfficeCompleted: 0,
@@ -76,11 +81,10 @@ const emptyReport: ScopeReport = {
 };
 
 const emptyAdvancedReport: HrAdvancedReport = {
-  monthlyLeave: [],
   topLeaveEmployees: [],
-  averageApprovalHours: 0,
-  pendingByLevel: [],
-  employeesWithoutEntitlement: 0,
+  longLeaveCount: 0,
+  longLeaveRequests: [],
+  lateOutOfficeDetails: [],
   lateOutOfficeReturns: 0,
   actualTracking: { completedCount: 0, onTimeCount: 0, lateCount: 0 },
 };
@@ -158,185 +162,145 @@ function SectionHeading({
 function ReportSection({
   report,
   scopeLabel,
+  longLeaveCount,
   reportFrom,
   reportTo,
-  showDepartmentBreakdown,
 }: {
   report: ScopeReport;
   scopeLabel: string;
+  longLeaveCount: number;
   reportFrom?: string;
   reportTo?: string;
-  showDepartmentBreakdown: boolean;
 }) {
   const { totals } = report;
-  const detailHref = (type: "leave" | "out-office", status: string) => {
-    const params = new URLSearchParams({ type, status, scope: "report" });
+  const leaveDetailsHref = (longLeaveOnly = false) => {
+    const params = new URLSearchParams({
+      type: "leave",
+      status: "APPROVED_GROUP",
+      scope: "report",
+    });
     if (reportFrom) params.set("from", reportFrom);
     if (reportTo) params.set("to", reportTo);
+    if (longLeaveOnly) params.set("long", "1");
     return `/dashboard/details?${params.toString()}`;
   };
+  const averageLeaveDays = totals.leaveApproved
+    ? totals.leaveDays / totals.leaveApproved
+    : 0;
   return (
-    <section className="bg-white rounded-2xl p-5 sm:p-6 shadow-xs border border-slate-200/90 space-y-5">
-      <SectionHeading
-        title="Báo cáo thống kê tổng hợp"
-        detail={`Phạm vi số liệu: ${scopeLabel}`}
-        action={
-          <form method="get" className="flex items-center gap-2 flex-wrap">
+    <section className="space-y-4">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <h1 className="text-xl font-black text-slate-900 sm:text-2xl">
+            Tổng quan
+          </h1>
+          <p className="text-xs text-slate-500 sm:text-sm">
+            Tình hình nghỉ phép và ra ngoài theo kỳ · {scopeLabel}
+          </p>
+        </div>
+        <form
+          method="get"
+          className="flex flex-wrap items-end gap-2"
+          aria-label="Lọc kỳ báo cáo trên trang tổng quan"
+        >
+          <label className="block text-[10px] font-semibold text-slate-500">
+            Kỳ báo cáo
             <input
               type="date"
               name="from"
               defaultValue={reportFrom}
-              className="text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white"
+              aria-label="Từ ngày"
+              className="mt-1 block text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white"
             />
-            <span className="text-xs text-slate-400">→</span>
+          </label>
+          <span className="pb-2 text-xs text-slate-400">→</span>
+          <label className="block text-[10px] font-semibold text-slate-500">
+            Đến ngày
             <input
               type="date"
               name="to"
               defaultValue={reportTo}
-              className="text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white"
+              aria-label="Đến ngày"
+              className="mt-1 block text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white"
             />
-            <button
-              type="submit"
-              className="px-3 py-1.5 rounded-lg bg-[#005a3c] text-white text-xs font-semibold hover:bg-[#044e3f] transition-colors"
-            >
-              Lọc
-            </button>
-            <Link
-              href="/"
-              className="px-3 py-1.5 rounded-lg border border-rose-200 bg-rose-50 text-rose-700 text-xs font-bold hover:bg-rose-100 transition-colors"
-            >
-              Xóa bộ lọc
-            </Link>
-          </form>
-        }
-      />
-
-      {/* Metric Cards Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <Link href={detailHref("leave", "ALL")} className="block rounded-xl border border-emerald-200/80 bg-gradient-to-br from-emerald-50/80 to-emerald-100/40 p-4 transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700">
-          <p className="text-xs font-bold text-[#005a3c] uppercase tracking-wider">
-            Tổng đơn nghỉ phép
-          </p>
-          <p className="mt-1.5 text-2xl sm:text-3xl font-black text-slate-900">
-            {totals.leaveTotal}
-          </p>
-          <p className="mt-1 text-xs text-slate-600">
-            <span className="font-semibold text-amber-700">
-              {totals.leavePending} chờ
-            </span>{" "}
-            · {totals.leaveApproved} duyệt ·{" "}
-            <span className="font-semibold text-rose-700">
-              {totals.leaveRejected} từ chối
-            </span>{" "}
-            · {totals.leaveCancelled} hủy
-          </p>
-          <p className="mt-2 text-[11px] font-semibold text-emerald-800">Xem danh sách chi tiết →</p>
-        </Link>
-
-        <Link href={detailHref("leave", "APPROVED_GROUP")} className="block rounded-xl border border-teal-200/80 bg-gradient-to-br from-teal-50/80 to-teal-100/40 p-4 transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700">
-          <p className="text-xs font-bold text-teal-800 uppercase tracking-wider">
-            Tổng ngày nghỉ
-          </p>
-          <p className="mt-1.5 text-2xl sm:text-3xl font-black text-slate-900">
-            {Number(totals.leaveDays.toFixed(1))}
-          </p>
-          <p className="mt-1 text-xs text-slate-600">Ngày làm việc</p>
-          <p className="mt-2 text-[11px] font-semibold text-teal-800">Xem các đơn đã duyệt →</p>
-        </Link>
-
-        <Link href={detailHref("out-office", "ALL")} className="block rounded-xl border border-blue-200/80 bg-gradient-to-br from-blue-50/80 to-blue-100/40 p-4 transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700">
-          <p className="text-xs font-bold text-blue-800 uppercase tracking-wider">
-            Tổng đơn ra ngoài
-          </p>
-          <p className="mt-1.5 text-2xl sm:text-3xl font-black text-slate-900">
-            {totals.outOfficeTotal}
-          </p>
-          <p className="mt-1 text-xs text-slate-600">
-            <span className="font-semibold text-amber-700">
-              {totals.outOfficePending} chờ
-            </span>{" "}
-            · {totals.outOfficeCompleted} hoàn tất ·{" "}
-            <span className="font-semibold text-rose-700">
-              {totals.outOfficeRejected} từ chối
-            </span>{" "}
-            · {totals.outOfficeCancelled} hủy
-          </p>
-          <p className="mt-2 text-[11px] font-semibold text-blue-800">Xem danh sách chi tiết →</p>
-        </Link>
-
-        <Link href={detailHref("out-office", "TRACKED")} className="block rounded-xl border border-cyan-200/80 bg-gradient-to-br from-cyan-50/80 to-cyan-100/40 p-4 transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700">
-          <p className="text-xs font-bold text-cyan-800 uppercase tracking-wider">
-            Tổng giờ ra ngoài
-          </p>
-          <p className="mt-1.5 text-2xl sm:text-3xl font-black text-slate-900">
-            {Number(totals.outOfficeHours.toFixed(1))}h
-          </p>
-          <p className="mt-1 text-xs text-slate-600">Giờ thực tế</p>
-          <p className="mt-2 text-[11px] font-semibold text-cyan-800">Xem đơn đang thực hiện/hoàn tất →</p>
-        </Link>
+          </label>
+          <button
+            type="submit"
+            className="px-3 py-1.5 rounded-lg bg-[#005a3c] text-white text-xs font-semibold hover:bg-[#044e3f] transition-colors"
+          >
+            Lọc
+          </button>
+          <Link
+            href="/"
+            className="px-3 py-1.5 rounded-lg border border-rose-200 bg-rose-50 text-rose-700 text-xs font-bold hover:bg-rose-100 transition-colors"
+          >
+            Xóa bộ lọc
+          </Link>
+        </form>
       </div>
-
-      {showDepartmentBreakdown && report.departments.length > 0 && (
-        <div className="pt-2">
-          <h3 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
-            <Building2 className="w-4 h-4 text-[#005a3c]" />
-            <span>Chi tiết theo phòng ban</span>
-          </h3>
-          <div className="overflow-x-auto rounded-xl border border-slate-200">
-            <table className="w-full text-left text-xs sm:text-sm">
-              <thead className="bg-slate-50 text-slate-700 font-semibold border-b border-slate-200">
-                <tr>
-                  <th className="py-3 px-4">Phòng ban</th>
-                  <th className="py-3 px-3 text-right">Đơn nghỉ</th>
-                  <th className="py-3 px-3 text-right">Ngày nghỉ</th>
-                  <th className="py-3 px-3 text-right">Đơn ra ngoài</th>
-                  <th className="py-3 px-4 text-right">Giờ ra ngoài</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {report.departments.map((dep) => (
-                  <tr
-                    key={dep.departmentName}
-                    className="hover:bg-slate-50/80 transition-colors"
-                  >
-                    <td className="py-3 px-4 font-semibold text-slate-800">
-                      {dep.departmentName}
-                    </td>
-                    <td className="py-3 px-3 text-right font-medium text-slate-700">
-                      {dep.leaveTotal}{" "}
-                      <span className="text-xs text-slate-400">
-                        ({dep.leavePending} chờ)
-                      </span>
-                    </td>
-                    <td className="py-3 px-3 text-right font-medium text-slate-700">
-                      {Number(dep.leaveDays.toFixed(1))}
-                    </td>
-                    <td className="py-3 px-3 text-right font-medium text-slate-700">
-                      {dep.outOfficeTotal}{" "}
-                      <span className="text-xs text-slate-400">
-                        ({dep.outOfficePending} chờ)
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-right font-medium text-slate-700">
-                      {Number(dep.outOfficeHours.toFixed(2))}h
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {[
+          {
+            label: "Nhân viên nghỉ",
+            value: totals.leaveEmployees,
+            detail: "người trong kỳ",
+            color: "text-blue-600 bg-blue-50",
+            href: leaveDetailsHref(),
+          },
+          {
+            label: "Lượt nghỉ",
+            value: totals.leaveApproved,
+            detail: "đơn đã duyệt",
+            color: "text-emerald-700 bg-emerald-50",
+            href: leaveDetailsHref(),
+          },
+          {
+            label: "Đơn nghỉ > 2 ngày",
+            value: longLeaveCount,
+            detail: "ngày làm việc",
+            color: "text-amber-700 bg-amber-50",
+            href: leaveDetailsHref(true),
+          },
+          {
+            label: "Ngày nghỉ TB",
+            value: Number(averageLeaveDays.toFixed(1)),
+            detail: "trên mỗi đơn",
+            color: "text-violet-700 bg-violet-50",
+            href: leaveDetailsHref(),
+          },
+        ].map((item) => (
+          <Link
+            key={item.label}
+            href={item.href}
+            className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs transition hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 sm:p-5"
+          >
+            <div className="flex items-start gap-3">
+              <span
+                className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-lg ${item.color}`}
+              >
+                <span className="h-2 w-2 rounded-full bg-current" />
+              </span>
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
+                  {item.label}
+                </p>
+                <p className="mt-1 text-2xl font-black tabular-nums text-slate-900 sm:text-3xl">
+                  {item.value.toLocaleString("vi-VN")}
+                </p>
+                <p className="text-[11px] text-slate-500">{item.detail}</p>
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
     </section>
   );
 }
 
 function PersonalSummary({
   stats,
-  isManager,
 }: {
   stats: DashboardStats;
-  isManager: boolean;
 }) {
   return (
     <section className="space-y-4">
@@ -453,7 +417,9 @@ function ApprovalQueue({
     end_time: string;
   }>;
 }) {
-  const total = leaveRequests.length + outOfficeRequests.length;
+  const leavePreview = leaveRequests.slice(0, 3);
+  const outOfficePreview = outOfficeRequests.slice(0, 3);
+  const total = leavePreview.length + outOfficePreview.length;
   if (total === 0) return null;
 
   return (
@@ -465,36 +431,36 @@ function ApprovalQueue({
           </div>
           <div>
             <h2 className="text-base font-bold text-slate-900">
-              Hàng đợi phê duyệt cần xử lý ({total} đơn)
+              Hàng đợi phê duyệt cần xử lý
             </h2>
             <p className="text-xs text-slate-600">
-              Có đơn của nhân viên đang chờ bạn xem xét và phê duyệt.
+              Đang hiển thị tối đa 3 đơn mỗi loại; mở hàng đợi để xem toàn bộ.
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          {leaveRequests.length > 0 && (
+          {leavePreview.length > 0 && (
             <Link
               href="/approvals/leave"
               className="px-3 py-1.5 text-xs font-bold rounded-lg bg-[#005a3c] text-white hover:bg-[#044e3f] shadow-xs transition-colors"
             >
-              Duyệt nghỉ phép ({leaveRequests.length})
+              Duyệt nghỉ phép
             </Link>
           )}
-          {outOfficeRequests.length > 0 && (
+          {outOfficePreview.length > 0 && (
             <Link
               href="/approvals/out-office"
               className="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-800 text-white hover:bg-slate-900 shadow-xs transition-colors"
             >
-              Duyệt ra ngoài ({outOfficeRequests.length})
+              Duyệt ra ngoài
             </Link>
           )}
         </div>
       </div>
 
       <div className="grid sm:grid-cols-2 gap-3 pt-1">
-        {leaveRequests.slice(0, 3).map((r) => (
+        {leavePreview.map((r) => (
           <Link
             key={r.id}
             href={`/leave/${r.id}`}
@@ -514,7 +480,7 @@ function ApprovalQueue({
             </span>
           </Link>
         ))}
-        {outOfficeRequests.slice(0, 3).map((r) => (
+        {outOfficePreview.map((r) => (
           <Link
             key={r.id}
             href={`/out-office/${r.id}`}
@@ -544,123 +510,74 @@ function PersonalActivity({
   activities: RecentActivityItem[];
 }) {
   return (
-    <section className="bg-white rounded-2xl p-5 sm:p-6 shadow-xs border border-slate-200/90 space-y-4">
-      <SectionHeading
-        title="Hoạt động gần đây của tôi"
-        detail="Các đơn nghỉ phép & ra ngoài mới nhất"
-        action={
-          <div className="flex items-center gap-3 text-xs font-semibold">
-            <Link
-              href="/leave?tab=mine"
-              className="text-slate-600 hover:text-[#005a3c]"
-            >
-              Xem tất cả đơn nghỉ
-            </Link>
-            <span className="text-slate-300">·</span>
-            <Link
-              href="/out-office?tab=mine"
-              className="text-slate-600 hover:text-[#005a3c]"
-            >
-              Xem đơn ra ngoài
-            </Link>
-          </div>
-        }
-      />
-
-      {activities.length === 0 ? (
-        <div className="py-8 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200">
-          <CalendarCheck2 className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-          <p className="text-sm font-semibold text-slate-700">
-            Chưa có đơn nào gần đây
-          </p>
-          <p className="text-xs text-slate-400 mt-1">
-            Các đơn bạn tạo sẽ xuất hiện và cập nhật trạng thái tại đây
+    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs sm:p-6">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-base font-bold text-slate-900">Đơn của tôi</h2>
+          <p className="text-xs text-slate-500">
+            Theo dõi các đơn nghỉ phép và ra ngoài gần đây
           </p>
         </div>
-      ) : (
-        <div className="divide-y divide-slate-100">
-          {activities.map((item) => (
-            <div
-              key={`${item.type}-${item.id}`}
-              className="py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 hover:bg-slate-50/70 px-2 rounded-xl transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                    item.type === "LEAVE"
-                      ? "bg-emerald-100/70 text-[#005a3c]"
-                      : "bg-blue-100/70 text-blue-700"
-                  }`}
-                >
-                  {item.type === "LEAVE" ? (
-                    <CalendarDays className="w-4 h-4" />
-                  ) : (
-                    <Clock className="w-4 h-4" />
-                  )}
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-slate-900">
-                    {item.title}
-                  </p>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    {item.dateInfo}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 self-end sm:self-center">
-                <StatusBadge status={item.status} />
-                <Link
-                  href={item.link}
-                  className="px-3 py-1 text-xs font-semibold rounded-lg bg-slate-100 text-slate-700 hover:bg-[#005a3c] hover:text-white transition-colors"
-                >
-                  Chi tiết
-                </Link>
-              </div>
-            </div>
-          ))}
+        <div className="flex flex-wrap gap-2 text-xs font-semibold">
+          <Link
+            href="/leave?tab=mine"
+            className="rounded-lg border border-slate-200 px-3 py-2 text-slate-700 hover:bg-slate-50"
+          >
+            Xem đơn nghỉ phép
+          </Link>
+          <Link
+            href="/out-office?tab=mine"
+            className="rounded-lg border border-slate-200 px-3 py-2 text-slate-700 hover:bg-slate-50"
+          >
+            Xem đơn ra ngoài
+          </Link>
         </div>
-      )}
-    </section>
-  );
-}
-
-function ManagerActivity({ activities }: { activities: ScopeActivityItem[] }) {
-  return (
-    <section className="bg-white rounded-2xl p-5 sm:p-6 shadow-xs border border-slate-200/90 space-y-4">
-      <SectionHeading
-        title="Hoạt động phòng ban gần đây"
-        detail="Đơn từ cán bộ công nhân viên trong phòng ban của bạn"
-      />
-
+      </div>
       {activities.length === 0 ? (
-        <div className="py-6 text-center text-xs text-slate-400">
-          Chưa có hoạt động mới trong phòng ban.
-        </div>
+        <p className="rounded-lg bg-slate-50 p-6 text-center text-xs text-slate-500">
+          Chưa có đơn nào gần đây.
+        </p>
       ) : (
-        <div className="divide-y divide-slate-100">
-          {activities.slice(0, 5).map((act) => (
-            <div
-              key={`${act.type}-${act.id}`}
-              className="py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
-            >
-              <div>
-                <p className="text-sm font-semibold text-slate-800">
-                  {act.employeeName} · {act.detailLabel}
-                </p>
-                <p className="text-xs text-slate-500 mt-0.5">{act.dateLabel}</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <StatusBadge status={act.status} />
-                <Link
-                  href={act.link}
-                  className="text-xs font-semibold text-[#005a3c] hover:underline"
-                >
-                  Chi tiết →
-                </Link>
-              </div>
-            </div>
-          ))}
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[36rem] text-left text-xs">
+            <thead className="border-y border-slate-100 text-[10px] uppercase text-slate-500">
+              <tr>
+                <th className="px-3 py-3">Loại đơn</th>
+                <th className="px-3 py-3">Thời gian</th>
+                <th className="px-3 py-3">Trạng thái</th>
+                <th className="px-3 py-3">Cập nhật</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {activities.map((item) => (
+                <tr key={`${item.type}-${item.id}`}>
+                  <td className="px-3 py-3 font-semibold text-slate-800">
+                    <Link href={item.link} className="hover:underline">
+                      {item.type === "LEAVE" ? "Nghỉ phép" : "Ra ngoài"}
+                    </Link>
+                  </td>
+                  <td className="px-3 py-3 text-slate-600">
+                    <span className="block">{item.dateInfo}</span>
+                    <span className="block max-w-sm truncate text-[10px] text-slate-400">
+                      {item.title}
+                    </span>
+                  </td>
+                  <td className="px-3 py-3">
+                    <StatusBadge status={item.status} />
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-3 text-slate-500">
+                    {new Intl.DateTimeFormat("vi-VN", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      timeZone: "Asia/Ho_Chi_Minh",
+                    }).format(new Date(item.createdAt))}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </section>
@@ -670,15 +587,25 @@ function ManagerActivity({ activities }: { activities: ScopeActivityItem[] }) {
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams?: { from?: string; to?: string };
+  searchParams?: { from?: string; to?: string; groupBy?: string };
 }) {
   const user = await requireAuth();
-  let reportFrom = validDateFilter(searchParams?.from);
-  let reportTo = validDateFilter(searchParams?.to);
+  const todayParts = getVietnamDateParts();
+  const currentDateVN = `${todayParts.year}-${todayParts.month}-${todayParts.day}`;
+  const currentYearVN = todayParts.year;
+  let reportFrom =
+    validDateFilter(searchParams?.from) || `${currentYearVN}-01-01`;
+  let reportTo = validDateFilter(searchParams?.to) || currentDateVN;
   if (reportFrom && reportTo && reportFrom > reportTo) {
-    reportFrom = undefined;
-    reportTo = undefined;
+    reportFrom = `${currentYearVN}-01-01`;
+    reportTo = currentDateVN;
   }
+  const groupBy: AbsenceTrendGrouping =
+    searchParams?.groupBy === "day" ||
+    searchParams?.groupBy === "year" ||
+    searchParams?.groupBy === "month"
+      ? searchParams.groupBy
+      : "month";
 
   const isAccountant = user.role === "ACCOUNTANT";
   const isAdmin = user.role === "ADMIN";
@@ -692,12 +619,16 @@ export default async function DashboardPage({
   const needsReport =
     isAdmin || isTeamLead || isManager || isDirector || isAccountant;
   const scopeLabel = getUserDataScopeLabel(user);
-  const currentYearVN = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Ho_Chi_Minh",
-    year: "numeric",
-  }).format(new Date());
-  const entitlementYear = Number((reportFrom || currentYearVN).slice(0, 4));
-
+  const calendarFrom = `${currentDateVN.slice(0, 7)}-01`;
+  const calendarTo = `${currentDateVN.slice(0, 7)}-${String(
+    new Date(
+      Date.UTC(
+        Number(currentDateVN.slice(0, 4)),
+        Number(currentDateVN.slice(5, 7)),
+        0,
+      ),
+    ).getUTCDate(),
+  ).padStart(2, "0")}`;
   const [
     stats,
     recentActivities,
@@ -705,18 +636,20 @@ export default async function DashboardPage({
     pendingOutOffices,
     scopeReport,
     advancedReport,
-    scopeActivity,
     absenceItems,
+    trend,
   ] = await Promise.all([
     hasPersonalDashboard
-      ? getDashboardStats(user)
+      ? getDashboardStats(user, reportFrom, reportTo)
       : Promise.resolve(emptyStats),
     hasPersonalDashboard
       ? getRecentActivities(user)
       : Promise.resolve([] as RecentActivityItem[]),
-    isApprover ? getPendingLeaveRequestsForApprover(user) : Promise.resolve([]),
+    isApprover
+      ? getPendingLeaveRequestsForApprover(user, { limit: 3, offset: 0 })
+      : Promise.resolve([]),
     isOutOfficeApprover
-      ? getPendingOutOfficeRequestsForApprover(user)
+      ? getPendingOutOfficeRequestsForApprover(user, { limit: 3, offset: 0 })
       : Promise.resolve([]),
     needsReport
       ? getScopeReport(user, reportFrom, reportTo)
@@ -724,13 +657,14 @@ export default async function DashboardPage({
     needsReport
       ? getHrAdvancedReport(user, reportFrom, reportTo)
       : Promise.resolve(emptyAdvancedReport),
-    isManager
-      ? getScopeActivityFeed(user, reportFrom, reportTo)
-      : Promise.resolve([] as ScopeActivityItem[]),
-    getAbsenceCalendar(user, reportFrom, reportTo),
+    !needsReport
+      ? getAbsenceCalendar(user, calendarFrom, calendarTo)
+      : Promise.resolve([]),
+    needsReport
+      ? getAbsenceTrend(user, reportFrom, reportTo, groupBy)
+      : Promise.resolve([] as AbsenceTrendItem[]),
   ]);
 
-  const totalPending = pendingLeaves.length + pendingOutOffices.length;
   const roleDescription = isAccountant
     ? "Theo dõi dữ liệu toàn công ty · Chế độ chỉ đọc đối soát"
     : isAdmin
@@ -814,6 +748,28 @@ export default async function DashboardPage({
         </div>
       )}
 
+      {/* Reports if manager/director/accountant */}
+      {needsReport && (
+        <ReportSection
+          report={scopeReport}
+          scopeLabel={scopeLabel}
+          longLeaveCount={advancedReport.longLeaveCount}
+          reportFrom={reportFrom}
+          reportTo={reportTo}
+        />
+      )}
+
+      {needsReport && (
+        <AdvancedReportSection
+          report={advancedReport}
+          scopeReport={scopeReport}
+          trend={trend}
+          trendGrouping={groupBy}
+          reportFrom={reportFrom}
+          reportTo={reportTo}
+        />
+      )}
+
       {/* Approvals Queue if approver */}
       {(isApprover || isOutOfficeApprover) && (
         <ApprovalQueue
@@ -822,35 +778,12 @@ export default async function DashboardPage({
         />
       )}
 
-      {/* Reports if manager/director/accountant */}
-      {needsReport && (
-        <ReportSection
-          report={scopeReport}
-          scopeLabel={scopeLabel}
-          reportFrom={reportFrom}
-          reportTo={reportTo}
-          showDepartmentBreakdown={isAdmin || isDirector || isAccountant}
-        />
-      )}
-
-      {needsReport && (
-        <AdvancedReportSection
-          report={advancedReport}
-          reportFrom={reportFrom}
-          reportTo={reportTo}
-          entitlementYear={entitlementYear}
-        />
-      )}
-
-      <AbsenceCalendar items={absenceItems} />
+      {!needsReport && <AbsenceCalendar items={absenceItems} />}
 
       {/* Personal KPI stats */}
-      {hasPersonalDashboard && (
-        <PersonalSummary stats={stats} isManager={isManager} />
+      {hasPersonalDashboard && !needsReport && (
+        <PersonalSummary stats={stats} />
       )}
-
-      {/* Manager activity */}
-      {isManager && <ManagerActivity activities={scopeActivity} />}
 
       {/* Recent activities */}
       {hasPersonalDashboard && (
