@@ -80,8 +80,8 @@ export default async function OutOfficeListPage({
   const filters = [
     { label: "Tất cả đơn", value: "ALL" },
     { label: "Chờ duyệt", value: "PENDING" },
-    { label: "Đang ra ngoài", value: "APPROVED" },
-    { label: "Đã hoàn tất", value: "COMPLETED" },
+    { label: "Đã duyệt, chờ giấy về", value: "APPROVED" },
+    { label: "Đã nộp giấy xác nhận", value: "COMPLETED" },
     { label: "Đã từ chối", value: "REJECTED" },
     { label: "Đã hủy", value: "CANCELLED" },
   ];

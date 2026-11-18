@@ -7,16 +7,18 @@
 - Đăng nhập bằng `login_username` tùy chọn (có thể là chữ, số hoặc giá trị khác) hoặc email đầy đủ cùng mật khẩu; email đầy đủ vẫn được giữ trong database cho liên hệ/thông báo. Mật khẩu được lưu dưới dạng bcrypt hash. Session được lưu trong PostgreSQL, thời hạn 7 ngày, cookie `HttpOnly` và `SameSite=Lax`.
 - Tạo, xem và theo dõi đơn nghỉ phép; chọn nghỉ cả ngày hoặc nửa ngày, người thay thế và ghi chú bàn giao. Số ngày phép loại trừ Chủ Nhật và ngày lễ đang hoạt động; thứ Hai đến thứ Bảy được tính là ngày làm việc.
 - Quản lý hạn mức nghỉ theo nhân viên/năm; đơn đang chờ được tính vào ngày đã giữ chỗ. Nhân viên có thể sửa/hủy đơn khi còn ở trạng thái cho phép; thay đổi được ghi lịch sử.
-- Nộp ảnh/PDF giấy nghỉ phép đã ký cho đơn chờ giấy. Tệp được lưu riêng trong PostgreSQL và tải qua route có xác thực/phân quyền.
+- Nộp ảnh/PDF giấy nghỉ phép đã ký cho đơn chờ giấy. Tệp được lưu riêng trong PostgreSQL và tải qua route có xác thực/phân quyền; lịch sử ghi nhận tạo, sửa, hủy, duyệt/từ chối và nộp giấy.
 - Tạo đơn ra ngoài theo ngày, giờ, mục đích và lý do. Hệ thống kiểm tra giờ hợp lệ, tính thời lượng dự kiến và phát hiện khoảng giờ bị trùng.
+- Đơn ra ngoài chỉ cần quản lý duyệt trước khi đi. Khi về, nhân viên tải giấy xác nhận lên; thời điểm tải giấy được lưu làm giờ về thực tế.
+- Lưu lịch sử tạo, chỉnh sửa, hủy và nộp giấy của đơn ra ngoài; thao tác duyệt/từ chối được lưu trong lịch sử phê duyệt.
 - Nghỉ phép: Director cũng tạo được đơn cá nhân. Đơn từ 2 ngày của nhân viên có thể theo luồng Manager → Director hoặc Director duyệt trực tiếp khi còn `PENDING`; riêng đơn nghỉ của chính Director do `manager_id` duyệt một lần để tránh tự duyệt. Đơn ra ngoài của Director cũng chuyển tới `manager_id` theo luồng một cấp hiện tại.
 - Danh bạ nhân sự theo phạm vi tài khoản; hỗ trợ tìm kiếm, lọc phòng ban/team, trạng thái nhân sự, người chưa được phân bổ và nhân viên chưa có hạn mức phép.
 - Dashboard theo vai trò, các chỉ số có thể mở danh sách chi tiết; báo cáo được giới hạn theo scope người đăng nhập.
-- Theo dõi đơn ra ngoài đã hoàn tất: so sánh giờ kết thúc đăng ký với thời điểm người duyệt xác nhận hoàn tất, phân loại đúng/trước giờ hoặc muộn; hiển thị ghi chú xác nhận nếu có.
+- Theo dõi đơn ra ngoài đã hoàn tất: so sánh giờ kết thúc đăng ký với thời điểm nhân viên nộp giấy xác nhận về, phân loại đúng/trước giờ hoặc muộn.
 - Thông báo nội bộ; Web Push là tùy chọn. Endpoint nhắc các đơn đang chờ quá 24 giờ có thể được gọi theo lịch bằng `CRON_SECRET`.
 - Quản lý nhân sự tại `/admin/hr` và ngày lễ tại `/holidays` theo quyền được kiểm tra phía server.
 
-> **Giới hạn dữ liệu theo dõi thực tế:** ứng dụng hiện dùng `out_office_requests.updated_at` của lượt `COMPLETED` làm thời điểm xác nhận hoàn tất. Đây là lúc người duyệt xác nhận trên hệ thống, không phải dữ liệu check-in/GPS hay giờ rời công ty được ghi nhận tự động. Ghi chú có thể chứa giờ nhân viên báo lại, nhưng chưa phải trường giờ đi/về riêng có cấu trúc.
+> **Giới hạn dữ liệu theo dõi thực tế:** giờ về thực tế là thời điểm nhân viên tải giấy xác nhận lên, không phải dữ liệu check-in/GPS hay giờ rời công ty được ghi nhận tự động.
 
 ## Ma trận phân quyền
 
@@ -33,7 +35,7 @@ Bảng dưới mô tả **quyền đang được code thực thi**, tách phạm
 
 Scope đọc danh sách được tạo phía server trong `lib/auth/data-scope.ts`: `MANAGER` thấy phòng ban, `TEAM_LEAD` thấy team khi đã được gán `team_id`, `DIRECTOR` và `ACCOUNTANT` thấy toàn công ty; người không có scope chỉ thấy đơn cá nhân. Quyền duyệt nghỉ phép được giới hạn cho `MANAGER` và `DIRECTOR`. Lưu ý: queue và workflow nghỉ phép xác định Manager bằng `manager_id`; Server Action hiện **không kiểm tra thêm** `applicant.department_id === manager.department_id`. Vì vậy phạm vi danh sách của Manager là phòng ban, nhưng việc được phép duyệt hiện dựa trên liên kết `manager_id`, không phải kiểm tra phòng ban độc lập.
 
-> **Cách hiểu quyền duyệt đơn ra ngoài:** hệ thống dùng đúng một người duyệt theo `manager_id`; người duyệt này xác nhận đơn trước khi đi và cùng `approver_id` xác nhận khi người xin về. Server Action kiểm tra đăng nhập và quan hệ ID, không kiểm tra riêng role của người được gán. Vì vậy cần bảo đảm `manager_id` luôn trỏ tới tài khoản quản lý được chỉ định; UI queue hiện cho mọi role trừ `ADMIN`, còn Server Action chưa chặn role khi bị gọi trực tiếp. Đơn cá nhân của mọi role nghiệp vụ, gồm Director, yêu cầu có `manager_id` hợp lệ; `ADMIN` không được tạo đơn.
+> **Cách hiểu quyền duyệt đơn ra ngoài:** hệ thống dùng đúng một người duyệt theo `manager_id` để duyệt trước khi đi. Sau khi về, nhân viên tự nộp giấy xác nhận; người duyệt không cần xác nhận lại. Đơn cá nhân của mọi role nghiệp vụ, gồm Director, yêu cầu có `manager_id` hợp lệ; `ADMIN` không được tạo đơn.
 
 ### Luồng nghỉ phép đang chạy
 
@@ -86,13 +88,11 @@ flowchart TD
     C -- Không --> X[Evaluator từ chối thao tác]
     C -- Có / duyệt --> D[APPROVED]
     C -- Có / từ chối --> R[REJECTED]
-    D --> E{Đúng approver_id đã duyệt?}
-    E -- Không --> X
-    E -- Có / xác nhận đã về --> F[COMPLETED]
-    E -- Có / từ chối --> R
+    D --> E[Nhân viên quay về và tải giấy xác nhận]
+    E --> F[COMPLETED; lưu thời điểm tải làm giờ về thực tế]
 ```
 
-Đây là luồng **một cấp theo `manager_id`**, không tự chuyển Manager → Director. Queue lấy đơn `PENDING` có `manager_id` trùng tài khoản đang đăng nhập và đơn `APPROVED` có `approver_id` trùng tài khoản đó; cùng người đã duyệt mới được xác nhận hoàn tất khi người xin về. Giao diện queue cho mọi role trừ `ADMIN`; Server Action kiểm tra đăng nhập và quan hệ ID nhưng không xác thực riêng role. Component chỉ hiện nút xác nhận về ở trạng thái `APPROVED`, tuy nhiên Server Action từ chối vẫn chấp nhận trạng thái này nếu cùng người duyệt gọi.
+Đây là luồng **một cấp theo `manager_id`**, không tự chuyển Manager → Director. Queue chỉ lấy đơn `PENDING` có `manager_id` trùng tài khoản đang đăng nhập. Sau khi quản lý duyệt, chủ đơn tải ảnh/PDF giấy xác nhận khi về; thao tác tải lên chuyển đơn sang `COMPLETED` và lưu thời điểm đó làm giờ về thực tế.
 
 ## Cài đặt và chạy ứng dụng
 
@@ -136,7 +136,7 @@ if ($LASTEXITCODE -ne 0) { throw "Khởi tạo database thất bại" }
 
 Chạy file này **một lần duy nhất trên database rỗng**. File có transaction và các câu `SELECT` kiểm tra cuối file để DBeaver hiển thị số bản ghi sau khi chạy. Không chạy lại file trên database đã có schema/dữ liệu. Ứng dụng **không tự thay đổi schema database khi khởi động**.
 
-Database đã khởi tạo trước đó: sao lưu database rồi chạy [`migrations/001_login_usernames.sql`](migrations/001_login_usernames.sql) một lần để thêm cột username. Database mới: chạy `000_initial_database.sql` trước, sau đó chạy `001_login_usernames.sql`. Migration lấy phần trước `@` làm username ban đầu cho email `@trithucvietbn.com`; sau đó có thể đổi riêng từng tên (kể cả giá trị số như `123456`) bằng SQL `UPDATE users SET login_username = '123456' WHERE email = 'email-day-du@trithucvietbn.com';`. Không xóa hoặc thay email liên hệ.
+Database đã khởi tạo trước đó: sao lưu database rồi chạy các migration chưa áp dụng theo thứ tự: `001_login_usernames.sql` (nếu chưa chạy), sau đó `002_out_office_return_document.sql`. Database mới: chạy `000_initial_database.sql` trước, sau đó chạy các migration cần thiết. Migration `001` lấy phần trước `@` làm username ban đầu cho email `@trithucvietbn.com`; sau đó có thể đổi riêng từng tên (kể cả giá trị số như `123456`) bằng SQL `UPDATE users SET login_username = '123456' WHERE email = 'email-day-du@trithucvietbn.com';`. Migration `002` bổ sung giấy xác nhận khi về, thời điểm về thực tế và các loại sự kiện lịch sử cho cả đơn nghỉ phép lẫn đơn ra ngoài. Không xóa hoặc thay email liên hệ.
 
 Nếu PostgreSQL báo `25P02 current transaction is aborted`, đó thường là lỗi phát sinh sau một câu lệnh trước đó đã thất bại trong transaction. Tìm lỗi đầu tiên trong log, xử lý nguyên nhân rồi chạy lại toàn bộ file trên database rỗng; không coi `25P02` là nguyên nhân gốc.
 
@@ -144,8 +144,9 @@ Nếu PostgreSQL báo `25P02 current transaction is aborted`, đó thường là
 | --- | --- |
 | `000_initial_database.sql` | File khởi tạo đầy đủ: schema, dữ liệu nhân sự/phòng ban/team/ngày lễ, index, khóa ngoại, constraint, hạn mức, audit log, push và thông báo nội bộ. |
 | `001_login_usernames.sql` | Migration bổ sung username đăng nhập riêng; không thay đổi email liên hệ. |
+| `002_out_office_return_document.sql` | Thêm nơi lưu giấy xác nhận khi về, thời điểm về thực tế và mở rộng sự kiện lịch sử cho hai luồng nghỉ phép/ra ngoài. |
 
-Với database cũ đã chạy `000_initial_database.sql`, chỉ chạy migration mới `001_login_usernames.sql`; không chạy lại file khởi tạo.
+Với database cũ đã chạy `000_initial_database.sql`, chạy lần lượt migration chưa áp dụng; không chạy lại file khởi tạo.
 
 ### Chạy ở chế độ phát triển và production
 

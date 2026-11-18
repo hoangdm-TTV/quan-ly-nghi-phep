@@ -24,9 +24,9 @@ export interface OutOfficeDetail {
   rejection_reason: string | null;
   created_at: Date;
   updated_at: Date;
-  actual_return_at?: string;
+  actual_return_at?: string | null;
+  return_document_file_name?: string | null;
   return_delta_minutes?: number;
-  completion_comment?: string | null;
 }
 
 export interface OutOfficeApprovalRecord {
@@ -35,7 +35,7 @@ export interface OutOfficeApprovalRecord {
   approver_id: string;
   approver_name: string;
   approver_role: string;
-  action: string;
+  action: "APPROVED_LEAD" | "APPROVED_DIRECTOR" | "REJECTED";
   comment: string | null;
   created_at: Date;
 }
@@ -69,7 +69,9 @@ export async function getVisibleOutOfficeRequests(
       app.full_name AS approver_name,
       oo.rejection_reason,
       oo.created_at,
-      oo.updated_at
+      oo.updated_at,
+      oo.return_document_file_name,
+      TO_CHAR(oo.actual_return_at AT TIME ZONE 'Asia/Ho_Chi_Minh', 'YYYY-MM-DD HH24:MI') AS actual_return_at
     FROM out_office_requests oo
     JOIN users u ON oo.employee_id = u.id
     LEFT JOIN departments d ON u.department_id = d.id
@@ -124,7 +126,9 @@ export async function getOutOfficeRequestById(
       app.full_name AS approver_name,
       oo.rejection_reason,
       oo.created_at,
-      oo.updated_at
+      oo.updated_at,
+      oo.return_document_file_name,
+      TO_CHAR(oo.actual_return_at AT TIME ZONE 'Asia/Ho_Chi_Minh', 'YYYY-MM-DD HH24:MI') AS actual_return_at
     FROM out_office_requests oo
     JOIN users u ON oo.employee_id = u.id
     LEFT JOIN departments d ON u.department_id = d.id
@@ -199,11 +203,10 @@ export async function getPendingOutOfficeRequestsForApprover(
     LEFT JOIN teams t ON u.team_id = t.id
     LEFT JOIN users app ON oo.approver_id = app.id
     WHERE oo.employee_id != $1
-      AND ((oo.status = 'PENDING' AND ${pendingScope})
-        OR (oo.status = 'APPROVED' AND oo.approver_id = $1))
-    ORDER BY 
-      CASE WHEN oo.status = 'PENDING' THEN 1 ELSE 2 END,
-      oo.request_date ASC,
+    AND oo.status = 'PENDING'
+    AND ${pendingScope}
+    ORDER BY
+    oo.request_date ASC,
       oo.start_time ASC
       ${pagination ? `LIMIT $${params.length + 1} OFFSET $${params.length + 2}` : ""}
   `;
@@ -225,7 +228,9 @@ export async function getPendingOutOfficeApprovalCount(
   const params: string[] = [approver.id];
   const pendingScope = `u.manager_id = $1`;
   const result = await query<{ count: number }>(
-    `SELECT COUNT(*)::int AS count FROM out_office_requests oo JOIN users u ON oo.employee_id = u.id WHERE oo.employee_id != $1 AND ((oo.status = 'PENDING' AND ${pendingScope}) OR (oo.status = 'APPROVED' AND oo.approver_id = $1))`,
+    `SELECT COUNT(*)::int AS count
+       FROM out_office_requests oo JOIN users u ON oo.employee_id = u.id
+      WHERE oo.employee_id != $1 AND oo.status = 'PENDING' AND ${pendingScope}`,
     params,
   );
   return Number(result.rows[0]?.count || 0);
@@ -233,25 +238,18 @@ export async function getPendingOutOfficeApprovalCount(
 
 export async function getPendingOutOfficeApprovalSummary(
   approver: SafeUser,
-): Promise<{ total: number; pending: number; approved: number }> {
+): Promise<{ total: number }> {
   const params: string[] = [approver.id];
   const scope = `u.manager_id = $1`;
-  const result = await query<{
-    total: number;
-    pending: number;
-    approved: number;
-  }>(
-    `SELECT COUNT(*)::int AS total, COUNT(*) FILTER (WHERE oo.status='PENDING')::int AS pending,
-            COUNT(*) FILTER (WHERE oo.status='APPROVED')::int AS approved
+  const result = await query<{ total: number }>(
+    `SELECT COUNT(*)::int AS total
        FROM out_office_requests oo JOIN users u ON u.id=oo.employee_id
-      WHERE oo.employee_id <> $1 AND ((oo.status='PENDING' AND ${scope}) OR (oo.status='APPROVED' AND oo.approver_id=$1))`,
+      WHERE oo.employee_id <> $1 AND oo.status='PENDING' AND ${scope}`,
     params,
   );
   const row = result.rows[0];
   return {
     total: Number(row?.total || 0),
-    pending: Number(row?.pending || 0),
-    approved: Number(row?.approved || 0),
   };
 }
 
@@ -289,7 +287,8 @@ export async function getScopedOutOfficeRequests(
   }
   if (filter.lateReturn) {
     conditions.push(
-      `oo.status = 'COMPLETED' AND (oo.updated_at AT TIME ZONE 'Asia/Ho_Chi_Minh') > (oo.request_date + oo.end_time)`,
+      `oo.status = 'COMPLETED' AND oo.actual_return_at IS NOT NULL
+       AND (oo.actual_return_at AT TIME ZONE 'Asia/Ho_Chi_Minh') > (oo.request_date + oo.end_time)`,
     );
   }
   if (filter.actualTracking) {
@@ -317,18 +316,7 @@ export async function getScopedOutOfficeRequests(
   }
 
   const trackingColumns = filter.actualTracking
-    ? `, TO_CHAR(oo.updated_at AT TIME ZONE 'Asia/Ho_Chi_Minh', 'YYYY-MM-DD HH24:MI') AS actual_return_at,
-         ROUND(EXTRACT(EPOCH FROM ((oo.updated_at AT TIME ZONE 'Asia/Ho_Chi_Minh') - (oo.request_date + oo.end_time))) / 60)::int AS return_delta_minutes,
-         tracking.comment AS completion_comment`
-    : "";
-  const trackingJoin = filter.actualTracking
-    ? `LEFT JOIN LATERAL (
-         SELECT ah.comment
-           FROM approval_history ah
-          WHERE ah.request_type = 'OUT_OFFICE' AND ah.request_id = oo.id
-          ORDER BY ah.created_at DESC
-          LIMIT 1
-       ) tracking ON TRUE`
+    ? `, ROUND(EXTRACT(EPOCH FROM ((oo.actual_return_at AT TIME ZONE 'Asia/Ho_Chi_Minh') - (oo.request_date + oo.end_time))) / 60)::int AS return_delta_minutes`
     : "";
 
   const sql = `
@@ -351,13 +339,14 @@ export async function getScopedOutOfficeRequests(
       app.full_name AS approver_name,
       oo.rejection_reason,
       oo.created_at,
-      oo.updated_at${trackingColumns}
+      oo.updated_at,
+      TO_CHAR(oo.actual_return_at AT TIME ZONE 'Asia/Ho_Chi_Minh', 'YYYY-MM-DD HH24:MI') AS actual_return_at,
+      oo.return_document_file_name${trackingColumns}
     FROM out_office_requests oo
     JOIN users u ON oo.employee_id = u.id
     LEFT JOIN departments d ON u.department_id = d.id
     LEFT JOIN teams t ON u.team_id = t.id
     LEFT JOIN users app ON oo.approver_id = app.id
-    ${trackingJoin}
     WHERE ${conditions.join(" AND ")}
     ORDER BY oo.request_date DESC, oo.created_at DESC
     ${pagination ? `LIMIT $${params.length + 1} OFFSET $${params.length + 2}` : ""}

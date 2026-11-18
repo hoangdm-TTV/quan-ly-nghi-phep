@@ -217,7 +217,7 @@ export default async function DashboardDetailsPage({
         <Link href="/" className="text-xs font-semibold text-emerald-800 hover:underline">← Quay lại tổng quan</Link>
         <h1 className="mt-2 text-2xl font-black text-slate-900">{actualTracking ? "Theo dõi thực tế đơn ra ngoài" : lateReturn ? "Chi tiết lượt ra ngoài về muộn" : title}</h1>
         <p className="mt-1 text-sm text-slate-600">Phạm vi: {scope === "mine" ? "Đơn cá nhân của tôi" : getUserDataScopeLabel(user)}{dateDescription}</p>
-        {actualTracking && <p className="mt-2 rounded-lg bg-sky-50 px-3 py-2 text-xs leading-5 text-sky-900">Thời điểm thực tế ở đây là lúc người duyệt xác nhận hoàn tất trên hệ thống; giờ hẹn được lấy từ đơn đăng ký. Ghi chú xác nhận được hiển thị nếu có.</p>}
+        {actualTracking && <p className="mt-2 rounded-lg bg-sky-50 px-3 py-2 text-xs leading-5 text-sky-900">Thời điểm thực tế là lúc nhân viên tải giấy xác nhận đã về lên hệ thống; giờ hẹn được lấy từ đơn đăng ký.</p>}
       </header>
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
         <div className="overflow-x-auto">
@@ -227,10 +227,10 @@ export default async function DashboardDetailsPage({
                 {scope !== "mine" && <th className="px-4 py-3">Nhân viên</th>}
                 <th className="px-4 py-3">Ngày</th>
                 <th className="px-4 py-3">Giờ đăng ký</th>
-                {(lateReturn || actualTracking) && <th className="px-4 py-3">Thời điểm xác nhận</th>}
+                {(lateReturn || actualTracking) && <th className="px-4 py-3">Thời điểm nộp giấy / giờ về</th>}
                 {actualTracking && <th className="px-4 py-3">Chênh lệch với giờ hẹn</th>}
                 <th className="px-4 py-3">Mục đích</th>
-                {actualTracking && <th className="px-4 py-3">Ghi chú xác nhận</th>}
+                {actualTracking && <th className="px-4 py-3">Giấy xác nhận</th>}
                 <th className="px-4 py-3">Trạng thái</th>
                 {user.role !== "ADMIN" && <th className="px-4 py-3">Chi tiết</th>}
               </tr>
@@ -241,10 +241,10 @@ export default async function DashboardDetailsPage({
                   {scope !== "mine" && <td className="px-4 py-3 font-semibold text-slate-900">{row.employee_name}</td>}
                   <td className="whitespace-nowrap px-4 py-3">{row.request_date}</td>
                   <td className="whitespace-nowrap px-4 py-3">{row.start_time}–{row.end_time}</td>
-                  {(lateReturn || actualTracking) && <td className="whitespace-nowrap px-4 py-3">{row.actual_return_at || new Date(row.updated_at).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}</td>}
+                  {(lateReturn || actualTracking) && <td className="whitespace-nowrap px-4 py-3">{row.actual_return_at || "—"}</td>}
                   {actualTracking && <td className="whitespace-nowrap px-4 py-3">{Number(row.return_delta_minutes || 0) > 0 ? <span className="font-semibold text-rose-700">Muộn {Math.floor(Number(row.return_delta_minutes) / 60) ? `${Math.floor(Number(row.return_delta_minutes) / 60)} giờ ` : ""}{Number(row.return_delta_minutes) % 60} phút</span> : <span className="font-semibold text-emerald-800">Đúng/trước giờ</span>}</td>}
                   <td className="max-w-xs truncate px-4 py-3" title={row.reason || ""}>{row.reason || "—"}</td>
-                  {actualTracking && <td className="max-w-sm px-4 py-3 text-xs text-slate-600">{row.completion_comment || "Không có ghi chú"}</td>}
+                  {actualTracking && <td className="max-w-sm px-4 py-3 text-xs text-slate-600">{row.return_document_file_name || "Không có tệp (đơn cũ)"}</td>}
                   <td className="px-4 py-3"><OutOfficeStatusBadge status={row.status} /></td>
                   {user.role !== "ADMIN" && <td className="px-4 py-3"><Link href={`/out-office/${row.id}`} className="font-semibold text-emerald-800 hover:underline">Mở đơn →</Link></td>}
                 </tr>

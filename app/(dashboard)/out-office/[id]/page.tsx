@@ -9,7 +9,8 @@ import { evaluateOutOfficeApproval } from "@/lib/out-office/workflow";
 import OutOfficeStatusBadge from "@/components/out-office/out-office-status-badge";
 import OutOfficeApprovalActions from "@/components/out-office/approval-actions";
 import PendingOutOfficeEditor from "@/components/out-office/pending-request-editor";
-import RequestChangeHistory from "@/components/requests/request-change-history";
+import ReturnDocumentForm from "@/components/out-office/return-document-form";
+import RequestHistoryTimeline from "@/components/requests/request-history-timeline";
 import { getRequestChangeHistory } from "@/lib/admin/queries";
 import { formatDateTimeVN } from "@/lib/date-time";
 import Link from "next/link";
@@ -18,7 +19,6 @@ import {
   Clock,
   ArrowLeft,
   CheckCircle,
-  History,
   ShieldAlert,
   Briefcase,
   UserCheck,
@@ -53,8 +53,10 @@ export default async function OutOfficeDetailPage({
     redirect("/out-office");
   }
 
-  const history = await getOutOfficeApprovalHistory(request.id);
-  const changeHistory = await getRequestChangeHistory("OUT_OFFICE", request.id);
+  const [history, changeHistory] = await Promise.all([
+    getOutOfficeApprovalHistory(request.id),
+    getRequestChangeHistory("OUT_OFFICE", request.id),
+  ]);
 
   // Kế toán chỉ xem (chỉ đọc), không duyệt.
   const isReadOnly = currentUser.role === "ACCOUNTANT";
@@ -64,7 +66,6 @@ export default async function OutOfficeDetailPage({
         currentUser,
         applicant,
         request.status,
-        request.approver_id,
       );
   const canApproveNow = approvalEval.allowed;
 
@@ -136,8 +137,8 @@ export default async function OutOfficeDetailPage({
               Đơn đã được duyệt cho phép ra ngoài
             </div>
             <p className="text-xs text-blue-700">
-              Nhân viên có thể ra ngoài theo khung giờ đã đăng ký. Người duyệt
-              đơn sẽ xác nhận hoàn tất khi nhân viên quay lại.
+              Đơn đã được duyệt. Khi quay về, nhân viên tải giấy xác nhận lên;
+              thời điểm tải lên được ghi nhận làm giờ về thực tế.
             </p>
           </div>
         )}
@@ -149,9 +150,22 @@ export default async function OutOfficeDetailPage({
               Đã hoàn tất quy trình ra ngoài
             </div>
             <p className="text-xs text-emerald-700">
-              Đơn đã được người có thẩm quyền xác nhận hoàn tất. Dữ liệu sẵn
-              sàng phục vụ đối soát chấm công.
+              Giấy xác nhận đã được nộp. Thời điểm tải lên được dùng làm giờ về
+              thực tế để đối soát.
             </p>
+            {request.actual_return_at && (
+              <p className="text-xs font-semibold text-emerald-800">
+                Giờ về được ghi nhận: {request.actual_return_at}
+              </p>
+            )}
+            {request.return_document_file_name && (
+              <a
+                href={`/api/out-office/${request.id}/document`}
+                className="inline-flex text-xs font-semibold text-emerald-800 underline"
+              >
+                Tải giấy xác nhận: {request.return_document_file_name}
+              </a>
+            )}
           </div>
         )}
 
@@ -253,55 +267,10 @@ export default async function OutOfficeDetailPage({
           }}
         />
       )}
-      <RequestChangeHistory entries={changeHistory} />
-
-      {/* Lịch sử phê duyệt */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
-        <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3">
-          <History className="w-4 h-4 text-blue-600" />
-          Tiến trình xử lý & Lịch sử ký duyệt
-        </h3>
-
-        {history.length === 0 ? (
-          <p className="text-xs text-slate-500 italic py-2">
-            Đơn đang chờ cấp duyệt trực tiếp tiếp nhận xử lý.
-          </p>
-        ) : (
-          <div className="space-y-3">
-            {history.map((h, idx) => (
-              <div
-                key={h.id}
-                className="flex items-start gap-3 p-3 rounded-lg border border-slate-100 bg-slate-50 text-xs"
-              >
-                <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-[11px] flex-shrink-0 mt-0.5">
-                  {idx + 1}
-                </div>
-                <div className="flex-1 space-y-1">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-                    <p className="font-semibold text-slate-900">
-                      {h.approver_name} ({h.approver_role})
-                    </p>
-                    <span className="text-[11px] text-slate-400">
-                      {formatDateTimeVN(h.created_at)}
-                    </span>
-                  </div>
-                  <p className="text-slate-600">
-                    <span className="font-medium">Hành động:</span>{" "}
-                    {h.action === "REJECTED"
-                      ? "Đã từ chối đơn"
-                      : "Đã duyệt / Xác nhận ký sổ hoàn tất"}
-                  </p>
-                  {h.comment && (
-                    <p className="text-slate-600 italic bg-white p-2 rounded border border-slate-200 mt-1">
-                      "{h.comment}"
-                    </p>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      {isOwner && request.status === "APPROVED" && (
+        <ReturnDocumentForm requestId={request.id} />
+      )}
+      <RequestHistoryTimeline changes={changeHistory} approvals={history} />
     </div>
   );
 }

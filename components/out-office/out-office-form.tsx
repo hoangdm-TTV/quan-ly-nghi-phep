@@ -139,8 +139,8 @@ export default function OutOfficeForm() {
             duyệt một lần.
           </p>
           <p>
-            2. <strong>Sau khi về:</strong> Người đã duyệt ký sổ điện tử xác
-            nhận hoàn tất.
+            2. <strong>Sau khi về:</strong> Bạn tải ảnh hoặc PDF giấy xác nhận
+            lên; thời điểm tải lên được ghi nhận làm giờ về thực tế.
           </p>
         </div>
 

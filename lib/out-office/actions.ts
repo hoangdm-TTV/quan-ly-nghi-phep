@@ -5,7 +5,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { pool } from "@/lib/db/pool";
 import { requireAuth } from "@/lib/auth/permissions";
-import { canSubmitPersonalRequests } from "@/lib/auth/roles";
+import {
+  canApproveOutOfficeRequests,
+  canSubmitPersonalRequests,
+} from "@/lib/auth/roles";
 import { getSafeUserById } from "@/lib/db/queries/users";
 import { calculateEstimatedHours } from "./calculator";
 import {
@@ -56,6 +59,8 @@ const rejectionInputSchema = z.object({
 const editOutOfficeSchema = createOutOfficeSchema.extend({
   requestId: z.string().uuid("Mã đơn không hợp lệ."),
 });
+const MAX_RETURN_IMAGE_SIZE = 5 * 1024 * 1024;
+const MAX_RETURN_PDF_SIZE = 50 * 1024 * 1024;
 
 function isRealDate(value: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
@@ -159,7 +164,25 @@ export async function createOutOfficeRequestAction(
         reason.trim(),
       ],
     );
-    requestId = insertResult.rows[0]?.id;
+    requestId = insertResult.rows[0].id;
+    await client.query(
+      `INSERT INTO request_change_history
+        (request_type, request_id, actor_id, action, after_data)
+       VALUES ('OUT_OFFICE', $1, $2, 'CREATED', $3::jsonb)`,
+      [
+        requestId,
+        currentUser.id,
+        JSON.stringify({
+          request_date: requestDate,
+          start_time: startTime,
+          end_time: endTime,
+          estimated_hours: estimatedHours,
+          reason_type: reasonType,
+          reason: reason.trim(),
+          status: "PENDING",
+        }),
+      ],
+    );
     await client.query("COMMIT");
   } catch (error) {
     try {
@@ -183,13 +206,16 @@ export async function createOutOfficeRequestAction(
 }
 
 /**
- * Server Action: Phê duyệt đơn xin ra ngoài (hoặc xác nhận hoàn tất khi về)
+ * Server Action: Phê duyệt đơn xin ra ngoài
  */
 export async function approveOutOfficeRequestAction(
   prevState: OutOfficeActionState | null,
   formData: FormData,
 ): Promise<OutOfficeActionState> {
   const currentUser = await requireAuth();
+  if (!canApproveOutOfficeRequests(currentUser.role)) {
+    return { error: "Tài khoản này không có quyền duyệt đơn ra ngoài." };
+  }
   const input = approvalInputSchema.safeParse({
     requestId: formData.get("requestId"),
     comment: formData.get("comment") || undefined,
@@ -203,7 +229,6 @@ export async function approveOutOfficeRequestAction(
   const comment = input.data.comment || null;
 
   const client = await pool.connect();
-  let completedStatus: OutOfficeStatus | undefined;
 
   try {
     await client.query("BEGIN");
@@ -234,7 +259,6 @@ export async function approveOutOfficeRequestAction(
       currentUser,
       applicant,
       request.status as OutOfficeStatus,
-      request.approver_id,
     );
 
     if (!evaluation.allowed || !evaluation.nextStatus || !evaluation.action) {
@@ -243,8 +267,6 @@ export async function approveOutOfficeRequestAction(
         error: evaluation.reason || "Bạn không có thẩm quyền xử lý đơn này.",
       };
     }
-    completedStatus = evaluation.nextStatus;
-
     await client.query(
       `UPDATE out_office_requests 
        SET status = $1, approver_id = $2, updated_at = NOW() 
@@ -271,11 +293,178 @@ export async function approveOutOfficeRequestAction(
 
   revalidatePath("/approvals/out-office");
   revalidatePath(`/out-office/${requestId}`);
-  await notifyOutOfficeRequester(
-    requestId,
-    completedStatus === "COMPLETED" ? "COMPLETED" : "APPROVED",
-  ).catch((error) => console.error("[Out Office Requester Push Error]", error));
+  await notifyOutOfficeRequester(requestId, "APPROVED").catch((error) =>
+    console.error("[Out Office Requester Push Error]", error),
+  );
   return { success: true };
+}
+
+/**
+ * Nhân viên nộp giấy xác nhận khi về; thời điểm lưu tệp là giờ về thực tế.
+ */
+export async function uploadOutOfficeReturnDocumentAction(
+  _prevState: OutOfficeActionState | null,
+  formData: FormData,
+): Promise<OutOfficeActionState> {
+  const currentUser = await requireAuth();
+  if (!canSubmitPersonalRequests(currentUser.role)) {
+    return { error: "Tài khoản này không có quyền nộp giấy xác nhận về." };
+  }
+
+  const parsedRequestId = z
+    .string()
+    .uuid()
+    .safeParse(formData.get("requestId"));
+  if (!parsedRequestId.success) {
+    return { error: "Mã đơn ra ngoài không hợp lệ." };
+  }
+
+  const fileValue = formData.get("documentFile");
+  if (!fileValue || typeof fileValue === "string") {
+    return { error: "Vui lòng chọn ảnh hoặc PDF giấy xác nhận khi về." };
+  }
+  const file = fileValue as File;
+  if (!["application/pdf", "image/png", "image/jpeg"].includes(file.type)) {
+    return { error: "Chỉ chấp nhận tệp PDF, PNG hoặc JPEG." };
+  }
+  const maxSize =
+    file.type === "application/pdf"
+      ? MAX_RETURN_PDF_SIZE
+      : MAX_RETURN_IMAGE_SIZE;
+  if (file.size <= 0 || file.size > maxSize) {
+    return {
+      error:
+        file.type === "application/pdf"
+          ? "Tệp PDF phải có dung lượng lớn hơn 0 và không vượt quá 50 MB."
+          : "Ảnh phải có dung lượng lớn hơn 0 và không vượt quá 5 MB.",
+    };
+  }
+
+  let documentBytes: Buffer;
+  try {
+    documentBytes = Buffer.from(await file.arrayBuffer());
+  } catch {
+    return { error: "Không thể đọc tệp đã chọn. Vui lòng thử lại." };
+  }
+
+  const isPdf =
+    file.type === "application/pdf" &&
+    documentBytes.subarray(0, 5).toString("ascii") === "%PDF-";
+  const isPng =
+    file.type === "image/png" &&
+    documentBytes
+      .subarray(0, 8)
+      .equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+  const isJpeg =
+    file.type === "image/jpeg" &&
+    documentBytes.length >= 3 &&
+    documentBytes[0] === 0xff &&
+    documentBytes[1] === 0xd8 &&
+    documentBytes[2] === 0xff;
+  if (!isPdf && !isPng && !isJpeg) {
+    return {
+      error: "Nội dung tệp không khớp với định dạng PDF, PNG hoặc JPEG.",
+    };
+  }
+
+  const safeFileName =
+    file.name
+      .normalize("NFKC")
+      .replace(/[\/\\\u0000-\u001f\u007f]/g, "_")
+      .trim()
+      .slice(0, 180) || "out-office-return-document";
+  const requestId = parsedRequestId.data;
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const requestResult = await client.query(
+      `SELECT employee_id, status, return_document_data
+         FROM out_office_requests
+        WHERE id = $1
+        FOR UPDATE`,
+      [requestId],
+    );
+    const request = requestResult.rows[0];
+    if (!request) {
+      await client.query("ROLLBACK");
+      return { error: "Không tìm thấy đơn xin ra ngoài." };
+    }
+    if (request.employee_id !== currentUser.id) {
+      await client.query("ROLLBACK");
+      return { error: "Chỉ người tạo đơn mới được nộp giấy xác nhận về." };
+    }
+    if (request.status !== "APPROVED" || request.return_document_data) {
+      await client.query("ROLLBACK");
+      return {
+        error: "Chỉ có thể nộp giấy một lần cho đơn đã được duyệt.",
+      };
+    }
+
+    const updateResult = await client.query<{ actual_return_at: Date }>(
+      `UPDATE out_office_requests
+          SET return_document_data = $1,
+              return_document_mime_type = $2,
+              return_document_file_name = $3,
+              actual_return_at = NOW(),
+              status = 'COMPLETED',
+              updated_at = NOW()
+        WHERE id = $4
+          AND employee_id = $5
+          AND status = 'APPROVED'
+          AND return_document_data IS NULL
+        RETURNING actual_return_at`,
+      [
+        documentBytes,
+        file.type,
+        safeFileName,
+        requestId,
+        currentUser.id,
+      ],
+    );
+    if (updateResult.rowCount !== 1) {
+      await client.query("ROLLBACK");
+      return {
+        error:
+          "Đơn đã được cập nhật ở nơi khác. Tải lại trang và kiểm tra trạng thái.",
+      };
+    }
+    const actualReturnAt = updateResult.rows[0].actual_return_at;
+    await client.query(
+      `INSERT INTO request_change_history
+        (request_type, request_id, actor_id, action, before_data, after_data)
+       VALUES ('OUT_OFFICE', $1, $2, 'RETURN_DOCUMENT_UPLOADED', $3::jsonb, $4::jsonb)`,
+      [
+        requestId,
+        currentUser.id,
+        JSON.stringify({ status: "APPROVED" }),
+        JSON.stringify({
+          status: "COMPLETED",
+          return_document_file_name: safeFileName,
+          actual_return_at: actualReturnAt,
+        }),
+      ],
+    );
+    await client.query("COMMIT");
+  } catch (error) {
+    try {
+      await client.query("ROLLBACK");
+    } catch {}
+    console.error("[Upload Out Office Return Document Error]", error);
+    return {
+      error: "Không thể lưu giấy xác nhận về lúc này. Vui lòng thử lại sau.",
+    };
+  } finally {
+    client.release();
+  }
+
+  revalidatePath("/out-office");
+  revalidatePath(`/out-office/${requestId}`);
+  revalidatePath("/approvals/out-office");
+  revalidatePath("/");
+  await notifyOutOfficeRequester(requestId, "COMPLETED").catch((error) =>
+    console.error("[Out Office Requester Push Error]", error),
+  );
+  redirect(`/out-office/${requestId}`);
 }
 
 /**
@@ -286,6 +475,9 @@ export async function rejectOutOfficeRequestAction(
   formData: FormData,
 ): Promise<OutOfficeActionState> {
   const currentUser = await requireAuth();
+  if (!canApproveOutOfficeRequests(currentUser.role)) {
+    return { error: "Tài khoản này không có quyền từ chối đơn ra ngoài." };
+  }
   const input = rejectionInputSchema.safeParse({
     requestId: formData.get("requestId"),
     rejectionReason: formData.get("rejectionReason"),
@@ -327,7 +519,6 @@ export async function rejectOutOfficeRequestAction(
       currentUser,
       applicant,
       request.status as OutOfficeStatus,
-      request.approver_id,
     );
 
     if (!evaluation.allowed) {

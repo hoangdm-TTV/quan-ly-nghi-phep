@@ -188,7 +188,7 @@ export async function uploadLeaveDocumentAction(
       };
     }
 
-    const updateResult = await client.query(
+    const updateResult = await client.query<{ document_uploaded_at: Date }>(
       `UPDATE leave_requests
           SET document_data = $1,
               document_mime_type = $2,
@@ -200,7 +200,8 @@ export async function uploadLeaveDocumentAction(
         WHERE id = $5
           AND employee_id = $6
           AND status = 'WAITING_FOR_DOC'
-          AND document_data IS NULL`,
+          AND document_data IS NULL
+        RETURNING document_uploaded_at`,
       [
         documentBytes,
         file.type,
@@ -217,6 +218,22 @@ export async function uploadLeaveDocumentAction(
           "Đơn đã được cập nhật ở nơi khác. Tải lại trang và kiểm tra trạng thái.",
       };
     }
+
+    await client.query(
+      `INSERT INTO request_change_history
+        (request_type, request_id, actor_id, action, before_data, after_data)
+       VALUES ('LEAVE', $1, $2, 'LEAVE_DOCUMENT_UPLOADED', $3::jsonb, $4::jsonb)`,
+      [
+        requestId,
+        currentUser.id,
+        JSON.stringify({ status: "WAITING_FOR_DOC" }),
+        JSON.stringify({
+          status: "COMPLETED",
+          document_file_name: safeFileName,
+          document_uploaded_at: updateResult.rows[0].document_uploaded_at,
+        }),
+      ],
+    );
 
     await client.query("COMMIT");
   } catch (error) {
@@ -395,6 +412,25 @@ export async function createLeaveRequestAction(
       ],
     );
     requestId = insertResult.rows[0]?.id;
+    await client.query(
+      `INSERT INTO request_change_history
+        (request_type, request_id, actor_id, action, after_data)
+       VALUES ('LEAVE', $1, $2, 'CREATED', $3::jsonb)`,
+      [
+        requestId,
+        currentUser.id,
+        JSON.stringify({
+          start_date: startDate,
+          end_date: endDate,
+          duration_days: effectiveDuration,
+          day_part: dayPart,
+          replacement_user_id: replacementUserId || null,
+          handover_note: handoverNote?.trim() || null,
+          reason: reason.trim(),
+          status: "PENDING",
+        }),
+      ],
+    );
     await client.query("COMMIT");
   } catch (error) {
     try {

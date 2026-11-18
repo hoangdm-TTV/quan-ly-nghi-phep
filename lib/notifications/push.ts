@@ -314,7 +314,7 @@ export async function notifyOutOfficeRequester(
     APPROVED: ["Đơn ra ngoài đã được duyệt", "Đơn của bạn đã được duyệt."],
     COMPLETED: [
       "Đơn ra ngoài đã hoàn tất",
-      "Người duyệt đã xác nhận bạn quay về.",
+      "Giấy xác nhận khi về của bạn đã được tải lên thành công.",
     ],
     REJECTED: [
       "Đơn ra ngoài bị từ chối",

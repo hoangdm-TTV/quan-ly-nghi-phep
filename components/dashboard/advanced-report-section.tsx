@@ -75,7 +75,7 @@ export default function AdvancedReportSection({
             {report.lateOutOfficeReturns}
           </p>
           <p className="mt-1 text-xs text-slate-600">
-            Theo lúc xác nhận hoàn tất
+            Theo thời điểm nộp giấy
           </p>
           <p className="mt-2 text-[11px] font-semibold text-rose-800">Xem các lượt về muộn →</p>
         </Link>
@@ -106,10 +106,10 @@ export default function AdvancedReportSection({
             </span>
           </div>
           <p className="mt-2 text-[10px] leading-4 text-slate-600">
-            Giờ thực tế lấy từ lúc người duyệt xác nhận hoàn tất.
+            Giờ thực tế lấy từ lúc nhân viên tải giấy xác nhận đã về.
           </p>
           <p className="mt-1 text-[11px] font-semibold text-sky-900 group-hover:underline">
-            Xem đối chiếu giờ hẹn và giờ xác nhận →
+            Xem đối chiếu giờ hẹn và giờ về →
           </p>
         </Link>
       </div>

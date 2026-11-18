@@ -382,10 +382,10 @@ export async function getHrAdvancedReport(
     ),
     query<{ completed_count: number; on_time_count: number; late_count: number }>(
       `SELECT COUNT(*)::int AS completed_count,
-              (COUNT(*) FILTER (WHERE (oo.updated_at AT TIME ZONE 'Asia/Ho_Chi_Minh') <= (oo.request_date + oo.end_time)))::int AS on_time_count,
-              (COUNT(*) FILTER (WHERE (oo.updated_at AT TIME ZONE 'Asia/Ho_Chi_Minh') > (oo.request_date + oo.end_time)))::int AS late_count
+              (COUNT(*) FILTER (WHERE (oo.actual_return_at AT TIME ZONE 'Asia/Ho_Chi_Minh') <= (oo.request_date + oo.end_time)))::int AS on_time_count,
+              (COUNT(*) FILTER (WHERE (oo.actual_return_at AT TIME ZONE 'Asia/Ho_Chi_Minh') > (oo.request_date + oo.end_time)))::int AS late_count
          FROM out_office_requests oo JOIN users u ON u.id = oo.employee_id
-        WHERE ${lateConditions.join(" AND ")}`,
+        WHERE ${lateConditions.join(" AND ")} AND oo.actual_return_at IS NOT NULL`,
       lateParams,
     ),
   ]);

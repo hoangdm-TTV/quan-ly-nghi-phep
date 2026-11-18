@@ -5,43 +5,28 @@ import { useFormState, useFormStatus } from "react-dom";
 import {
   approveOutOfficeRequestAction,
   rejectOutOfficeRequestAction,
-  OutOfficeActionState,
 } from "@/lib/out-office/actions";
+import type { OutOfficeActionState } from "@/lib/out-office/actions";
 import { OutOfficeStatus } from "@/lib/out-office/workflow";
-import {
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
-  Loader2,
-  CheckCheck,
-} from "lucide-react";
+import { CheckCircle2, XCircle, AlertCircle, Loader2 } from "lucide-react";
 
 interface ApprovalActionsProps {
   requestId: string;
   currentStatus: OutOfficeStatus;
 }
 
-function ApproveBtn({ isCompleting }: { isCompleting: boolean }) {
+function ApproveBtn() {
   const { pending } = useFormStatus();
   return (
     <button
       type="submit"
       disabled={pending}
-      className={`inline-flex items-center px-4 py-2 text-xs font-semibold rounded-lg text-white disabled:opacity-50 transition-colors ${
-        isCompleting
-          ? "bg-teal-600 hover:bg-teal-700"
-          : "bg-emerald-600 hover:bg-emerald-700"
-      }`}
+      className="inline-flex items-center px-4 py-2 text-xs font-semibold rounded-lg text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 transition-colors"
     >
       {pending ? (
         <>
           <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
           Đang xử lý...
-        </>
-      ) : isCompleting ? (
-        <>
-          <CheckCheck className="w-3.5 h-3.5 mr-1.5" />
-          Xác nhận đã về & Hoàn tất ký
         </>
       ) : (
         <>
@@ -94,8 +79,6 @@ export default function OutOfficeApprovalActions({
     initialRejectState,
   );
 
-  const isCompleting = currentStatus === "APPROVED";
-
   return (
     <div className="space-y-3">
       {approveState.error && (
@@ -132,15 +115,6 @@ export default function OutOfficeApprovalActions({
             </>
           )}
 
-          {currentStatus === "APPROVED" && (
-            <button
-              onClick={() => setMode("approve")}
-              className="inline-flex items-center px-3.5 py-1.5 text-xs font-semibold rounded-lg text-teal-700 bg-teal-50 border border-teal-200 hover:bg-teal-100 transition-colors"
-            >
-              <CheckCheck className="w-3.5 h-3.5 mr-1.5" />
-              Đã về & Ký xác nhận
-            </button>
-          )}
         </div>
       )}
 
@@ -152,23 +126,17 @@ export default function OutOfficeApprovalActions({
           <input type="hidden" name="requestId" value={requestId} />
           <div>
             <label className="block text-xs font-medium text-slate-800 mb-1">
-              {isCompleting
-                ? "Ghi chú xác nhận giờ về thực tế (tùy chọn):"
-                : "Ghi chú phê duyệt (tùy chọn):"}
+              Ghi chú phê duyệt (tùy chọn):
             </label>
             <input
               type="text"
               name="comment"
-              placeholder={
-                isCompleting
-                  ? "VD: Về lúc 11:15, đã ký sổ..."
-                  : "VD: Đồng ý cho đi công tác..."
-              }
+              placeholder="VD: Đồng ý cho đi công tác..."
               className="block w-full px-2.5 py-1.5 border border-slate-300 rounded-md text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
           <div className="flex items-center gap-2">
-            <ApproveBtn isCompleting={isCompleting} />
+            <ApproveBtn />
             <button
               type="button"
               onClick={() => setMode("idle")}

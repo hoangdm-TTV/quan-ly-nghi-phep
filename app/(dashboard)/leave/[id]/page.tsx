@@ -14,7 +14,7 @@ import LeaveStatusBadge from "@/components/leave/leave-status-badge";
 import LeaveDocumentForm from "@/components/leave/leave-document-form";
 import ApprovalActions from "@/components/leave/approval-actions";
 import PendingLeaveEditor from "@/components/leave/pending-request-editor";
-import RequestChangeHistory from "@/components/requests/request-change-history";
+import RequestHistoryTimeline from "@/components/requests/request-history-timeline";
 import { getRequestChangeHistory } from "@/lib/admin/queries";
 import { formatDateTimeVN, formatDateVN } from "@/lib/date-time";
 import Link from "next/link";
@@ -27,7 +27,6 @@ import {
   ArrowLeft,
   CheckCircle,
   AlertTriangle,
-  History,
   ShieldAlert,
 } from "lucide-react";
 
@@ -61,8 +60,10 @@ export default async function LeaveDetailPage({
   }
 
   const documentMetadata = await getLeaveDocumentMetadataById(request.id);
-  const history = await getLeaveApprovalHistory(request.id);
-  const changeHistory = await getRequestChangeHistory("LEAVE", request.id);
+  const [history, changeHistory] = await Promise.all([
+    getLeaveApprovalHistory(request.id),
+    getRequestChangeHistory("LEAVE", request.id),
+  ]);
 
   // Kế toán chỉ xem (chỉ đọc), không duyệt.
   const isReadOnly = currentUser.role === "ACCOUNTANT";
@@ -271,59 +272,7 @@ export default async function LeaveDetailPage({
           }}
         />
       )}
-      <RequestChangeHistory entries={changeHistory} />
-
-      {/* Lịch sử phê duyệt */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
-        <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3">
-          <History className="w-4 h-4 text-blue-600" />
-          Tiến trình & Lịch sử phê duyệt
-        </h3>
-
-        {history.length === 0 ? (
-          <p className="text-xs text-slate-500 italic py-2">
-            Đơn đang chờ cấp phê duyệt đầu tiên tiếp nhận xử lý.
-          </p>
-        ) : (
-          <div className="space-y-3">
-            {history.map((h, idx) => (
-              <div
-                key={h.id}
-                className="flex items-start gap-3 p-3 rounded-lg border border-slate-100 bg-slate-50 text-xs"
-              >
-                <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-[11px] flex-shrink-0 mt-0.5">
-                  {idx + 1}
-                </div>
-                <div className="flex-1 space-y-1">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-                    <p className="font-semibold text-slate-900">
-                      {h.approver_name} ({h.approver_role})
-                    </p>
-                    <span className="text-[11px] text-slate-400">
-                      {formatDateTimeVN(h.created_at)}
-                    </span>
-                  </div>
-                  <p className="text-slate-600">
-                    <span className="font-medium">Hành động:</span>{" "}
-                    {h.action === "APPROVED_LEAD"
-                      ? applicant.role === "DIRECTOR"
-                        ? "Người quản lý đã duyệt đơn của Giám đốc (hoàn tất luồng duyệt)"
-                        : "Đã duyệt Cấp 1 (Trưởng phòng)"
-                      : h.action === "APPROVED_DIRECTOR"
-                        ? "Giám đốc đã duyệt (trực tiếp hoặc cấp cuối)"
-                        : "Đã từ chối đơn"}
-                  </p>
-                  {h.comment && (
-                    <p className="text-slate-600 italic bg-white p-2 rounded border border-slate-200 mt-1">
-                      "{h.comment}"
-                    </p>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      <RequestHistoryTimeline changes={changeHistory} approvals={history} />
     </div>
   );
 }

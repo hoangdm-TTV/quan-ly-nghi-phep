@@ -40,7 +40,12 @@ export async function getRequestChangeHistory(
 ) {
   const result = await query<{
     id: string;
-    action: "UPDATED" | "CANCELLED";
+    action:
+      | "CREATED"
+      | "UPDATED"
+      | "CANCELLED"
+      | "RETURN_DOCUMENT_UPLOADED"
+      | "LEAVE_DOCUMENT_UPLOADED";
     actor_name: string | null;
     created_at: Date;
     before_data: Record<string, unknown> | null;
