@@ -269,6 +269,55 @@ export default async function OutOfficeListPage({
 
       {/* Main Request Table Card */}
       <div id="all-requests" className="scroll-mt-20">
+      {/* Điện thoại (< 768px): danh sách thẻ thay cho bảng */}
+      {requests.length > 0 && (
+        <ul className="space-y-3 md:hidden">
+          {requests.map((r) => (
+            <li
+              key={r.id}
+              className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 space-y-1">
+                  {activeTab === "scope" && (
+                    <div>
+                      <p className="font-bold text-slate-900">{r.employee_name}</p>
+                      <p className="text-xs font-medium text-slate-500">
+                        {r.department_name || "—"}
+                      </p>
+                    </div>
+                  )}
+                  <p className="flex flex-wrap items-center gap-x-1.5 text-sm font-semibold text-slate-900">
+                    <Calendar className="w-3.5 h-3.5 shrink-0 text-[#005a3c]" />
+                    <span>{r.request_date}</span>
+                    <span className="text-slate-400">·</span>
+                    <Clock className="w-3.5 h-3.5 shrink-0 text-slate-400" />
+                    <span className="font-medium text-slate-800">
+                      {r.start_time} - {r.end_time}
+                    </span>
+                  </p>
+                </div>
+                <OutOfficeStatusBadge status={r.status} />
+              </div>
+              <p className="mt-2 line-clamp-2 text-sm text-slate-600">
+                <span className="font-semibold text-slate-700">
+                  {r.reason_type === "WORK" ? "Việc công" : "Việc riêng"}:
+                </span>{" "}
+                {r.reason || "—"}
+              </p>
+              <div className="mt-3 flex justify-end">
+                <Link
+                  href={`/out-office/${r.id}`}
+                  className="inline-flex min-h-11 items-center rounded-lg bg-emerald-50 px-4 text-sm font-bold text-[#005a3c] transition-all hover:bg-[#005a3c] hover:text-white"
+                >
+                  Chi tiết
+                  <ArrowRight className="w-4 h-4 ml-1" />
+                </Link>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
       {requests.length === 0 ? (
         <div className="bg-white p-12 text-center rounded-2xl border border-slate-200/90 shadow-xs space-y-3">
           <div className="w-12 h-12 rounded-xl bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
@@ -297,7 +346,7 @@ export default async function OutOfficeListPage({
           )}
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+        <div className="hidden md:block bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-200 text-left text-xs sm:text-sm">
               <thead className="bg-slate-50/90 text-slate-700 font-bold uppercase text-[11px] tracking-wider">
@@ -348,18 +397,18 @@ export default async function OutOfficeListPage({
                       </div>
                     </td>
                     <td
-                      className="px-5 py-4 max-w-xs truncate text-slate-600 font-medium"
+                      className="px-5 py-4 text-slate-600 font-medium"
                       title={r.reason || ""}
                     >
-                      <span className="inline-flex items-center gap-1">
+                      <span className="flex max-w-[12rem] items-center gap-1 sm:max-w-xs">
                         <Briefcase className="w-3 h-3 text-slate-400 shrink-0" />
-                        <span className="font-semibold text-slate-700">
+                        <span className="shrink-0 font-semibold text-slate-700">
                           {r.reason_type === "WORK"
                             ? "Việc công"
                             : "Việc riêng"}
                           :
                         </span>
-                        <span className="truncate">{r.reason || "—"}</span>
+                        <span className="min-w-0 truncate">{r.reason || "—"}</span>
                       </span>
                     </td>
                     <td className="px-5 py-4 whitespace-nowrap">
@@ -390,7 +439,7 @@ export default async function OutOfficeListPage({
           {pageNumber > 1 && (
             <Link
               href={pageHref(pageNumber - 1)}
-              className="rounded-lg border px-3 py-1.5 font-semibold text-slate-700"
+              className="inline-flex h-11 items-center rounded-lg border px-4 text-sm font-semibold text-slate-700 sm:h-8 sm:px-3 sm:text-xs"
             >
               Trước
             </Link>
@@ -398,7 +447,7 @@ export default async function OutOfficeListPage({
           {hasNextPage && (
             <Link
               href={pageHref(pageNumber + 1)}
-              className="rounded-lg border px-3 py-1.5 font-semibold text-slate-700"
+              className="inline-flex h-11 items-center rounded-lg border px-4 text-sm font-semibold text-slate-700 sm:h-8 sm:px-3 sm:text-xs"
             >
               Tiếp
             </Link>

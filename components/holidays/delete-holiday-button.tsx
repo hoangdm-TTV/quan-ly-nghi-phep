@@ -26,10 +26,10 @@ export default function DeleteHolidayButton({
     <>
       <button
         onClick={() => setShowConfirm(true)}
-        className="p-1.5 text-slate-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors"
+        className="inline-flex h-11 w-11 items-center justify-center text-slate-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors sm:h-9 sm:w-9"
         title="Xóa ngày lễ"
       >
-        <Trash2 className="w-3.5 h-3.5" />
+        <Trash2 className="w-4 h-4" />
       </button>
 
       {showConfirm && (
@@ -71,14 +71,14 @@ export default function DeleteHolidayButton({
               <button
                 type="button"
                 onClick={() => setShowConfirm(false)}
-                className="px-3.5 py-2 text-xs font-medium text-slate-600 hover:text-slate-900 border border-slate-300 rounded-lg hover:bg-slate-50"
+                className="px-3.5 py-2.5 text-sm font-medium text-slate-600 hover:text-slate-900 border border-slate-300 rounded-lg hover:bg-slate-50"
               >
                 Hủy
               </button>
               <button
                 type="submit"
                 disabled={isPending}
-                className="inline-flex items-center px-3.5 py-2 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg disabled:opacity-50"
+                className="inline-flex items-center px-3.5 py-2.5 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg disabled:opacity-50"
               >
                 {isPending ? (
                   <>

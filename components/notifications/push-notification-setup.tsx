@@ -288,7 +288,7 @@ export default function PushNotificationSetup({
         ) : (
           <Bell className="h-4 w-4" />
         )}
-        <span className={alwaysShowLabel ? "inline" : "hidden lg:inline"}>
+        <span className={alwaysShowLabel ? "inline" : "hidden 2xl:inline"}>
           {denied
             ? "Thông báo bị chặn"
             : enabled && soundReady
@@ -301,7 +301,7 @@ export default function PushNotificationSetup({
       {message && (
         <p
           role="status"
-          className={`absolute right-0 top-full z-50 mt-2 w-72 rounded-lg border p-3 text-xs shadow-lg ${
+          className={`${alwaysShowLabel ? "mt-2 w-full" : "absolute right-0 top-full z-50 mt-2 w-72 shadow-lg"} rounded-lg border p-3 text-xs ${
             denied
               ? "border-rose-200 bg-rose-50 text-rose-800"
               : "border-slate-200 bg-white text-slate-700"

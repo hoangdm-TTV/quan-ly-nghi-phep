@@ -48,7 +48,7 @@ function EmployeeForm({
   const field =
     "block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm";
   return (
-    <form action={action} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <form action={action} className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {employee && <input type="hidden" name="id" value={employee.id} />}
       <label className="text-xs font-semibold text-slate-700">
         Họ tên
@@ -197,7 +197,7 @@ function EmployeeForm({
         />
       </label>
       <div className="sm:col-span-2 lg:col-span-3">
-        <button className="rounded-lg bg-[#005a3c] px-4 py-2 text-xs font-bold text-white">
+        <button className="w-full rounded-lg bg-[#005a3c] px-4 py-2.5 text-sm font-bold text-white sm:w-auto">
           {employee ? "Lưu hồ sơ" : "Tạo tài khoản"}
         </button>
         <Feedback state={state} />
@@ -209,7 +209,7 @@ function EmployeeForm({
 function DepartmentForm() {
   const [state, action] = useFormState(createDepartmentAction, {});
   return (
-    <form action={action} className="flex gap-2">
+    <form action={action} className="flex flex-wrap gap-2">
       <input
         name="name"
         required
@@ -221,7 +221,9 @@ function DepartmentForm() {
       <button className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-bold text-white">
         Thêm
       </button>
-      <Feedback state={state} />
+      <div className="basis-full empty:hidden">
+        <Feedback state={state} />
+      </div>
     </form>
   );
 }
@@ -229,7 +231,7 @@ function DepartmentForm() {
 function TeamForm({ departments }: { departments: HrDepartment[] }) {
   const [state, action] = useFormState(createTeamAction, {});
   return (
-    <form action={action} className="grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
+    <form action={action} className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_auto]">
       <input
         name="name"
         required
@@ -264,22 +266,24 @@ function DepartmentRow({ department }: { department: HrDepartment }) {
   const [editState, editAction] = useFormState(updateDepartmentAction, {});
   const [deleteState, deleteAction] = useFormState(deleteDepartmentAction, {});
   return (
-    <details className="border-b border-slate-100 py-2 last:border-0">
-      <summary className="cursor-pointer text-xs font-medium text-slate-700">
+    <details className="border-b border-slate-100 last:border-0">
+      <summary className="cursor-pointer py-2.5 text-sm font-medium text-slate-700">
         {department.name}
       </summary>
-      <div className="mt-2 grid gap-2 sm:grid-cols-2">
-        <form action={editAction} className="flex gap-2">
+      <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <form action={editAction} className="flex flex-wrap gap-2">
           <input type="hidden" name="id" value={department.id} />
           <input
             name="name"
             defaultValue={department.name}
             className="min-w-0 flex-1 rounded border border-slate-300 px-2 py-1 text-xs"
           />
-          <button className="rounded bg-slate-800 px-2 py-1 text-xs text-white">
+          <button className="min-h-11 rounded bg-slate-800 px-3 py-2 text-sm text-white sm:min-h-0">
             Đổi tên
           </button>
-          <Feedback state={editState} />
+          <div className="basis-full empty:hidden">
+            <Feedback state={editState} />
+          </div>
         </form>
         <form
           action={deleteAction}
@@ -288,7 +292,7 @@ function DepartmentRow({ department }: { department: HrDepartment }) {
           }}
         >
           <input type="hidden" name="id" value={department.id} />
-          <button className="rounded border border-rose-300 px-2 py-1 text-xs text-rose-700">
+          <button className="min-h-11 rounded border border-rose-300 px-3 py-2 text-sm text-rose-700 sm:min-h-0">
             Xóa nếu chưa được sử dụng
           </button>
           <Feedback state={deleteState} />
@@ -308,14 +312,14 @@ function TeamRow({
   const [editState, editAction] = useFormState(updateTeamAction, {});
   const [deleteState, deleteAction] = useFormState(deleteTeamAction, {});
   return (
-    <details className="border-b border-slate-100 py-2 last:border-0">
-      <summary className="cursor-pointer text-xs font-medium text-slate-700">
+    <details className="border-b border-slate-100 last:border-0">
+      <summary className="cursor-pointer py-2.5 text-sm font-medium text-slate-700">
         {team.name} ·{" "}
         {departments.find((d) => d.id === team.department_id)?.name ||
           "Chưa phân bổ"}
       </summary>
-      <div className="mt-2 grid gap-2 sm:grid-cols-2">
-        <form action={editAction} className="grid gap-2">
+      <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <form action={editAction} className="grid grid-cols-1 gap-2">
           <input type="hidden" name="id" value={team.id} />
           <input
             name="name"
@@ -334,7 +338,7 @@ function TeamRow({
               </option>
             ))}
           </select>
-          <button className="rounded bg-slate-800 px-2 py-1 text-xs text-white">
+          <button className="min-h-11 rounded bg-slate-800 px-3 py-2 text-sm text-white sm:min-h-0">
             Lưu team
           </button>
           <Feedback state={editState} />
@@ -346,7 +350,7 @@ function TeamRow({
           }}
         >
           <input type="hidden" name="id" value={team.id} />
-          <button className="rounded border border-rose-300 px-2 py-1 text-xs text-rose-700">
+          <button className="min-h-11 rounded border border-rose-300 px-3 py-2 text-sm text-rose-700 sm:min-h-0">
             Xóa nếu chưa có nhân sự
           </button>
           <Feedback state={deleteState} />
@@ -367,7 +371,7 @@ function EntitlementForm({
   return (
     <form
       action={action}
-      className="grid items-center gap-2 border-b border-slate-100 py-2 last:border-0 sm:grid-cols-[1fr_180px_140px_auto]"
+      className="grid grid-cols-1 items-center gap-2 border-b border-slate-100 py-2 last:border-0 sm:grid-cols-[1fr_180px_140px_auto]"
     >
       <input type="hidden" name="userId" value={employee.user_id} />
       <input type="hidden" name="year" value={year} />
@@ -391,7 +395,7 @@ function EntitlementForm({
           className="ml-2 w-24 rounded border border-slate-300 px-2 py-1 text-sm text-slate-900"
         />
       </label>
-      <button className="rounded-lg border border-emerald-300 px-3 py-1.5 text-xs font-bold text-emerald-800">
+      <button className="rounded-lg border border-emerald-300 px-3 py-2.5 text-sm font-bold text-emerald-800">
         Lưu
       </button>
       <Feedback state={state} />
@@ -488,7 +492,7 @@ function EmployeeFilters({
         ref={formRef}
         method="get"
         onSubmit={submitSearch}
-        className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-5"
+        className="grid grid-cols-1 gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"
       >
         <input type="hidden" name="section" value="employees" />
         <input type="hidden" name="pageSize" value={pageSize} />
@@ -709,7 +713,7 @@ export default function HrAdminPanel({
       )}
 
       {section === "organization" && (
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
             <h2 className="text-base font-bold text-slate-900">Phòng ban</h2>
             <DepartmentForm />

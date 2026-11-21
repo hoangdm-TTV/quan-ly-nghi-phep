@@ -48,7 +48,7 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl shadow-xs text-sm font-bold text-white bg-[#005a3c] hover:bg-[#044e3f] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#005a3c] disabled:opacity-50 transition-all"
+      className="inline-flex w-full items-center justify-center px-5 py-2.5 rounded-xl shadow-xs sm:w-auto text-sm font-bold text-white bg-[#005a3c] hover:bg-[#044e3f] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#005a3c] disabled:opacity-50 transition-all"
     >
       {pending ? (
         <>
@@ -256,10 +256,10 @@ export default function LeaveForm() {
           ></textarea>
         </div>
 
-        <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+        <div className="flex flex-col-reverse gap-3 pt-4 border-t border-slate-100 sm:flex-row sm:items-center sm:justify-between">
           <Link
             href="/leave"
-            className="inline-flex items-center text-xs sm:text-sm font-bold text-slate-600 hover:text-slate-900"
+            className="inline-flex min-h-11 items-center justify-center text-sm font-bold text-slate-600 hover:text-slate-900 sm:min-h-0 sm:justify-start"
           >
             <ArrowLeft className="w-4 h-4 mr-1.5" /> Quay lại danh sách
           </Link>

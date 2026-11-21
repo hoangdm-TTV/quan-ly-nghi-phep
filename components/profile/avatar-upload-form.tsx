@@ -15,7 +15,7 @@ function SaveAvatarButton() {
     <button
       type="submit"
       disabled={pending}
-      className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#005a3c] px-3.5 py-2 text-xs font-bold text-white transition-colors hover:bg-[#044e3f] disabled:cursor-not-allowed disabled:opacity-60"
+      className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#005a3c] px-3.5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#044e3f] disabled:cursor-not-allowed disabled:opacity-60"
     >
       {pending ? (
         <Loader2 className="h-4 w-4 animate-spin" />
@@ -82,7 +82,7 @@ export default function AvatarUploadForm() {
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
-          className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-[#005a3c] transition-colors hover:bg-emerald-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2"
+          className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm font-semibold text-[#005a3c] transition-colors hover:bg-emerald-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2"
         >
           <ImagePlus className="h-4 w-4" />
           Chọn ảnh

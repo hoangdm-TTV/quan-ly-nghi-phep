@@ -62,7 +62,7 @@ export default function EmployeeDirectoryFilters({
     <form
       ref={formRef}
       method="get"
-      className="mt-4 grid gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 sm:grid-cols-2 lg:grid-cols-[minmax(240px,1fr)_220px_220px_180px_auto_auto]"
+      className="mt-4 grid grid-cols-1 gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-[minmax(240px,1fr)_220px_220px_180px_auto_auto]"
     >
       {missingEntitlementYear && (
         <input

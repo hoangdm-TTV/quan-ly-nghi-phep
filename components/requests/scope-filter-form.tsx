@@ -68,7 +68,7 @@ export default function ScopeFilterForm({
       <form
         ref={formRef}
         method="get"
-        className="grid grid-cols-1 gap-3.5 rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs sm:grid-cols-2 sm:p-5 lg:grid-cols-6"
+        className="grid grid-cols-1 gap-3.5 rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs sm:grid-cols-2 sm:p-5 lg:grid-cols-3 xl:grid-cols-6"
       >
         <input type="hidden" name="tab" value="scope" />
         {status && status !== "ALL" && (

@@ -25,7 +25,7 @@ export default async function ProfilePage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Cột trái: Thẻ tóm tắt thông tin */}
         <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-6 flex flex-col items-center text-center space-y-4">
           <UserAvatar
@@ -37,7 +37,7 @@ export default async function ProfilePage() {
             <h3 className="text-base font-bold text-slate-900">
               {user.full_name}
             </h3>
-            <p className="text-xs text-slate-500 font-medium">{user.email}</p>
+            <p className="break-all text-xs text-slate-500 font-medium">{user.email}</p>
           </div>
           <div className="pt-1">
             <span className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-[#005a3c] border border-emerald-200">
@@ -65,7 +65,7 @@ export default async function ProfilePage() {
         </div>
 
         {/* Cột phải: Chi tiết tổ chức và phân quyền */}
-        <div className="md:col-span-2 space-y-6">
+        <div className="xl:col-span-2 space-y-6">
           {/* Thông tin phòng ban và tổ chức */}
           <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-6 space-y-4">
             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3">

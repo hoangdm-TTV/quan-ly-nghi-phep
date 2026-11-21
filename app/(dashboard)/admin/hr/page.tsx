@@ -80,7 +80,7 @@ export default async function HrAdminPage({
             defaultValue={year}
             className="w-28 rounded-lg border border-slate-300 px-3 py-2"
           />
-          <button className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-bold text-white">
+          <button className="rounded-lg bg-slate-900 px-3 py-2.5 text-sm font-bold text-white">
             Xem năm
           </button>
         </form>

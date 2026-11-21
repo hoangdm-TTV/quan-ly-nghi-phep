@@ -45,13 +45,13 @@ export default function AbsenceCalendar({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <label className="relative">
+          <label className="relative w-full sm:w-auto">
             <Search className="absolute left-2.5 top-2.5 w-4 h-4 text-slate-400" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Tìm người, phòng, team"
-              className="pl-8 pr-3 py-2 text-sm rounded-lg border border-slate-300 w-56"
+              className="pl-8 pr-3 py-2 text-sm rounded-lg border border-slate-300 w-full sm:w-56"
             />
           </label>
           <select
@@ -70,7 +70,7 @@ export default function AbsenceCalendar({
           Không có lịch vắng mặt phù hợp.
         </p>
       ) : (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
           {filtered.map((item) => (
             <article
               key={`${item.type}-${item.id}`}

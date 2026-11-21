@@ -13,7 +13,7 @@ function SaveButton() {
   return (
     <button
       disabled={pending}
-      className="rounded-lg bg-[#005a3c] px-3 py-2 text-xs font-bold text-white disabled:opacity-50"
+      className="min-h-11 rounded-lg bg-[#005a3c] px-3 py-2 text-xs font-bold text-white disabled:opacity-50 sm:min-h-0"
     >
       {pending ? "Đang lưu..." : "Lưu thay đổi"}
     </button>
@@ -55,7 +55,7 @@ export default function PendingOutOfficeEditor({
           sử.
         </p>
       </div>
-      <form action={editAction} className="grid gap-3 sm:grid-cols-2">
+      <form action={editAction} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <input type="hidden" name="requestId" value={request.id} />
         <label className="text-xs font-semibold text-slate-700">
           Ngày
@@ -134,7 +134,7 @@ export default function PendingOutOfficeEditor({
         {cancelState.error && (
           <p className="mb-2 text-xs text-rose-700">{cancelState.error}</p>
         )}
-        <button className="rounded-lg border border-rose-300 bg-white px-3 py-2 text-xs font-bold text-rose-700">
+        <button className="min-h-11 rounded-lg border border-rose-300 bg-white px-3 py-2 text-xs font-bold text-rose-700 sm:min-h-0">
           Hủy đơn ra ngoài
         </button>
       </form>

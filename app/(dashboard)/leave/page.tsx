@@ -265,6 +265,55 @@ export default async function LeaveListPage({
 
       {/* Main Request Table Card */}
       <div id="all-requests" className="scroll-mt-20">
+      {/* Điện thoại (< 768px): danh sách thẻ thay cho bảng */}
+      {requests.length > 0 && (
+        <ul className="space-y-3 md:hidden">
+          {requests.map((r) => (
+            <li
+              key={r.id}
+              className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 space-y-1">
+                  {activeTab === "scope" && (
+                    <div>
+                      <p className="font-bold text-slate-900">{r.employee_name}</p>
+                      <p className="text-xs font-medium text-slate-500">
+                        {r.department_name || "—"}
+                      </p>
+                    </div>
+                  )}
+                  <p className="flex flex-wrap items-center gap-x-1.5 text-sm font-semibold text-slate-900">
+                    <Calendar className="w-3.5 h-3.5 shrink-0 text-[#005a3c]" />
+                    <span>{r.start_date}</span>
+                    <span className="text-slate-400">→</span>
+                    <span>{r.end_date}</span>
+                    <span className="font-medium text-slate-500">
+                      · {r.duration_days} ngày
+                    </span>
+                  </p>
+                </div>
+                <LeaveStatusBadge status={r.status} />
+              </div>
+              <p className="mt-2 line-clamp-2 text-sm text-slate-600">
+                {r.reason || "—"}
+              </p>
+              <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
+                {r.status === "WAITING_FOR_DOC" && r.employee_id === user.id && (
+                  <LeaveDocumentDialog requestId={r.id} />
+                )}
+                <Link
+                  href={`/leave/${r.id}`}
+                  className="inline-flex min-h-11 items-center rounded-lg border border-emerald-200 bg-emerald-50 px-4 text-sm font-bold text-[#005a3c] transition-colors hover:border-emerald-300 hover:bg-emerald-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2"
+                >
+                  Chi tiết
+                  <ArrowRight className="w-4 h-4 ml-1" />
+                </Link>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
       {requests.length === 0 ? (
         <div className="bg-white p-12 text-center rounded-2xl border border-slate-200/90 shadow-xs space-y-3">
           <div className="w-12 h-12 rounded-xl bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
@@ -293,7 +342,7 @@ export default async function LeaveListPage({
           )}
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+        <div className="hidden md:block bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-200 text-left text-xs sm:text-sm">
               <thead className="bg-slate-50/90 text-slate-700 font-bold uppercase text-[11px] tracking-wider">
@@ -344,10 +393,10 @@ export default async function LeaveListPage({
                       ngày
                     </td>
                     <td
-                      className="px-5 py-4 max-w-xs truncate text-slate-600 font-medium"
+                      className="px-5 py-4 text-slate-600 font-medium"
                       title={r.reason || ""}
                     >
-                      {r.reason || "—"}
+                      <div className="max-w-[12rem] truncate sm:max-w-xs">{r.reason || "—"}</div>
                     </td>
                     <td className="px-5 py-4 whitespace-nowrap">
                       <LeaveStatusBadge status={r.status} />
@@ -383,7 +432,7 @@ export default async function LeaveListPage({
           {pageNumber > 1 && (
             <Link
               href={pageHref(pageNumber - 1)}
-              className="rounded-lg border px-3 py-1.5 font-semibold text-slate-700"
+              className="inline-flex h-11 items-center rounded-lg border px-4 text-sm font-semibold text-slate-700 sm:h-8 sm:px-3 sm:text-xs"
             >
               Trước
             </Link>
@@ -391,7 +440,7 @@ export default async function LeaveListPage({
           {hasNextPage && (
             <Link
               href={pageHref(pageNumber + 1)}
-              className="rounded-lg border px-3 py-1.5 font-semibold text-slate-700"
+              className="inline-flex h-11 items-center rounded-lg border px-4 text-sm font-semibold text-slate-700 sm:h-8 sm:px-3 sm:text-xs"
             >
               Tiếp
             </Link>

@@ -79,7 +79,7 @@ export default function PaginationControls({
             name="pageSize"
             defaultValue={pageSize}
             onChange={(event) => event.currentTarget.form?.requestSubmit()}
-            className="h-8 rounded-md border border-slate-300 bg-white px-2 text-xs font-semibold text-slate-700 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-100"
+            className="h-11 rounded-md border border-slate-300 bg-white px-2 text-xs sm:h-8 font-semibold text-slate-700 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-100"
           >
             <option value="10">10 / trang</option>
             <option value="20">20 / trang</option>
@@ -90,7 +90,7 @@ export default function PaginationControls({
         <a
           aria-label="Trang đầu"
           aria-disabled={page <= 1}
-          className={`inline-flex h-8 items-center justify-center rounded-md border px-2 text-xs font-semibold transition ${page <= 1 ? "pointer-events-none border-slate-200 bg-slate-50 text-slate-300" : "border-slate-300 bg-white text-slate-600 hover:bg-slate-100"}`}
+          className={`inline-flex h-11 min-w-11 items-center justify-center rounded-md border px-2 sm:h-8 sm:min-w-0 text-xs font-semibold transition ${page <= 1 ? "pointer-events-none border-slate-200 bg-slate-50 text-slate-300" : "border-slate-300 bg-white text-slate-600 hover:bg-slate-100"}`}
           href={firstHref}
         >
           « <span className="hidden sm:inline">first</span>
@@ -98,7 +98,7 @@ export default function PaginationControls({
         <a
           aria-label="Trang trước"
           aria-disabled={page <= 1}
-          className={`inline-flex h-8 items-center justify-center gap-0.5 rounded-md border px-2 text-xs font-semibold transition ${page <= 1 ? "pointer-events-none border-slate-200 bg-slate-50 text-slate-300" : "border-slate-300 bg-white text-slate-600 hover:bg-slate-100"}`}
+          className={`inline-flex h-11 min-w-11 items-center justify-center gap-0.5 rounded-md border px-2 sm:h-8 sm:min-w-0 text-xs font-semibold transition ${page <= 1 ? "pointer-events-none border-slate-200 bg-slate-50 text-slate-300" : "border-slate-300 bg-white text-slate-600 hover:bg-slate-100"}`}
           href={previousHref}
         >
           <ChevronLeft className="h-3.5 w-3.5" /><span className="hidden sm:inline">Trước</span>
@@ -106,14 +106,14 @@ export default function PaginationControls({
 
         {pageItems.map((item, index) =>
           typeof item === "string" ? (
-            <span key={`${item}-${index}`} className="inline-flex h-8 min-w-7 items-center justify-center px-0.5 text-xs font-semibold text-slate-500">
+            <span key={`${item}-${index}`} className="inline-flex h-11 min-w-7 items-center justify-center px-0.5 sm:h-8 text-xs font-semibold text-slate-500">
               ...
             </span>
           ) : (
             <a
               key={item}
               aria-current={item === page ? "page" : undefined}
-              className={`inline-flex h-8 min-w-7 items-center justify-center rounded-md border px-1.5 text-xs font-semibold transition ${item === page ? "border-slate-800 bg-slate-800 text-white shadow-sm" : "border-slate-300 bg-white text-slate-600 hover:bg-slate-100"}`}
+              className={`inline-flex h-11 min-w-11 items-center justify-center rounded-md border px-1.5 sm:h-8 sm:min-w-7 text-xs font-semibold transition ${item === page ? "border-slate-800 bg-slate-800 text-white shadow-sm" : "border-slate-300 bg-white text-slate-600 hover:bg-slate-100"}`}
               href={buildHref(basePath, params, item, pageSize)}
             >
               {item}
@@ -124,7 +124,7 @@ export default function PaginationControls({
         <a
           aria-label="Trang sau"
           aria-disabled={!hasNext}
-          className={`inline-flex h-8 items-center justify-center gap-0.5 rounded-md border px-2 text-xs font-semibold transition ${!hasNext ? "pointer-events-none border-slate-200 bg-slate-50 text-slate-300" : "border-slate-300 bg-white text-slate-600 hover:bg-slate-100"}`}
+          className={`inline-flex h-11 min-w-11 items-center justify-center gap-0.5 rounded-md border px-2 sm:h-8 sm:min-w-0 text-xs font-semibold transition ${!hasNext ? "pointer-events-none border-slate-200 bg-slate-50 text-slate-300" : "border-slate-300 bg-white text-slate-600 hover:bg-slate-100"}`}
           href={nextHref}
         >
           <span className="hidden sm:inline">Sau</span><ChevronRight className="h-3.5 w-3.5" />
@@ -132,7 +132,7 @@ export default function PaginationControls({
         <a
           aria-label="Trang cuối"
           aria-disabled={!hasNext}
-          className={`inline-flex h-8 items-center justify-center rounded-md border px-2 text-xs font-semibold transition ${!hasNext ? "pointer-events-none border-slate-200 bg-slate-50 text-slate-300" : "border-slate-300 bg-white text-slate-600 hover:bg-slate-100"}`}
+          className={`inline-flex h-11 min-w-11 items-center justify-center rounded-md border px-2 sm:h-8 sm:min-w-0 text-xs font-semibold transition ${!hasNext ? "pointer-events-none border-slate-200 bg-slate-50 text-slate-300" : "border-slate-300 bg-white text-slate-600 hover:bg-slate-100"}`}
           href={lastHref}
         >
           <span className="hidden sm:inline">last</span> »

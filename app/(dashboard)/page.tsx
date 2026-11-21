@@ -120,6 +120,11 @@ const statusLabels: Record<string, { label: string; class: string }> = {
   },
 };
 
+// Số 0 hiển thị nhạt để các số có giá trị nổi bật hơn
+function numberTone(value: number, tone = "text-slate-900") {
+  return value === 0 ? "text-slate-400" : tone;
+}
+
 function StatusBadge({ status }: { status: string }) {
   const cfg = statusLabels[status] || {
     label: status,
@@ -189,7 +194,7 @@ function ReportSection({
     : 0;
   return (
     <section className="space-y-4">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+      <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
         <div>
           <h1 className="text-xl font-black text-slate-900 sm:text-2xl">
             Tổng quan
@@ -238,32 +243,36 @@ function ReportSection({
           </Link>
         </form>
       </div>
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         {[
           {
             label: "Nhân viên nghỉ",
             value: totals.leaveEmployees,
-            detail: "người trong kỳ",
+            unit: "người",
+            detail: "trong kỳ",
             color: "text-blue-600 bg-blue-50",
             href: leaveDetailsHref(),
           },
           {
             label: "Lượt nghỉ",
             value: totals.leaveApproved,
-            detail: "đơn đã duyệt",
+            unit: "đơn",
+            detail: "đã duyệt",
             color: "text-emerald-700 bg-emerald-50",
             href: leaveDetailsHref(),
           },
           {
             label: "Đơn nghỉ > 2 ngày",
             value: longLeaveCount,
-            detail: "ngày làm việc",
+            unit: "đơn",
+            detail: "tính ngày làm việc",
             color: "text-amber-700 bg-amber-50",
             href: leaveDetailsHref(true),
           },
           {
             label: "Ngày nghỉ TB",
             value: Number(averageLeaveDays.toFixed(1)),
+            unit: "ngày",
             detail: "trên mỗi đơn",
             color: "text-violet-700 bg-violet-50",
             href: leaveDetailsHref(),
@@ -276,7 +285,7 @@ function ReportSection({
           >
             <div className="flex items-start gap-3">
               <span
-                className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-lg ${item.color}`}
+                className={`mt-0.5 hidden h-9 w-9 shrink-0 items-center justify-center rounded-xl text-lg sm:flex ${item.color}`}
               >
                 <span className="h-2 w-2 rounded-full bg-current" />
               </span>
@@ -284,10 +293,17 @@ function ReportSection({
                 <p className="text-[13px] font-bold uppercase tracking-wide text-slate-500">
                   {item.label}
                 </p>
-                <p className="mt-1 text-2xl font-black tabular-nums text-slate-900 sm:text-3xl">
-                  {item.value.toLocaleString("vi-VN")}
+                <p className="mt-2 flex flex-wrap items-baseline gap-x-1.5 leading-none">
+                  <span
+                    className={`text-4xl font-black tabular-nums tracking-tight sm:text-5xl ${numberTone(item.value)}`}
+                  >
+                    {item.value.toLocaleString("vi-VN")}
+                  </span>
+                  <span className="text-sm font-semibold text-slate-500 sm:text-base">
+                    {item.unit}
+                  </span>
                 </p>
-                <p className="text-[13px] text-slate-500">{item.detail}</p>
+                <p className="mt-1.5 text-[13px] text-slate-500">{item.detail}</p>
               </div>
             </div>
           </Link>
@@ -319,7 +335,7 @@ function PersonalSummary({
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {/* KPI Card 1: Nghỉ phép */}
         <Link
           href="/dashboard/details?type=leave&scope=mine&status=ALL"
@@ -339,18 +355,23 @@ function PersonalSummary({
                 </p>
               </div>
             </div>
-            <span className="text-3xl font-black text-slate-900 tabular-nums">
-              {stats.myLeaveTotal}
+            <span className="flex shrink-0 items-baseline gap-1 leading-none">
+              <span
+                className={`text-4xl font-black tabular-nums tracking-tight ${numberTone(stats.myLeaveTotal)}`}
+              >
+                {stats.myLeaveTotal}
+              </span>
+              <span className="text-sm font-semibold text-slate-500">đơn</span>
             </span>
           </div>
 
           <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center px-2 py-0.5 rounded-md text-sm font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                {stats.myLeavePending} đang chờ
+<span className="mr-1 text-base font-black tabular-nums">{stats.myLeavePending}</span> đang chờ
               </span>
               <span className="inline-flex items-center px-2 py-0.5 rounded-md text-sm font-bold bg-emerald-50 text-[#005a3c] border border-emerald-200">
-                {stats.myLeaveApproved} đã duyệt
+                <span className="mr-1 text-base font-black tabular-nums">{stats.myLeaveApproved}</span> đã duyệt
               </span>
             </div>
             <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-[#005a3c] group-hover:translate-x-1 transition-all" />
@@ -376,18 +397,23 @@ function PersonalSummary({
                 </p>
               </div>
             </div>
-            <span className="text-3xl font-black text-slate-900 tabular-nums">
-              {stats.myOutOfficeTotal}
+            <span className="flex shrink-0 items-baseline gap-1 leading-none">
+              <span
+                className={`text-4xl font-black tabular-nums tracking-tight ${numberTone(stats.myOutOfficeTotal)}`}
+              >
+                {stats.myOutOfficeTotal}
+              </span>
+              <span className="text-sm font-semibold text-slate-500">đơn</span>
             </span>
           </div>
 
           <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center px-2 py-0.5 rounded-md text-sm font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                {stats.myOutOfficePending} đang chờ
+<span className="mr-1 text-base font-black tabular-nums">{stats.myOutOfficePending}</span> đang chờ
               </span>
               <span className="inline-flex items-center px-2 py-0.5 rounded-md text-sm font-bold bg-emerald-50 text-[#005a3c] border border-emerald-200">
-                {stats.myOutOfficeCompleted} hoàn tất
+                <span className="mr-1 text-base font-black tabular-nums">{stats.myOutOfficeCompleted}</span> hoàn tất
               </span>
             </div>
             <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-blue-700 group-hover:translate-x-1 transition-all" />
@@ -459,7 +485,7 @@ function ApprovalQueue({
         </div>
       </div>
 
-      <div className="grid sm:grid-cols-2 gap-3 pt-1">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
         {leavePreview.map((r) => (
           <Link
             key={r.id}

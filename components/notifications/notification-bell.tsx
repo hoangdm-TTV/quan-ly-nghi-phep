@@ -93,7 +93,7 @@ export default function NotificationBell() {
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-label="Thông báo"
-        className="relative inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-600 transition hover:bg-slate-50"
+        className="relative inline-flex h-11 w-11 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-600 transition hover:bg-slate-50 sm:h-10 sm:w-10"
       >
         <Bell className="h-4 w-4" />
         {unread > 0 && (
@@ -103,7 +103,7 @@ export default function NotificationBell() {
         )}
       </button>
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
+        <div className="absolute right-0 top-full z-50 mt-2 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl max-sm:fixed max-sm:inset-x-3 max-sm:top-16 max-sm:w-auto">
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
             <div>
               <p className="text-sm font-bold text-slate-900">Thông báo</p>
@@ -118,7 +118,7 @@ export default function NotificationBell() {
                 type="button"
                 onClick={markAllRead}
                 disabled={loading}
-                className="inline-flex items-center gap-1 text-[11px] font-bold text-[#005a3c] hover:underline"
+                className="inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-xs font-bold text-[#005a3c] hover:underline sm:min-h-0 sm:py-1.5"
               >
                 {loading ? (
                   <Loader2 className="h-3 w-3 animate-spin" />
@@ -129,7 +129,7 @@ export default function NotificationBell() {
               </button>
             )}
           </div>
-          <div className="max-h-96 overflow-y-auto">
+          <div className="max-h-[min(24rem,calc(100dvh-10rem))] overflow-y-auto">
             {items.length === 0 ? (
               <p className="p-6 text-center text-xs text-slate-400">
                 Chưa có thông báo nào.

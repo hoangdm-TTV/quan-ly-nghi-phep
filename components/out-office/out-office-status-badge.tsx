@@ -38,7 +38,7 @@ export default function OutOfficeStatusBadge({
 
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${current.className}`}
+      className={`inline-flex items-center whitespace-nowrap px-2.5 py-0.5 rounded-full text-xs font-medium border ${current.className}`}
     >
       <span className="w-1.5 h-1.5 rounded-full mr-1.5 bg-current opacity-70"></span>
       {current.label}

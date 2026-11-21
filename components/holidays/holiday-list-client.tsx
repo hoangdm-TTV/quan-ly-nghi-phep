@@ -47,7 +47,7 @@ export default function HolidayListClient({
               setEditTarget(null);
               setShowForm(true);
             }}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+            className="inline-flex items-center px-4 py-2.5 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors"
           >
             <Plus className="w-4 h-4 mr-1.5" />
             Thêm ngày lễ
@@ -136,10 +136,10 @@ export default function HolidayListClient({
                             setEditTarget(h);
                             setShowForm(true);
                           }}
-                          className="p-1.5 text-slate-400 hover:text-blue-600 rounded-md hover:bg-blue-50 transition-colors mr-1"
+                          className="mr-2 inline-flex h-11 w-11 items-center justify-center text-slate-400 hover:text-blue-600 rounded-md hover:bg-blue-50 transition-colors sm:h-9 sm:w-9"
                           title="Chỉnh sửa"
                         >
-                          <Pencil className="w-3.5 h-3.5" />
+                          <Pencil className="w-4 h-4" />
                         </button>
                         <DeleteHolidayButton
                           holidayId={h.id}

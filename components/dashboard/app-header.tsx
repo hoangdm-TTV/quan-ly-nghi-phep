@@ -40,7 +40,7 @@ export default function AppHeader({ user, approvalCounts: _approvalCounts, onOpe
         <button
           onClick={onOpenSidebar}
           aria-label="Mở menu"
-          className="-ml-2 rounded-xl p-2 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
+          className="-ml-2 inline-flex h-11 w-11 items-center justify-center rounded-xl text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 sm:h-10 sm:w-10"
         >
           <Menu className="h-5 w-5" />
         </button>
@@ -51,7 +51,7 @@ export default function AppHeader({ user, approvalCounts: _approvalCounts, onOpe
       </div>
 
       {/* Desktop: giữ nguyên tiêu đề hệ thống */}
-      <div className="hidden items-center gap-4 lg:flex">
+      <div className="hidden min-w-0 items-center gap-4 xl:flex">
         <div>
           <div className="flex items-center gap-2">
             <span className="text-sm font-bold text-slate-800">
@@ -65,7 +65,7 @@ export default function AppHeader({ user, approvalCounts: _approvalCounts, onOpe
         </div>
       </div>
 
-      <div className="flex items-center gap-1.5 sm:gap-4">
+      <div className="ml-auto flex items-center gap-1.5 sm:gap-4">
         {/* Web Push nằm trên desktop; mobile đưa vào menu avatar */}
         <div className="hidden lg:block">
           <PushNotificationSetup />
@@ -75,11 +75,11 @@ export default function AppHeader({ user, approvalCounts: _approvalCounts, onOpe
 
         {canSubmit && (
           <div className="hidden items-center gap-2 sm:flex">
-            <Link href="/leave/new" className="inline-flex items-center gap-1.5 rounded-lg bg-[#005a3c] px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-[#044e3f]">
+            <Link href="/leave/new" className="inline-flex min-h-10 items-center gap-1.5 whitespace-nowrap rounded-lg bg-[#005a3c] px-3 py-2 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-[#044e3f]">
               <Plus className="h-3.5 w-3.5" />
               <span>Nghỉ phép</span>
             </Link>
-            <Link href="/out-office/new" className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs transition-colors hover:bg-slate-50">
+            <Link href="/out-office/new" className="inline-flex min-h-10 items-center gap-1.5 whitespace-nowrap rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-2xs transition-colors hover:bg-slate-50">
               <Clock className="h-3.5 w-3.5 text-slate-500" />
               <span>Ra ngoài</span>
             </Link>
@@ -93,7 +93,7 @@ export default function AppHeader({ user, approvalCounts: _approvalCounts, onOpe
             <div className="hidden text-left xl:block">
               <p className="leading-tight text-xs font-semibold text-slate-900">{user.full_name}</p>
               <div className="mt-0.5 flex items-center gap-1.5">
-                <span className={`inline-block rounded border px-1.5 py-0.2 text-[9px] font-semibold ${roleBadgeColors[user.role] || "bg-slate-100 text-slate-700 border-slate-200"}`}>
+                <span className={`inline-block rounded border px-1.5 py-0.5 text-[9px] font-semibold ${roleBadgeColors[user.role] || "bg-slate-100 text-slate-700 border-slate-200"}`}>
                   {user.position || "Chưa cập nhật chức vụ"}
                 </span>
                 {user.department_name && <span className="max-w-[130px] truncate text-[11px] text-slate-500">• {user.department_name}</span>}

@@ -136,8 +136,8 @@ export default async function DashboardDetailsPage({
             </table>
           </div>
           <footer className="flex justify-end gap-2 border-t border-slate-100 px-4 py-3">
-            {pageNumber > 1 && <Link href={pageHref(pageNumber - 1)} className="rounded-lg border px-3 py-1.5 text-xs font-semibold">Trước</Link>}
-            {hasNext && <Link href={pageHref(pageNumber + 1)} className="rounded-lg border px-3 py-1.5 text-xs font-semibold">Tiếp</Link>}
+            {pageNumber > 1 && <Link href={pageHref(pageNumber - 1)} className="inline-flex h-11 items-center rounded-lg border px-4 text-sm font-semibold sm:h-8 sm:px-3 sm:text-xs">Trước</Link>}
+            {hasNext && <Link href={pageHref(pageNumber + 1)} className="inline-flex h-11 items-center rounded-lg border px-4 text-sm font-semibold sm:h-8 sm:px-3 sm:text-xs">Tiếp</Link>}
           </footer>
         </section>
       </main>
@@ -225,7 +225,7 @@ export default async function DashboardDetailsPage({
                     {scope !== "mine" && <td className="px-4 py-3">{row.department_name || "Chưa phân bổ"}</td>}
                     <td className="whitespace-nowrap px-4 py-3">{row.start_date} → {row.end_date}</td>
                     <td className="px-4 py-3">{row.duration_days} ngày</td>
-                    <td className="max-w-xs truncate px-4 py-3" title={row.reason || ""}>{row.reason || "—"}</td>
+                    <td className="px-4 py-3" title={row.reason || ""}><div className="max-w-[12rem] truncate sm:max-w-xs">{row.reason || "—"}</div></td>
                     <td className="px-4 py-3"><LeaveStatusBadge status={row.status} /></td>
                     {user.role !== "ADMIN" && <td className="px-4 py-3"><Link href={`/leave/${row.id}`} className="font-semibold text-emerald-800 hover:underline">Mở đơn →</Link></td>}
                   </tr>
@@ -235,8 +235,8 @@ export default async function DashboardDetailsPage({
             </table>
           </div>
           <footer className="flex justify-end gap-2 border-t border-slate-100 px-4 py-3">
-            {pageNumber > 1 && <Link href={listHref(pageNumber - 1)} className="rounded-lg border px-3 py-1.5 text-xs font-semibold">Trước</Link>}
-            {hasNext && <Link href={listHref(pageNumber + 1)} className="rounded-lg border px-3 py-1.5 text-xs font-semibold">Tiếp</Link>}
+            {pageNumber > 1 && <Link href={listHref(pageNumber - 1)} className="inline-flex h-11 items-center rounded-lg border px-4 text-sm font-semibold sm:h-8 sm:px-3 sm:text-xs">Trước</Link>}
+            {hasNext && <Link href={listHref(pageNumber + 1)} className="inline-flex h-11 items-center rounded-lg border px-4 text-sm font-semibold sm:h-8 sm:px-3 sm:text-xs">Tiếp</Link>}
           </footer>
         </section>
       </main>
@@ -293,7 +293,7 @@ export default async function DashboardDetailsPage({
                   <td className="whitespace-nowrap px-4 py-3">{row.start_time}–{row.end_time}</td>
                   {(lateReturn || actualTracking) && <td className="whitespace-nowrap px-4 py-3">{row.actual_return_at || "—"}</td>}
                   {actualTracking && <td className="whitespace-nowrap px-4 py-3">{Number(row.return_delta_minutes || 0) > 0 ? <span className="font-semibold text-rose-700">Muộn {Math.floor(Number(row.return_delta_minutes) / 60) ? `${Math.floor(Number(row.return_delta_minutes) / 60)} giờ ` : ""}{Number(row.return_delta_minutes) % 60} phút</span> : <span className="font-semibold text-emerald-800">Đúng/trước giờ</span>}</td>}
-                  <td className="max-w-xs truncate px-4 py-3" title={row.reason || ""}>{row.reason || "—"}</td>
+                  <td className="px-4 py-3" title={row.reason || ""}><div className="max-w-[12rem] truncate sm:max-w-xs">{row.reason || "—"}</div></td>
                   {actualTracking && <td className="max-w-sm px-4 py-3 text-xs text-slate-600">{row.return_document_file_name || "Không có tệp (đơn cũ)"}</td>}
                   <td className="px-4 py-3"><OutOfficeStatusBadge status={row.status} /></td>
                   {user.role !== "ADMIN" && <td className="px-4 py-3"><Link href={`/out-office/${row.id}`} className="font-semibold text-emerald-800 hover:underline">Mở đơn →</Link></td>}
@@ -304,8 +304,8 @@ export default async function DashboardDetailsPage({
           </table>
         </div>
         <footer className="flex justify-end gap-2 border-t border-slate-100 px-4 py-3">
-          {pageNumber > 1 && <Link href={listHref(pageNumber - 1)} className="rounded-lg border px-3 py-1.5 text-xs font-semibold">Trước</Link>}
-          {hasNext && <Link href={listHref(pageNumber + 1)} className="rounded-lg border px-3 py-1.5 text-xs font-semibold">Tiếp</Link>}
+          {pageNumber > 1 && <Link href={listHref(pageNumber - 1)} className="inline-flex h-11 items-center rounded-lg border px-4 text-sm font-semibold sm:h-8 sm:px-3 sm:text-xs">Trước</Link>}
+          {hasNext && <Link href={listHref(pageNumber + 1)} className="inline-flex h-11 items-center rounded-lg border px-4 text-sm font-semibold sm:h-8 sm:px-3 sm:text-xs">Tiếp</Link>}
         </footer>
       </section>
     </main>

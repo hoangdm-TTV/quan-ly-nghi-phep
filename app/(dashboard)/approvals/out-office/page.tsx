@@ -92,7 +92,7 @@ export default async function ApprovalsOutOfficePage({
               key={req.id}
               className="bg-white rounded-2xl border border-amber-300 ring-1 ring-amber-100 shadow-xs p-6 hover:shadow-md transition-all space-y-4"
             >
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 pb-4">
+              <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3 border-b border-slate-100 pb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 border border-blue-200 flex items-center justify-center font-bold text-sm shrink-0">
                     {req.employee_name.slice(0, 2).toUpperCase()}
@@ -109,16 +109,16 @@ export default async function ApprovalsOutOfficePage({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2.5">
+                <div className="flex flex-wrap items-center gap-2">
                   <span
-                    className="px-2.5 py-1 rounded-lg text-[11px] font-black uppercase tracking-wide bg-amber-100 text-amber-900"
+                    className="whitespace-nowrap px-2.5 py-1 rounded-lg text-[11px] font-black uppercase tracking-wide bg-amber-100 text-amber-900"
                   >
                     Chưa duyệt
                   </span>
                   <OutOfficeStatusBadge status={req.status} />
                   <Link
                     href={`/out-office/${req.id}`}
-                    className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold text-[#005a3c] bg-emerald-50 hover:bg-[#005a3c] hover:text-white transition-all"
+                    className="inline-flex items-center whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-bold text-[#005a3c] bg-emerald-50 hover:bg-[#005a3c] hover:text-white transition-all"
                     title="Xem chi tiết"
                   >
                     Xem đơn
@@ -190,7 +190,7 @@ export default async function ApprovalsOutOfficePage({
           {pageNumber > 1 && (
             <Link
               href={`/approvals/out-office?page=${pageNumber - 1}`}
-              className="rounded-lg border px-3 py-1.5 font-semibold text-slate-700"
+              className="inline-flex h-11 items-center rounded-lg border px-4 text-sm font-semibold text-slate-700 sm:h-8 sm:px-3 sm:text-xs"
             >
               Trước
             </Link>
@@ -198,7 +198,7 @@ export default async function ApprovalsOutOfficePage({
           {hasNextPage && (
             <Link
               href={`/approvals/out-office?page=${pageNumber + 1}`}
-              className="rounded-lg border px-3 py-1.5 font-semibold text-slate-700"
+              className="inline-flex h-11 items-center rounded-lg border px-4 text-sm font-semibold text-slate-700 sm:h-8 sm:px-3 sm:text-xs"
             >
               Tiếp
             </Link>

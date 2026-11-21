@@ -30,6 +30,16 @@ textarea {
   font: inherit;
 }
 
+/* iOS Safari tự phóng to khi chạm vào ô nhập có chữ < 16px. Gốc 1rem = 15px nên phải
+   dùng px; cần !important vì class cỡ chữ (.text-xs, .text-sm…) mạnh hơn selector thẻ. */
+@media (max-width: 639px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
 /* Cỡ chữ dễ đọc hơn trên màn hình Windows; chỉ các thành phần có class
    font-semibold/bold/black mới được nhấn mạnh theo chủ ý của giao diện. */
 .text-xs {

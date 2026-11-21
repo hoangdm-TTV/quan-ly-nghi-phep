@@ -11,6 +11,11 @@ function formatNumber(value: number, digits = 0) {
   return Number(value.toFixed(digits)).toLocaleString("vi-VN");
 }
 
+// Số 0 hiển thị nhạt để các số có giá trị nổi bật hơn
+function numberTone(value: number, tone = "text-slate-900") {
+  return value === 0 ? "text-slate-400" : tone;
+}
+
 export default function AdvancedReportSection({
   report,
   scopeReport,
@@ -133,7 +138,7 @@ export default function AdvancedReportSection({
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 xl:grid-cols-12">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs sm:p-6 xl:col-span-7">
           <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
             <div>
@@ -167,11 +172,11 @@ export default function AdvancedReportSection({
           </div>
           <div className="mb-3 flex flex-wrap gap-4 text-[13px] font-medium text-slate-600">
             <span className="inline-flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-sm bg-blue-500" />
+              <span className="h-2.5 w-2.5 rounded-sm bg-emerald-500" />
               Nghỉ phép
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-sm bg-emerald-500" />
+              <span className="h-2.5 w-2.5 rounded-sm bg-blue-500" />
               Ra ngoài
             </span>
           </div>
@@ -180,8 +185,9 @@ export default function AdvancedReportSection({
               Chưa có dữ liệu trong kỳ.
             </p>
           ) : (
-            <div className="overflow-x-auto pb-2">
-              <div className="flex min-w-max items-end gap-3 border-b border-l border-slate-200 px-3 pb-2">
+            <div className="overflow-x-auto pb-2" dir="rtl">
+              {/* rtl: khung cuộn mở sẵn ở kỳ mới nhất (bên phải); nội dung bên trong vẫn trái → phải */}
+              <div dir="ltr" className="flex min-w-max items-end gap-3 border-b border-l border-slate-200 px-3 pb-2">
                 {trend.map((item) => (
                   <div
                     key={item.period}
@@ -192,13 +198,15 @@ export default function AdvancedReportSection({
                       <Link
                         href={leaveDetailsHref(item.fromDate, item.toDate)}
                         aria-label={`Xem đơn nghỉ phép ${item.period}`}
-                        className="flex h-full w-5 flex-col items-center justify-end rounded-t hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                        className="flex h-full w-7 flex-col items-center justify-end rounded-t hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                       >
-                        <span className="mb-1 text-[11px] text-blue-700">
+                        <span
+                          className={`mb-1 text-sm font-bold tabular-nums ${numberTone(item.leaveEmployees, "text-emerald-700")}`}
+                        >
                           {item.leaveEmployees}
                         </span>
                         <div
-                          className="w-3 rounded-t bg-blue-500"
+                          className="w-3 rounded-t bg-emerald-500"
                           style={{
                             height: `${(item.leaveEmployees / maxTrendEmployees) * 78}%`,
                             minHeight: item.leaveEmployees ? "3px" : "0",
@@ -214,13 +222,15 @@ export default function AdvancedReportSection({
                           item.toDate,
                         )}
                         aria-label={`Xem đơn ra ngoài ${item.period}`}
-                        className="flex h-full w-5 flex-col items-center justify-end rounded-t hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                        className="flex h-full w-7 flex-col items-center justify-end rounded-t hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                       >
-                        <span className="mb-1 text-[11px] text-emerald-700">
+                        <span
+                          className={`mb-1 text-sm font-bold tabular-nums ${numberTone(item.outOfficeEmployees, "text-blue-700")}`}
+                        >
                           {item.outOfficeEmployees}
                         </span>
                         <div
-                          className="w-3 rounded-t bg-emerald-500"
+                          className="w-3 rounded-t bg-blue-500"
                           style={{
                             height: `${(item.outOfficeEmployees / maxTrendEmployees) * 78}%`,
                             minHeight: item.outOfficeEmployees ? "3px" : "0",
@@ -228,7 +238,7 @@ export default function AdvancedReportSection({
                         />
                       </Link>
                     </div>
-                    <span className="mt-2 whitespace-nowrap text-[11px] text-slate-500">
+                    <span className="mt-2 whitespace-nowrap text-xs text-slate-500">
                       {item.period}
                     </span>
                   </div>
@@ -290,29 +300,29 @@ export default function AdvancedReportSection({
                       >
                         {department.departmentName}
                       </Link>
-                      <span className="flex shrink-0 items-center gap-1 font-semibold">
+                      <span className="flex shrink-0 items-center gap-1 text-lg font-bold tabular-nums">
                         <Link
                           href={leaveHref}
                           aria-label={`Xem đơn nghỉ phép của ${department.departmentName}`}
-                          className="text-emerald-800 hover:underline"
+                          className={`inline-flex min-h-11 min-w-11 items-center justify-center hover:underline sm:min-h-8 sm:min-w-8 ${numberTone(department.leaveEmployees, "text-emerald-800")}`}
                         >
                           {department.leaveEmployees}
                         </Link>
-                        <span className="font-normal text-slate-400">/</span>
+                        <span className="font-normal text-slate-300">/</span>
                         <Link
                           href={outOfficeHref}
                           aria-label={`Xem đơn ra ngoài của ${department.departmentName}`}
-                          className="text-blue-700 hover:underline"
+                          className={`inline-flex min-h-11 min-w-11 items-center justify-center hover:underline sm:min-h-8 sm:min-w-8 ${numberTone(department.outOfficeEmployees, "text-blue-700")}`}
                         >
                           {department.outOfficeEmployees}
                         </Link>
                       </span>
                     </div>
                     <div className="space-y-1">
-                      <Link
-                        href={leaveHref}
-                        aria-label={`Xem danh sách nghỉ phép của ${department.departmentName}`}
-                        className="block h-2 overflow-hidden rounded-full bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                      {/* Thanh chỉ để minh hoạ; link nằm ở 2 số liệu phía trên (vùng chạm đủ lớn) */}
+                      <div
+                        aria-hidden="true"
+                        className="h-2 overflow-hidden rounded-full bg-slate-100"
                       >
                         <span
                           className="block h-full rounded-full bg-emerald-500"
@@ -320,11 +330,10 @@ export default function AdvancedReportSection({
                             width: `${(department.leaveEmployees / maxDepartmentEmployees) * 100}%`,
                           }}
                         />
-                      </Link>
-                      <Link
-                        href={outOfficeHref}
-                        aria-label={`Xem danh sách ra ngoài của ${department.departmentName}`}
-                        className="block h-1.5 overflow-hidden rounded-full bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                      </div>
+                      <div
+                        aria-hidden="true"
+                        className="h-1.5 overflow-hidden rounded-full bg-slate-100"
                       >
                         <span
                           className="block h-full rounded-full bg-blue-500"
@@ -332,11 +341,37 @@ export default function AdvancedReportSection({
                             width: `${(department.outOfficeEmployees / maxDepartmentEmployees) * 100}%`,
                           }}
                         />
-                      </Link>
+                      </div>
                     </div>
                   </div>
                 );
               })}
+              {/* Dòng tổng = cộng các phòng ban ở trên */}
+              <div className="flex items-center justify-between gap-2 border-t border-slate-200 pt-3 text-sm">
+                <span className="font-bold uppercase tracking-wide text-slate-700">
+                  Tổng
+                </span>
+                <span className="flex shrink-0 items-center gap-1 text-xl font-black tabular-nums">
+                  <Link
+                    href={leaveDetailsHref()}
+                    aria-label="Xem tất cả đơn nghỉ phép trong kỳ"
+                    className={`inline-flex min-h-11 min-w-11 items-center justify-center hover:underline sm:min-h-8 sm:min-w-8 ${numberTone(scopeReport.totals.leaveEmployees, "text-emerald-800")}`}
+                  >
+                    {formatNumber(scopeReport.totals.leaveEmployees)}
+                  </Link>
+                  <span className="font-normal text-slate-300">/</span>
+                  <Link
+                    href={outOfficeDetailsHref("TRACKED")}
+                    aria-label="Xem tất cả đơn ra ngoài trong kỳ"
+                    className={`inline-flex min-h-11 min-w-11 items-center justify-center hover:underline sm:min-h-8 sm:min-w-8 ${numberTone(scopeReport.totals.outOfficeEmployees, "text-blue-700")}`}
+                  >
+                    {formatNumber(scopeReport.totals.outOfficeEmployees)}
+                  </Link>
+                  <span className="ml-1 text-sm font-semibold text-slate-500">
+                    người
+                  </span>
+                </span>
+              </div>
             </div>
           )}
           <p className="mt-5 text-xs text-slate-400">
@@ -345,16 +380,20 @@ export default function AdvancedReportSection({
         </section>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-12">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs sm:p-6 xl:col-span-7">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
               <h2 className="text-base font-bold uppercase tracking-wide text-slate-800">
                 Đơn nghỉ trên 2 ngày
               </h2>
-              <p className="mt-1 text-2xl font-black text-slate-900">
-                {formatNumber(report.longLeaveCount)}
-                <span className="ml-2 text-sm font-normal text-slate-500">
+              <p className="mt-2 flex flex-wrap items-baseline gap-x-2 leading-none">
+                <span
+                  className={`text-4xl font-black tabular-nums tracking-tight ${numberTone(report.longLeaveCount)}`}
+                >
+                  {formatNumber(report.longLeaveCount)}
+                </span>
+                <span className="text-sm font-semibold text-slate-500">
                   đơn · ngày làm việc
                 </span>
               </p>
@@ -392,10 +431,10 @@ export default function AdvancedReportSection({
                       <td className="px-3 py-3 text-slate-500">
                         {item.departmentName}
                       </td>
-                      <td className="whitespace-nowrap px-3 py-3 text-slate-600">
+                      <td className="whitespace-nowrap px-3 py-3 tabular-nums text-slate-600">
                         {item.startDate} – {item.endDate}
                       </td>
-                      <td className="px-3 py-3 text-right font-bold text-slate-800">
+                      <td className="px-3 py-3 text-right text-base font-black tabular-nums text-slate-900">
                         {formatNumber(item.durationDays)}
                       </td>
                     </tr>
@@ -452,10 +491,10 @@ export default function AdvancedReportSection({
                       {item.departmentName}
                     </span>
                   </span>
-                  <span className="text-right font-bold text-slate-800">
+                  <span className="text-right text-base font-black tabular-nums text-slate-900">
                     {formatNumber(item.leaveDays)}
                   </span>
-                  <span className="text-right text-slate-600">
+                  <span className="text-right text-base font-semibold tabular-nums text-slate-600">
                     {formatNumber(item.leaveRequests)}
                   </span>
                 </Link>
@@ -478,33 +517,39 @@ export default function AdvancedReportSection({
               </p>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2 text-right">
+          <div className="grid w-full grid-cols-3 gap-2 text-center sm:flex sm:w-auto sm:flex-wrap sm:text-right">
           <Link
             href={outOfficeDetailsHref("ALL")}
-            className="min-w-24 rounded-lg px-2 py-1 transition hover:bg-slate-50"
+            className="rounded-lg px-2 py-1 transition sm:min-w-24 hover:bg-slate-50"
           >
-              <p className="text-lg font-black text-slate-900">
+              <p
+                className={`text-3xl font-black leading-none tabular-nums tracking-tight ${numberTone(scopeReport.totals.outOfficeTotal)}`}
+              >
                 {formatNumber(scopeReport.totals.outOfficeTotal)}
               </p>
-              <p className="text-xs text-slate-500">đơn ra ngoài</p>
+              <p className="mt-1.5 text-[13px] text-slate-500">đơn ra ngoài</p>
           </Link>
           <Link
             href={outOfficeDetailsHref("COMPLETED", false, true)}
-            className="min-w-24 rounded-lg px-2 py-1 transition hover:bg-emerald-50"
+            className="rounded-lg px-2 py-1 transition sm:min-w-24 hover:bg-emerald-50"
           >
-              <p className="text-lg font-black text-emerald-700">
+              <p
+                className={`text-3xl font-black leading-none tabular-nums tracking-tight ${numberTone(report.actualTracking.completedCount, "text-emerald-700")}`}
+              >
                 {formatNumber(report.actualTracking.completedCount)}
               </p>
-              <p className="text-xs text-slate-500">đã xác nhận về</p>
+              <p className="mt-1.5 text-[13px] text-slate-500">đã xác nhận về</p>
           </Link>
           <Link
             href={outOfficeDetailsHref("COMPLETED", true)}
-            className="min-w-24 rounded-lg px-2 py-1 transition hover:bg-rose-50"
+            className="rounded-lg px-2 py-1 transition sm:min-w-24 hover:bg-rose-50"
           >
-              <p className="text-lg font-black text-rose-700">
+              <p
+                className={`text-3xl font-black leading-none tabular-nums tracking-tight ${numberTone(report.lateOutOfficeReturns, "text-rose-700")}`}
+              >
                 {formatNumber(report.lateOutOfficeReturns)}
               </p>
-              <p className="text-xs text-slate-500">về muộn</p>
+              <p className="mt-1.5 text-[13px] text-slate-500">về muộn</p>
           </Link>
           </div>
         </div>
@@ -539,17 +584,22 @@ export default function AdvancedReportSection({
                     <td className="px-3 py-3 text-slate-500">
                       {item.departmentName}
                     </td>
-                    <td className="px-3 py-3 text-slate-600">
+                    <td className="whitespace-nowrap px-3 py-3 tabular-nums text-slate-600">
                       {item.requestDate}
                     </td>
-                    <td className="px-3 py-3 text-slate-600">
+                    <td className="whitespace-nowrap px-3 py-3 tabular-nums text-slate-600">
                       {item.scheduledEndTime}
                     </td>
-                    <td className="px-3 py-3 text-slate-600">
+                    <td className="whitespace-nowrap px-3 py-3 tabular-nums text-slate-600">
                       {item.actualReturnAt}
                     </td>
-                    <td className="px-3 py-3 text-right font-bold text-rose-700">
-                      {formatNumber(item.delayMinutes)} phút
+                    <td className="whitespace-nowrap px-3 py-3 text-right">
+                      <span className="text-base font-black tabular-nums text-rose-700">
+                        {formatNumber(item.delayMinutes)}
+                      </span>
+                      <span className="ml-1 text-xs font-semibold text-slate-500">
+                        phút
+                      </span>
                     </td>
                   </tr>
                 ))}

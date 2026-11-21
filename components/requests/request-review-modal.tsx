@@ -30,7 +30,7 @@ export default function RequestReviewModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-[2px]"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/55 p-4 backdrop-blur-[2px]"
       role="dialog"
       aria-modal="true"
       aria-labelledby="request-review-title"
@@ -38,7 +38,7 @@ export default function RequestReviewModal({
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <div className="w-full max-w-xl overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-900/10">
+      <div className="flex max-h-[calc(100dvh-2rem)] w-full max-w-xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-900/10">
         <div className="flex items-start justify-between border-b border-slate-100 px-5 py-4 sm:px-6">
           <div className="flex items-start gap-3">
             <div className="mt-0.5 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-[#005a3c]">
@@ -64,7 +64,7 @@ export default function RequestReviewModal({
           </button>
         </div>
 
-        <div className="max-h-[60vh] overflow-y-auto px-5 py-5 sm:px-6">
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
           <div className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-slate-50/70">
             {items.map((item) => (
               <div

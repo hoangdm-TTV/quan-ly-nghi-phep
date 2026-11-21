@@ -19,7 +19,7 @@ function ApproveBtn() {
     <button
       type="submit"
       disabled={pending}
-      className="inline-flex items-center px-4 py-2 text-xs font-semibold rounded-lg text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+      className="inline-flex min-h-11 items-center px-4 py-2 text-xs font-semibold rounded-lg text-white sm:min-h-0 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 transition-colors"
     >
       {pending ? (
         <>
@@ -42,7 +42,7 @@ function RejectBtn() {
     <button
       type="submit"
       disabled={pending}
-      className="inline-flex items-center px-4 py-2 text-xs font-semibold rounded-lg text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 transition-colors"
+      className="inline-flex min-h-11 items-center px-4 py-2 text-xs font-semibold rounded-lg text-white sm:min-h-0 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 transition-colors"
     >
       {pending ? (
         <>
@@ -93,14 +93,14 @@ export default function ApprovalActions({ requestId }: ApprovalActionsProps) {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setMode("approve")}
-            className="inline-flex items-center px-3.5 py-1.5 text-xs font-semibold rounded-lg text-emerald-700 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 transition-colors"
+            className="inline-flex min-h-11 items-center px-4 py-2.5 text-xs font-semibold rounded-lg sm:min-h-0 sm:py-1.5 text-emerald-700 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 transition-colors"
           >
             <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
             Phê duyệt
           </button>
           <button
             onClick={() => setMode("reject")}
-            className="inline-flex items-center px-3.5 py-1.5 text-xs font-semibold rounded-lg text-rose-700 bg-rose-50 border border-rose-200 hover:bg-rose-100 transition-colors"
+            className="inline-flex min-h-11 items-center px-4 py-2.5 text-xs font-semibold rounded-lg sm:min-h-0 sm:py-1.5 text-rose-700 bg-rose-50 border border-rose-200 hover:bg-rose-100 transition-colors"
           >
             <XCircle className="w-3.5 h-3.5 mr-1.5" />
             Từ chối
@@ -130,7 +130,7 @@ export default function ApprovalActions({ requestId }: ApprovalActionsProps) {
             <button
               type="button"
               onClick={() => setMode("idle")}
-              className="px-3 py-2 text-xs font-medium text-slate-600 hover:text-slate-800"
+              className="min-h-11 px-3 py-2 text-xs font-medium text-slate-600 hover:text-slate-800 sm:min-h-0"
             >
               Hủy
             </button>
@@ -161,7 +161,7 @@ export default function ApprovalActions({ requestId }: ApprovalActionsProps) {
             <button
               type="button"
               onClick={() => setMode("idle")}
-              className="px-3 py-2 text-xs font-medium text-slate-600 hover:text-slate-800"
+              className="min-h-11 px-3 py-2 text-xs font-medium text-slate-600 hover:text-slate-800 sm:min-h-0"
             >
               Hủy
             </button>

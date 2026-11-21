@@ -27,7 +27,7 @@ function SubmitButton({ label }: { label: string }) {
     <button
       type="submit"
       disabled={pending}
-      className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-xs font-semibold rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
+      className="inline-flex w-full items-center justify-center px-4 py-2.5 border border-transparent text-sm font-semibold rounded-lg sm:w-auto shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
     >
       {pending ? (
         <>
@@ -59,8 +59,8 @@ export default function HolidayForm({
   const [isActive, setIsActive] = useState(holiday ? holiday.is_active : true);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-lg">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/50 backdrop-blur-sm p-4 sm:items-center">
+      <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-lg max-h-[calc(100dvh-2rem)] overflow-y-auto">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
           <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
             <Calendar className="w-4 h-4 text-blue-600" />
@@ -68,7 +68,7 @@ export default function HolidayForm({
           </h3>
           <button
             onClick={onCancel}
-            className="p-1.5 text-slate-400 hover:text-slate-600 rounded-md hover:bg-slate-100"
+            className="inline-flex h-11 w-11 items-center justify-center text-slate-400 hover:text-slate-600 rounded-md hover:bg-slate-100 sm:h-9 sm:w-9"
           >
             <X className="w-4 h-4" />
           </button>
@@ -105,7 +105,7 @@ export default function HolidayForm({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label
                 htmlFor="startDate"
@@ -183,7 +183,7 @@ export default function HolidayForm({
             <button
               type="button"
               onClick={onCancel}
-              className="px-3.5 py-2 text-xs font-medium text-slate-600 hover:text-slate-900 border border-slate-300 rounded-lg hover:bg-slate-50"
+              className="px-3.5 py-2.5 text-sm font-medium text-slate-600 hover:text-slate-900 border border-slate-300 rounded-lg hover:bg-slate-50"
             >
               Hủy
             </button>
