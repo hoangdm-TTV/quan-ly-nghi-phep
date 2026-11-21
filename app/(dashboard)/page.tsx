@@ -127,7 +127,7 @@ function StatusBadge({ status }: { status: string }) {
   };
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${cfg.class}`}
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-semibold border ${cfg.class}`}
     >
       <span className="w-1.5 h-1.5 rounded-full mr-1.5 bg-current opacity-70"></span>
       {cfg.label}
@@ -151,7 +151,7 @@ function SectionHeading({
           {title}
         </h2>
         {detail && (
-          <p className="text-xs sm:text-sm text-slate-500">{detail}</p>
+          <p className="text-sm sm:text-base text-slate-500">{detail}</p>
         )}
       </div>
       {action}
@@ -194,7 +194,7 @@ function ReportSection({
           <h1 className="text-xl font-black text-slate-900 sm:text-2xl">
             Tổng quan
           </h1>
-          <p className="text-xs text-slate-500 sm:text-sm">
+          <p className="text-sm text-slate-500 sm:text-base">
             Tình hình nghỉ phép và ra ngoài theo kỳ · {scopeLabel}
           </p>
         </div>
@@ -203,36 +203,36 @@ function ReportSection({
           className="flex flex-wrap items-end gap-2"
           aria-label="Lọc kỳ báo cáo trên trang tổng quan"
         >
-          <label className="block text-[10px] font-semibold text-slate-500">
+          <label className="block text-xs font-semibold text-slate-500">
             Kỳ báo cáo
             <input
               type="date"
               name="from"
               defaultValue={reportFrom}
               aria-label="Từ ngày"
-              className="mt-1 block text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white"
+              className="mt-1 block text-sm px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white"
             />
           </label>
-          <span className="pb-2 text-xs text-slate-400">→</span>
-          <label className="block text-[10px] font-semibold text-slate-500">
+          <span className="pb-2 text-sm text-slate-400">→</span>
+          <label className="block text-xs font-semibold text-slate-500">
             Đến ngày
             <input
               type="date"
               name="to"
               defaultValue={reportTo}
               aria-label="Đến ngày"
-              className="mt-1 block text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white"
+              className="mt-1 block text-sm px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white"
             />
           </label>
           <button
             type="submit"
-            className="px-3 py-1.5 rounded-lg bg-[#005a3c] text-white text-xs font-semibold hover:bg-[#044e3f] transition-colors"
+            className="px-3 py-1.5 rounded-lg bg-[#005a3c] text-white text-sm font-semibold hover:bg-[#044e3f] transition-colors"
           >
             Lọc
           </button>
           <Link
             href="/"
-            className="px-3 py-1.5 rounded-lg border border-rose-200 bg-rose-50 text-rose-700 text-xs font-bold hover:bg-rose-100 transition-colors"
+            className="px-3 py-1.5 rounded-lg border border-rose-200 bg-rose-50 text-rose-700 text-sm font-bold hover:bg-rose-100 transition-colors"
           >
             Xóa bộ lọc
           </Link>
@@ -281,13 +281,13 @@ function ReportSection({
                 <span className="h-2 w-2 rounded-full bg-current" />
               </span>
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
+                <p className="text-[13px] font-bold uppercase tracking-wide text-slate-500">
                   {item.label}
                 </p>
                 <p className="mt-1 text-2xl font-black tabular-nums text-slate-900 sm:text-3xl">
                   {item.value.toLocaleString("vi-VN")}
                 </p>
-                <p className="text-[11px] text-slate-500">{item.detail}</p>
+                <p className="text-[13px] text-slate-500">{item.detail}</p>
               </div>
             </div>
           </Link>
@@ -308,7 +308,7 @@ function PersonalSummary({
         title="Đơn cá nhân của tôi"
         detail="Theo dõi nhanh tình trạng nghỉ phép và ra ngoài cá nhân"
         action={
-          <div className="flex items-center gap-3 text-xs sm:text-sm font-semibold">
+          <div className="flex items-center gap-3 text-sm sm:text-base font-semibold">
             <Link
               href="/leave?tab=mine"
               className="text-[#005a3c] hover:underline"
@@ -334,7 +334,7 @@ function PersonalSummary({
                 <h3 className="text-base font-bold text-slate-900 group-hover:text-[#005a3c] transition-colors">
                   Đơn nghỉ phép
                 </h3>
-                <p className="text-xs text-slate-500">
+                <p className="text-sm text-slate-500">
                   Số đơn đã tạo trong năm
                 </p>
               </div>
@@ -346,10 +346,10 @@ function PersonalSummary({
 
           <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-sm font-bold bg-amber-50 text-amber-700 border border-amber-200">
                 {stats.myLeavePending} đang chờ
               </span>
-              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold bg-emerald-50 text-[#005a3c] border border-emerald-200">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-sm font-bold bg-emerald-50 text-[#005a3c] border border-emerald-200">
                 {stats.myLeaveApproved} đã duyệt
               </span>
             </div>
@@ -371,7 +371,7 @@ function PersonalSummary({
                 <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-700 transition-colors">
                   Đơn ra ngoài
                 </h3>
-                <p className="text-xs text-slate-500">
+                <p className="text-sm text-slate-500">
                   Số lượt xin ra ngoài cổng
                 </p>
               </div>
@@ -383,10 +383,10 @@ function PersonalSummary({
 
           <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-sm font-bold bg-amber-50 text-amber-700 border border-amber-200">
                 {stats.myOutOfficePending} đang chờ
               </span>
-              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold bg-emerald-50 text-[#005a3c] border border-emerald-200">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-sm font-bold bg-emerald-50 text-[#005a3c] border border-emerald-200">
                 {stats.myOutOfficeCompleted} hoàn tất
               </span>
             </div>
@@ -433,7 +433,7 @@ function ApprovalQueue({
             <h2 className="text-base font-bold text-slate-900">
               Hàng đợi phê duyệt cần xử lý
             </h2>
-            <p className="text-xs text-slate-600">
+            <p className="text-sm text-slate-600">
               Đang hiển thị tối đa 3 đơn mỗi loại; mở hàng đợi để xem toàn bộ.
             </p>
           </div>
@@ -443,7 +443,7 @@ function ApprovalQueue({
           {leavePreview.length > 0 && (
             <Link
               href="/approvals/leave"
-              className="px-3 py-1.5 text-xs font-bold rounded-lg bg-[#005a3c] text-white hover:bg-[#044e3f] shadow-xs transition-colors"
+              className="px-3 py-1.5 text-sm font-bold rounded-lg bg-[#005a3c] text-white hover:bg-[#044e3f] shadow-xs transition-colors"
             >
               Duyệt nghỉ phép
             </Link>
@@ -451,7 +451,7 @@ function ApprovalQueue({
           {outOfficePreview.length > 0 && (
             <Link
               href="/approvals/out-office"
-              className="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-800 text-white hover:bg-slate-900 shadow-xs transition-colors"
+              className="px-3 py-1.5 text-sm font-bold rounded-lg bg-slate-800 text-white hover:bg-slate-900 shadow-xs transition-colors"
             >
               Duyệt ra ngoài
             </Link>
@@ -467,15 +467,15 @@ function ApprovalQueue({
             className="p-3 bg-white rounded-xl border border-amber-200/70 hover:border-amber-400 hover:shadow-xs transition-all flex items-center justify-between"
           >
             <div>
-              <p className="text-xs font-bold text-slate-900">
+              <p className="text-sm font-bold text-slate-900">
                 {r.employee_name}
               </p>
-              <p className="text-[11px] text-slate-500 mt-0.5">
+              <p className="text-[13px] text-slate-500 mt-0.5">
                 Nghỉ phép: {r.start_date} → {r.end_date} ({r.duration_days}{" "}
                 ngày)
               </p>
             </div>
-            <span className="text-xs font-semibold text-[#005a3c] flex items-center gap-1">
+            <span className="text-sm font-semibold text-[#005a3c] flex items-center gap-1">
               Xem đơn <ArrowRight className="w-3.5 h-3.5" />
             </span>
           </Link>
@@ -487,14 +487,14 @@ function ApprovalQueue({
             className="p-3 bg-white rounded-xl border border-amber-200/70 hover:border-amber-400 hover:shadow-xs transition-all flex items-center justify-between"
           >
             <div>
-              <p className="text-xs font-bold text-slate-900">
+              <p className="text-sm font-bold text-slate-900">
                 {r.employee_name}
               </p>
-              <p className="text-[11px] text-slate-500 mt-0.5">
+              <p className="text-[13px] text-slate-500 mt-0.5">
                 Ra ngoài: {r.request_date} ({r.start_time} - {r.end_time})
               </p>
             </div>
-            <span className="text-xs font-semibold text-blue-700 flex items-center gap-1">
+            <span className="text-sm font-semibold text-blue-700 flex items-center gap-1">
               Xem đơn <ArrowRight className="w-3.5 h-3.5" />
             </span>
           </Link>
@@ -514,11 +514,11 @@ function PersonalActivity({
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-base font-bold text-slate-900">Đơn của tôi</h2>
-          <p className="text-xs text-slate-500">
+          <p className="text-sm text-slate-500">
             Theo dõi các đơn nghỉ phép và ra ngoài gần đây
           </p>
         </div>
-        <div className="flex flex-wrap gap-2 text-xs font-semibold">
+        <div className="flex flex-wrap gap-2 text-sm font-semibold">
           <Link
             href="/leave?tab=mine"
             className="rounded-lg border border-slate-200 px-3 py-2 text-slate-700 hover:bg-slate-50"
@@ -534,13 +534,13 @@ function PersonalActivity({
         </div>
       </div>
       {activities.length === 0 ? (
-        <p className="rounded-lg bg-slate-50 p-6 text-center text-xs text-slate-500">
+        <p className="rounded-lg bg-slate-50 p-6 text-center text-sm text-slate-500">
           Chưa có đơn nào gần đây.
         </p>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[36rem] text-left text-xs">
-            <thead className="border-y border-slate-100 text-[10px] uppercase text-slate-500">
+          <table className="w-full min-w-[36rem] text-left text-sm">
+            <thead className="border-y border-slate-100 text-xs uppercase text-slate-500">
               <tr>
                 <th className="px-3 py-3">Loại đơn</th>
                 <th className="px-3 py-3">Thời gian</th>
@@ -558,7 +558,7 @@ function PersonalActivity({
                   </td>
                   <td className="px-3 py-3 text-slate-600">
                     <span className="block">{item.dateInfo}</span>
-                    <span className="block max-w-sm truncate text-[10px] text-slate-400">
+                    <span className="block max-w-sm truncate text-xs text-slate-400">
                       {item.title}
                     </span>
                   </td>
@@ -682,11 +682,11 @@ export default async function DashboardPage({
         <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-5">
           <div>
             <div className="flex items-center gap-2 flex-wrap mb-2">
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-white/20 text-white backdrop-blur-xs">
+              <span className="px-2.5 py-0.5 rounded-full text-sm font-bold bg-white/20 text-white backdrop-blur-xs">
                 {user.position || "Chưa cập nhật chức vụ"}
               </span>
               {user.department_name && (
-                <span className="text-xs text-emerald-100 font-medium">
+                <span className="text-sm text-emerald-100 font-medium">
                   {user.department_name}
                 </span>
               )}
@@ -694,7 +694,7 @@ export default async function DashboardPage({
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
               Xin chào, {user.full_name}
             </h1>
-            <p className="mt-1 text-xs sm:text-sm text-emerald-100 max-w-xl">
+            <p className="mt-1 text-sm sm:text-base text-emerald-100 max-w-xl">
               {roleDescription}
             </p>
           </div>
@@ -703,14 +703,14 @@ export default async function DashboardPage({
             <div className="flex items-center gap-3 flex-wrap">
               <Link
                 href="/leave/new"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-[#005a3c] font-bold text-xs sm:text-sm hover:bg-emerald-50 shadow-sm transition-all"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-[#005a3c] font-bold text-sm sm:text-base hover:bg-emerald-50 shadow-sm transition-all"
               >
                 <Plus className="w-4 h-4" />
                 <span>Tạo đơn nghỉ phép</span>
               </Link>
               <Link
                 href="/out-office/new"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-800/80 text-white border border-emerald-400/40 font-bold text-xs sm:text-sm hover:bg-emerald-800 transition-all"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-800/80 text-white border border-emerald-400/40 font-bold text-sm sm:text-base hover:bg-emerald-800 transition-all"
               >
                 <Clock className="w-4 h-4" />
                 <span>Tạo đơn ra ngoài</span>
@@ -725,11 +725,11 @@ export default async function DashboardPage({
       </div>
 
       {isAccountant && (
-        <div className="bg-amber-50 border border-amber-200/90 rounded-xl p-4 text-xs sm:text-sm text-amber-900 flex items-start gap-3">
+        <div className="bg-amber-50 border border-amber-200/90 rounded-xl p-4 text-sm sm:text-base text-amber-900 flex items-start gap-3">
           <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
           <div>
             <p className="font-bold">Chế độ đối soát số liệu Kế toán</p>
-            <p className="mt-0.5 text-xs text-amber-700">
+            <p className="mt-0.5 text-sm text-amber-700">
               Báo cáo bên dưới hiển thị số liệu tổng hợp toàn công ty. Để xem
               chi tiết từng đơn, hãy mở mục{" "}
               <Link href="/leave?tab=scope" className="font-semibold underline">
